@@ -1,0 +1,7 @@
+*.project
+*.tags
+*.db
+*.workspace
+*.session
+*.d
+*.o
