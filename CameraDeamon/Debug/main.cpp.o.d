@@ -134,32 +134,31 @@ Debug/main.cpp.o: ../main.cpp /opt/pylon5/include/pylon/PylonIncludes.h \
  /opt/pylon5/include/pylon/usb/_UsbStreamParams.h \
  /opt/pylon5/include/pylon/usb/_UsbEventParams.h \
  /opt/pylon5/include/pylon/usb/_UsbTLParams.h \
- /home/agridata/Projects/spdlog/include/spdlog/spdlog.h \
- /home/agridata/Projects/spdlog/include/spdlog/tweakme.h \
- /home/agridata/Projects/spdlog/include/spdlog/common.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/null_mutex.h \
- /home/agridata/Projects/spdlog/include/spdlog/fmt/fmt.h \
- /home/agridata/Projects/spdlog/include/spdlog/fmt/bundled/format.h \
- /home/agridata/Projects/spdlog/include/spdlog/logger.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/base_sink.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/sink.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/log_msg.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/os.h \
- /home/agridata/Projects/spdlog/include/spdlog/formatter.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/pattern_formatter_impl.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/logger_impl.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/stdout_sinks.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/spdlog_impl.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/registry.h \
- /home/agridata/Projects/spdlog/include/spdlog/async_logger.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/async_logger_impl.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/async_log_helper.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/mpmc_bounded_q.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/file_sinks.h \
- /home/agridata/Projects/spdlog/include/spdlog/details/file_helper.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/syslog_sink.h \
- /home/agridata/Projects/spdlog/include/spdlog/sinks/ansicolor_sink.h \
- ../zmq.hpp
+ /home/agridata/spdlog/include/spdlog/spdlog.h \
+ /home/agridata/spdlog/include/spdlog/tweakme.h \
+ /home/agridata/spdlog/include/spdlog/common.h \
+ /home/agridata/spdlog/include/spdlog/details/null_mutex.h \
+ /home/agridata/spdlog/include/spdlog/fmt/fmt.h \
+ /home/agridata/spdlog/include/spdlog/fmt/bundled/format.h \
+ /home/agridata/spdlog/include/spdlog/logger.h \
+ /home/agridata/spdlog/include/spdlog/sinks/base_sink.h \
+ /home/agridata/spdlog/include/spdlog/sinks/sink.h \
+ /home/agridata/spdlog/include/spdlog/details/log_msg.h \
+ /home/agridata/spdlog/include/spdlog/details/os.h \
+ /home/agridata/spdlog/include/spdlog/formatter.h \
+ /home/agridata/spdlog/include/spdlog/details/pattern_formatter_impl.h \
+ /home/agridata/spdlog/include/spdlog/details/logger_impl.h \
+ /home/agridata/spdlog/include/spdlog/sinks/stdout_sinks.h \
+ /home/agridata/spdlog/include/spdlog/details/spdlog_impl.h \
+ /home/agridata/spdlog/include/spdlog/details/registry.h \
+ /home/agridata/spdlog/include/spdlog/async_logger.h \
+ /home/agridata/spdlog/include/spdlog/details/async_logger_impl.h \
+ /home/agridata/spdlog/include/spdlog/details/async_log_helper.h \
+ /home/agridata/spdlog/include/spdlog/details/mpmc_bounded_q.h \
+ /home/agridata/spdlog/include/spdlog/sinks/file_sinks.h \
+ /home/agridata/spdlog/include/spdlog/details/file_helper.h \
+ /home/agridata/spdlog/include/spdlog/sinks/syslog_sink.h \
+ /home/agridata/spdlog/include/spdlog/sinks/ansicolor_sink.h ../zmq.hpp
 
 /opt/pylon5/include/pylon/PylonIncludes.h:
 
@@ -449,54 +448,54 @@ Debug/main.cpp.o: ../main.cpp /opt/pylon5/include/pylon/PylonIncludes.h \
 
 /opt/pylon5/include/pylon/usb/_UsbTLParams.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/spdlog.h:
+/home/agridata/spdlog/include/spdlog/spdlog.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/tweakme.h:
+/home/agridata/spdlog/include/spdlog/tweakme.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/common.h:
+/home/agridata/spdlog/include/spdlog/common.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/null_mutex.h:
+/home/agridata/spdlog/include/spdlog/details/null_mutex.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/fmt/fmt.h:
+/home/agridata/spdlog/include/spdlog/fmt/fmt.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/fmt/bundled/format.h:
+/home/agridata/spdlog/include/spdlog/fmt/bundled/format.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/logger.h:
+/home/agridata/spdlog/include/spdlog/logger.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/base_sink.h:
+/home/agridata/spdlog/include/spdlog/sinks/base_sink.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/sink.h:
+/home/agridata/spdlog/include/spdlog/sinks/sink.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/log_msg.h:
+/home/agridata/spdlog/include/spdlog/details/log_msg.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/os.h:
+/home/agridata/spdlog/include/spdlog/details/os.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/formatter.h:
+/home/agridata/spdlog/include/spdlog/formatter.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/pattern_formatter_impl.h:
+/home/agridata/spdlog/include/spdlog/details/pattern_formatter_impl.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/logger_impl.h:
+/home/agridata/spdlog/include/spdlog/details/logger_impl.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/stdout_sinks.h:
+/home/agridata/spdlog/include/spdlog/sinks/stdout_sinks.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/spdlog_impl.h:
+/home/agridata/spdlog/include/spdlog/details/spdlog_impl.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/registry.h:
+/home/agridata/spdlog/include/spdlog/details/registry.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/async_logger.h:
+/home/agridata/spdlog/include/spdlog/async_logger.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/async_logger_impl.h:
+/home/agridata/spdlog/include/spdlog/details/async_logger_impl.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/async_log_helper.h:
+/home/agridata/spdlog/include/spdlog/details/async_log_helper.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/mpmc_bounded_q.h:
+/home/agridata/spdlog/include/spdlog/details/mpmc_bounded_q.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/file_sinks.h:
+/home/agridata/spdlog/include/spdlog/sinks/file_sinks.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/details/file_helper.h:
+/home/agridata/spdlog/include/spdlog/details/file_helper.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/syslog_sink.h:
+/home/agridata/spdlog/include/spdlog/sinks/syslog_sink.h:
 
-/home/agridata/Projects/spdlog/include/spdlog/sinks/ansicolor_sink.h:
+/home/agridata/spdlog/include/spdlog/sinks/ansicolor_sink.h:
 
 ../zmq.hpp:

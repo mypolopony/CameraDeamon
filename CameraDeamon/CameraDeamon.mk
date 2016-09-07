@@ -5,8 +5,8 @@
 ## Debug
 ProjectName            :=CameraDeamon
 ConfigurationName      :=Debug
-WorkspacePath          :=/home/agridata/Projects/CameraDeamon
-ProjectPath            :=/home/agridata/Projects/CameraDeamon/CameraDeamon
+WorkspacePath          :=/home/agridata/CameraDeamon
+ProjectPath            :=/home/agridata/CameraDeamon/CameraDeamon
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
@@ -36,7 +36,7 @@ ObjectsFileList        :="CameraDeamon.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=   `pkg-config opencv --cflags --libs` `/opt/pylon5/bin/pylon-config --libs-rpath`
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include/ $(IncludeSwitch)/usr/include/opencv2/ $(IncludeSwitch)/home/agridata/Projects/spdlog/include/ 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include/ $(IncludeSwitch)/usr/include/opencv2/ $(IncludeSwitch)/home/agridata/spdlog/include/ $(IncludeSwitch)/home/agridata/jeayeson/include/jeayeson/ $(IncludeSwitch)/home/agridata/CameraDeamon/CameraDeamon/library/ 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread 
@@ -92,7 +92,7 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/main.cpp$(ObjectSuffix): ../main.cpp $(IntermediateDirectory)/main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/Projects/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/main.cpp$(DependSuffix): ../main.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/main.cpp$(DependSuffix) -MM ../main.cpp
 
