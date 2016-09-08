@@ -53,8 +53,8 @@ CImageFormatConverter fc;
 CGrabResultPtr ptrGrabResult;
 
 int initialize(CBaslerUsbInstantCamera& camera)
-{	
-	// Create directory structure
+{    
+    // Create directory structure
     int status = mkdir("output", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
     stringstream ss;
@@ -62,11 +62,11 @@ int initialize(CBaslerUsbInstantCamera& camera)
     ss.str(asctime(localtime(&result)));
     string tm = ss.str();
     tm.resize(tm.size() - 1);
-	
-	// FPS
-	cFramesPerSecond = 20;
+    
+    // FPS
+    cFramesPerSecond = 20;
     save_path_ori = "/home/agridata/output/" + tm + ".avi";
-	
+    
     // default hard coded settings if Config.cfg file is not present or
     // in-complete/commented
     bool show_screen_info = 1;
@@ -123,7 +123,7 @@ int initialize(CBaslerUsbInstantCamera& camera)
     ofstream output_end_result;
     ostringstream strs, ost1, ost2, ost3;
     string radius, size_roi, frame_rate, output_file;
-	
+    
     // -----------------------//
     // Show loaded variables //
     // -----------------------//
@@ -182,20 +182,20 @@ int initialize(CBaslerUsbInstantCamera& camera)
     }
     
     return 0;
-	
+    
 }
 
 void run(CBaslerUsbInstantCamera& camera)
 {
-	// Configuration / Initialization
-	int exp_counter = 100;
+    // Configuration / Initialization
+    int exp_counter = 100;
     int wb_counter = 100;
     int stream_counter = 200;
-	int frames = 999 * cFramesPerSecond;
-	IsRecording = true;
-	
-	VideoWriter original;
-	
+    int frames = 999 * cFramesPerSecond;
+    IsRecording = true;
+    
+    VideoWriter original;
+    
     // Create an instant camera object with the camera device found first.
     // cameraObj camera(CTlFactory::GetInstance().CreateFirstDevice());
     
@@ -210,22 +210,18 @@ void run(CBaslerUsbInstantCamera& camera)
     // which
     // sets up free-running continuous acquisition.
     camera.StartGrabbing(frames);
-    
+
     // Enable the acquisition frame rate parameter and set the frame rate.
     camera.AcquisitionFrameRateEnable.SetValue(true);
     camera.AcquisitionFrameRate.SetValue(cFramesPerSecond);
-    
+
     // Get native width and height from connected camera
     GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
     GenApi::CIntegerPtr height(camera.GetNodeMap().GetNode("Height"));
-	
-	// Minimize Exposure Time
-	//camera.MinimizeExposureTimeEnable.SetValue(true);
-	//camera.MinimizeExposureTime.SetValue(true);
-	
-	// Continuous Auto Gain
-	//camera.GainAutoEnable.SetValue(true);
-	camera.GainAuto.SetValue(GainAuto_Continuous);
+    
+    // Continuous Auto Gain
+    //camera.GainAutoEnable.SetValue(true);
+    camera.GainAuto.SetValue(GainAuto_Continuous);
     
     // create Mat image template
     Mat cv_img(width->GetValue(), height->GetValue(), CV_8UC3);
@@ -234,6 +230,11 @@ void run(CBaslerUsbInstantCamera& camera)
     cout << Size(width->GetValue(), height->GetValue()) << endl;
     original.open(save_path_ori.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), cFramesPerSecond, Size(width->GetValue(), height->GetValue()), true);
     
+    // Streaming image compression
+    vector<int> compression_params;
+    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(3);
+
     // if the VideoWriter file is not initialized successfully, exit the
     // program.
     if(!original.isOpened()) {
@@ -248,7 +249,7 @@ void run(CBaslerUsbInstantCamera& camera)
             // Wait for an image and then retrieve it. A timeout of 5000
             // ms is used.
             camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-			fc.OutputPixelFormat = PixelType_BGR8packed;
+            fc.OutputPixelFormat = PixelType_BGR8packed;
             
             // Image grabbed successfully?
             if(ptrGrabResult->GrabSucceeded()) {
@@ -259,24 +260,24 @@ void run(CBaslerUsbInstantCamera& camera)
                 
                 // write the original stream into file
                 //cvtColor(cv_img, cv_img, CV_GRAY2BGR);
-				original.write(cv_img);
+                original.write(cv_img);
                 
                 // write to streaming jpeg
                 if(stream_counter == 0) {
-                    imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/streaming.png", cv_img);
+                    imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/streaming.png", cv_img, compression_params);
                     stream_counter = 200;
-				} else {
+                } else {
                     stream_counter--;
                 }
                 
-				/*
+                /*
                 // Auto White Balance
                 if(wb_counter == 0) {
                     wb_counter = 100;
                     cout << "Changing white balance: " << camera.BalanceRatio.GetValue() << endl;
                     // camera.BalanceWhiteAutoEnable.SetValue(true);
                     camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
-				} else {
+                } else {
                     wb_counter--;
                 }
                 
@@ -286,41 +287,41 @@ void run(CBaslerUsbInstantCamera& camera)
                     exp_counter = 100;
                     // camera.ExposureAutoEnable.setValue(true);
                     camera.ExposureAuto.SetValue(ExposureAuto_Once);
-				} else {
+                } else {
                     exp_counter--;
                 }
-				 */
+                 */
             }
             
-		} catch (const GenericException &e) {
-			cout << "Error: " << ptrGrabResult->GetErrorCode() << " ";
-			cout << ptrGrabResult->GetErrorDescription() << endl;
+        } catch (const GenericException &e) {
+            cout << "Error: " << ptrGrabResult->GetErrorCode() << " ";
+            cout << ptrGrabResult->GetErrorDescription() << endl;
         }
     }
-	camera.StopGrabbing();
+    camera.StopGrabbing();
 }
 
 int stop(CBaslerUsbInstantCamera &camera) {
-	IsRecording = false;
-	cout << endl << endl << " *** Done ***" << endl << endl;
+    IsRecording = false;
+    cout << endl << endl << " *** Done ***" << endl << endl;
 
-	return 0;
+    return 0;
 }
 
 int snap(CBaslerUsbInstantCamera &camera) {
     // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-	camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-	
-	fc.OutputPixelFormat = PixelType_Mono8;
+    camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+    
+    fc.OutputPixelFormat = PixelType_Mono8;
     
     // Image grabbed successfully?
     if(ptrGrabResult->GrabSucceeded()) {
-		// convert to Mat - openCV format for analysis
+        // convert to Mat - openCV format for analysis
         fc.Convert(image, ptrGrabResult);
         Mat cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8U, (uint8_t*)image.GetBuffer());
         imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/", cv_img);
-		imshow("original",cv_img);
-	} else {
+        imshow("original",cv_img);
+    } else {
         cout << "Error: " << ptrGrabResult->GetErrorCode() << " ";
         cout << ptrGrabResult->GetErrorDescription() << endl;
     }
@@ -329,37 +330,38 @@ int snap(CBaslerUsbInstantCamera &camera) {
 
 void gowhile() {
 
-		cout << rand();
+        cout << rand();
 
 }
 
 void stopwhile() {
-	IsRecording = false;
+    IsRecording = false;
 }
 
 vector<string> split(const string &s, char delim) {
-	stringstream ss(s);
-	string item;
-	vector <string> tokens;
-	while (getline(ss, item, delim)) {
-		tokens.push_back(item);
-	}
-	return tokens;
+    stringstream ss(s);
+    string item;
+    vector <string>tokens;
+    while (getline(ss, item, delim)) {
+        tokens.push_back(item);
+    }
+    return tokens;
 }
 
 int main()
 {
-	PylonInitialize();
-	
+    PylonInitialize();
+    
     zmq::context_t context(1);
     zmq::socket_t server(context, ZMQ_REP);
     server.bind("tcp://*:4999");
     
     zmq_sleep(1.5); // Wait for sockets
-		
-	int ret;
-	CBaslerUsbInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice());
-	
+    
+    bool block = false;
+    int ret;
+    CBaslerUsbInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice());
+    
     while(true) {
         
         zmq::message_t messageR;
@@ -369,69 +371,114 @@ int main()
         std::string recieved = std::string(static_cast<char*>(messageR.data()), messageR.size());
         
         printf("%sn", recieved.c_str());
-		
-		//Parse the string
-		char** argv;
-		int argc = 0;
-		size_t pos = 0;
-		string s;
-		char delimiter = '_';
-		string reply;
+        
+        //Parse the string
+        char** argv;
+        int argc = 0;
+        size_t pos = 0;
+        string s;
+        char delimiter = '_';
+        string reply;
 
-		s = recieved;
-		vector <string> tokens = split(s,delimiter);
+        s = recieved;
+        vector <string>tokens = split(s,delimiter);
 
-		try {
-			reply = "1";		// Innocent until proven guilty
-			
-			// Choose action
-			if ( tokens[0] == "start") {
-				if (IsRecording) {
-					reply = "0";
-				} else {
-					ret = initialize(ref(camera));
-					
-					thread t (run, ref(camera));
-					t.detach();
-				}
-			} else if (tokens[0] == "stop") {
-				ret = stop(ref(camera));
-			} else if ( tokens[0] == "BalanceWhite") {
-				//camera.BalanceWhiteAutoEnable.SetValue(true);
-				if (tokens[1] == "Once") {
-					camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
-				}
-			} else if ( tokens[0] == "ExposureBalance") {
-				//camera.ExposureAuto.SetValueEnable(true);
-				if (tokens[1] == "Once") {
-					camera.ExposureAuto.SetValue(ExposureAuto_Once);
-				}
-			} else if ( tokens[0] == "AutoExposureTimeUpperLimit" ) {
-				//camera.AutoExposureTimeUpperLimitEnable.SetValue(true);
-				camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
-			} else if ( tokens[0] == "AutoTargetBrightnessValue" ) {
-				camera.BlackLevel.SetValue(atof(tokens[1].c_str()));
-			} else if ( tokens[0] == "AutoGainUpperLimit") {
-				camera.GainSelector.SetValue(GainSelector_All);
-				camera.AutoGainUpperLimit.SetValue(atof(tokens[1].c_str()));
-			} else if ( tokens[0] == "AutoGainLowerLimit") {
-				camera.GainSelector.SetValue(GainSelector_All);
-				camera.AutoGainLowerLimit.SetValue(atof(tokens[1].c_str()));
-			} else if ( tokens[0] == "GetStatus") {
-			std::ostringstream oss;
-			oss << "BalanceWhite_" << camera.BalanceRatio.GetValue() << "_ExposureTime_" << camera.ExposureTime.GetValue();
-			reply = oss.str();	
-			} else {
-				reply ="0";
-			}
-		} catch (...) {
-			reply = "0";
-		}
-		
-		zmq::message_t messageS(reply.size());
-		memcpy(messageS.data(), reply.data(), reply.size());
+        if (!block) {
+
+            try {
+
+                reply = "1";        // Innocent until proven guilty
+                
+                // Choose action
+                if (tokens[0] == "start") {
+                    if (IsRecording) {
+                        reply = "0_NotRecording";
+                    } else {
+                        ret = initialize(ref(camera));
+                        
+                        thread t (run, ref(camera));
+                        t.detach();
+                    }
+                } else if (tokens[0] == "stop") {
+                    ret = stop(ref(camera));
+                } else if (tokens[0] == "BalanceWhiteAuto") {
+                    if (tokens[1] == "BalanceWhiteAuto_Once") {
+                        camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                    } else if (tokens[1] == "BalanceWhiteAuto_Continuous") {
+                        camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
+                    } else if (tokens[1] == "BalanceWhiteAuto_Off") {
+                        camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
+                    }
+                } else if (tokens[0] == "ExposureBalance") {
+                    if (tokens[1] == "Once") {
+                        camera.ExposureAuto.SetValue(ExposureAuto_Once);
+                    }
+                } else if (tokens[0] == "AutoFunctionProfile") {
+                    if (tokens[1] == "AutoFunctionProfile_MinimizeExposure") {
+                        camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+                    } else if (tokens[1] == "AutoFunctionProfile_MinimizeGain") {
+                        camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
+                    }
+                } else if (tokens[0] == "GainAuto") {
+                    if (tokens[1] == "GainAuto_Once") {
+                        camera.GainAuto.SetValue(GainAuto_Once);
+                    } else if (tokens[1] == "GainAuto_Continuous") {
+                        camera.GainAuto.SetValue(GainAuto_Continuous);
+                    } else if (tokens[1] == "GainAuto_Off") {
+                        camera.GainAuto.SetValue(GainAuto_Off);
+                    }
+                } else if (tokens[0] == "ExposureAuto") {
+                    if (tokens[1] == "Exposure_Once") {
+                        camera.ExposureAuto.SetValue(ExposureAuto_Once);
+                    } else if (tokens[1] == "ExposureAuto_Continuous") {
+                        camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+                    } else if (tokens[1] == "ExposureAuto_Off") {
+                        camera.ExposureAuto.SetValue(ExposureAuto_Off);
+                    }
+                } else if (tokens[0] == "BalanceRatioSelector") {
+                    if (tokens[1] == "BalanceRatioSelector_Green") {
+                        camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
+                    } else if (tokens[1] == "BalanceRatioSelector_Red") {
+                        camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
+                    } else if (tokens[1] == "BalanceRatioSelector_Blue") {
+                        camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
+                    }
+                } else if (tokens[0] == "GainSelector") {
+                    camera.GainSelector.SetValue(GainSelector_All);
+                } else if (tokens[0] == "Gain") {
+                    camera.Gain.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "BalanceRatio") {
+                    camera.BalanceRatio.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "AutoTargetBrightness") {
+                    camera.AutoTargetBrightness.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "AutoExposureTimeUpperLimit") {
+                    camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "AutoGainUpperLimit") {
+                    camera.GainSelector.SetValue(GainSelector_All);     // Backup in case we forget
+                    camera.AutoGainUpperLimit.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "AutoGainLowerLimit") {         // Backup incase we forget
+                    camera.GainSelector.SetValue(GainSelector_All);
+                    camera.AutoGainLowerLimit.SetValue(atof(tokens[1].c_str()));
+                } else if (tokens[0] == "GetStatus") {
+                    std::ostringstream oss;
+                    oss << "BalanceWhite_" << camera.BalanceRatio.GetValue() << "_ExposureTime_" << camera.ExposureTime.GetValue();
+                    reply = oss.str();    
+                } else {
+                    reply ="0_CommandNotFound";
+                }
+            } catch (...) {
+                reply = "0_ExceptionProcessingCommand";
+            }
+        } else {
+            reply = "0_CameraIsBusy";
+        }
+        
+        zmq::message_t messageS(reply.size());
+        memcpy(messageS.data(), reply.data(), reply.size());
         server.send(messageS);
+        block = false;
     }
     
     return 0;
 }
+
