@@ -18,7 +18,6 @@
 #include <GenApi/GenApi.h>
 
 // Utilities
-#include "spdlog/spdlog.h"
 #include "zmq.hpp"
 
 // Additional include files.
@@ -29,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <exception>
+#include <thread>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -275,7 +275,7 @@ void run(CBaslerUsbInstantCamera& camera)
                     stat(save_path_ori.c_str(), &filestatus);
                     int size = filestatus.st_size;
                     if (size > 1073741824) {            // 1GB = 1073741824 bytes
-                        original.close();
+						VideoWriter original;
 
                         stringstream ss;
                         time_t result = time(NULL);
@@ -482,7 +482,7 @@ int main()
                         << "Gain: " << camera.Gain.GetValue() << endl
                         << "Gain Auto: " << camera.GainAuto.GetValue() << endl
                         << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << endl
-                        << "Target Brightness: " << camera.AutoTargetBrightness << endl;
+                        << "Target Brightness: " << camera.AutoTargetBrightness.GetValue() << endl;
                     reply = oss.str();    
                 } else {
                     reply ="0_CommandNotFound";
