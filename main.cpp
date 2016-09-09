@@ -62,10 +62,10 @@ int initialize(CBaslerUsbInstantCamera& camera)
     ss.str(asctime(localtime(&result)));
     string tm = ss.str();
     tm.resize(tm.size() - 1);
-    
+    save_path_ori = "/home/agridata/output/" + tm + ".avi";
+
     // FPS
     cFramesPerSecond = 20;
-    save_path_ori = "/home/agridata/output/" + tm + ".avi";
     
     // default hard coded settings if Config.cfg file is not present or
     // in-complete/commented
@@ -188,11 +188,11 @@ int initialize(CBaslerUsbInstantCamera& camera)
 void run(CBaslerUsbInstantCamera& camera)
 {
     // Configuration / Initialization
-    int exp_counter = 100;
-    int wb_counter = 100;
+    int heartbeat = 100;
     int stream_counter = 200;
     int frames = 999 * cFramesPerSecond;
     IsRecording = true;
+    struct stat filestatus;
     
     VideoWriter original;
     
@@ -269,26 +269,47 @@ void run(CBaslerUsbInstantCamera& camera)
                 } else {
                     stream_counter--;
                 }
+
+                // Check file size
+                if (heartbeat == 0) {
+                    stat(save_path_ori.c_str(), &filestatus);
+                    int size = filestatus.st_size;
+                    if (size > 1073741824) {            // 1GB = 1073741824 bytes
+                        original.close();
+
+                        stringstream ss;
+                        time_t result = time(NULL);
+                        ss.str(asctime(localtime(&result)));
+                        string tm = ss.str();
+                        tm.resize(tm.size() - 1);
+                        save_path_ori = "/home/agridata/output/" + tm + ".avi";
+                        original.open(save_path_ori.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), cFramesPerSecond, Size(width->GetValue(), height->GetValue()), true);
+
+                    }
+                    heartbeat = 500;   
+                } else {
+                    heartbeat--;
+                }
                 
                 /*
                 // Auto White Balance
-                if(wb_counter == 0) {
-                    wb_counter = 100;
+                if(heartbeat == 0) {
+                    heartbeat = 100;
                     cout << "Changing white balance: " << camera.BalanceRatio.GetValue() << endl;
                     // camera.BalanceWhiteAutoEnable.SetValue(true);
                     camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
                 } else {
-                    wb_counter--;
+                    heartbeat--;
                 }
                 
                 // Auto Exposure
-                if(exp_counter == 0) {
+                if(heartbeat == 0) {
                     cout << "Changing exposure: " << camera.ExposureTime.GetValue() << endl;
-                    exp_counter = 100;
+                    heartbeat = 100;
                     // camera.ExposureAutoEnable.setValue(true);
                     camera.ExposureAuto.SetValue(ExposureAuto_Once);
                 } else {
-                    exp_counter--;
+                    heartbeat--;
                 }
                  */
             }
@@ -326,16 +347,6 @@ int snap(CBaslerUsbInstantCamera &camera) {
         cout << ptrGrabResult->GetErrorDescription() << endl;
     }
     return 0;
-}
-
-void gowhile() {
-
-        cout << rand();
-
-}
-
-void stopwhile() {
-    IsRecording = false;
 }
 
 vector<string> split(const string &s, char delim) {
@@ -409,7 +420,7 @@ int main()
                     } else if (tokens[1] == "BalanceWhiteAuto_Off") {
                         camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
                     }
-                } else if (tokens[0] == "ExposureBalance") {
+                } else if (tokens[0] == "ExposureAuto") {
                     if (tokens[1] == "Once") {
                         camera.ExposureAuto.SetValue(ExposureAuto_Once);
                     }
@@ -460,8 +471,18 @@ int main()
                     camera.GainSelector.SetValue(GainSelector_All);
                     camera.AutoGainLowerLimit.SetValue(atof(tokens[1].c_str()));
                 } else if (tokens[0] == "GetStatus") {
-                    std::ostringstream oss;
-                    oss << "BalanceWhite_" << camera.BalanceRatio.GetValue() << "_ExposureTime_" << camera.ExposureTime.GetValue();
+                    ostringstream oss;
+                    oss << "Is recording: " << IsRecording << endl
+                        << "White Balance Ratio: " << camera.BalanceRatio.GetValue() << endl
+                        << "Auto FUnctionProfile: " << camera.AutoFunctionProfile.GetValue() << endl
+                        << "Balance Ratio Selector: " << camera.BalanceRatioSelector.GetValue() << endl
+                        << "White Balance Auto: " << camera.BalanceWhiteAuto.GetValue() << endl
+                        << "Auto Exposure: " << camera.ExposureAuto.GetValue() << endl
+                        << "Exposure Mode: " << camera.ExposureMode.GetValue() << endl
+                        << "Gain: " << camera.Gain.GetValue() << endl
+                        << "Gain Auto: " << camera.GainAuto.GetValue() << endl
+                        << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << endl
+                        << "Target Brightness: " << camera.AutoTargetBrightness << endl;
                     reply = oss.str();    
                 } else {
                     reply ="0_CommandNotFound";
