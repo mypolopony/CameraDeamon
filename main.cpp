@@ -365,7 +365,7 @@ int main()
     // Listen on port 4999
     zmq::context_t context(1);
     zmq::socket_t client(context, ZMQ_SUB);
-    client.connect("tcp://106.254.34.2:4999");
+    client.connect("tcp://localhost:4999");
     
     // Publish on 4448
     zmq::socket_t publisher(context, ZMQ_PUB);
