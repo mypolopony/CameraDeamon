@@ -65,7 +65,7 @@ int initialize(CBaslerUsbInstantCamera& camera)
     save_path_ori = "/home/agridata/output/" + tm + ".avi";
 
     // FPS
-    cFramesPerSecond = 20;
+    cFramesPerSecond = 180 ;
     
     // default hard coded settings if Config.cfg file is not present or
     // in-complete/commented
@@ -261,7 +261,7 @@ void run(CBaslerUsbInstantCamera& camera)
                 // write the original stream into file
                 //cvtColor(cv_img, cv_img, CV_GRAY2BGR);
                 original.write(cv_img);
-                
+				
                 // write to streaming jpeg
                 if(stream_counter == 0) {
                     imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/streaming.png", cv_img, compression_params);
@@ -275,14 +275,13 @@ void run(CBaslerUsbInstantCamera& camera)
                     stat(save_path_ori.c_str(), &filestatus);
                     int size = filestatus.st_size;
                     if (size > 1073741824) {            // 1GB = 1073741824 bytes
-						VideoWriter original;
-
-                        stringstream ss;
+					stringstream ss;
                         time_t result = time(NULL);
                         ss.str(asctime(localtime(&result)));
                         string tm = ss.str();
                         tm.resize(tm.size() - 1);
                         save_path_ori = "/home/agridata/output/" + tm + ".avi";
+    
                         original.open(save_path_ori.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), cFramesPerSecond, Size(width->GetValue(), height->GetValue()), true);
 
                     }
@@ -363,9 +362,15 @@ int main()
 {
     PylonInitialize();
     
+    // Listen on port 4999
     zmq::context_t context(1);
-    zmq::socket_t server(context, ZMQ_REP);
-    server.bind("tcp://*:4999");
+    zmq::socket_t client(context, ZMQ_SUB);
+    client.connect("tcp://106.254.34.2:4999");
+    
+    // Publish on 4448
+    zmq::socket_t publisher(context, ZMQ_PUB);
+    publisher.bind("tcp://*:4998");
+
     
     zmq_sleep(1.5); // Wait for sockets
     
@@ -377,7 +382,7 @@ int main()
         
         zmq::message_t messageR;
         
-        server.recv(&messageR);
+        publisher.recv(&messageR);
         
         std::string recieved = std::string(static_cast<char*>(messageR.data()), messageR.size());
         
@@ -474,7 +479,7 @@ int main()
                     ostringstream oss;
                     oss << "Is recording: " << IsRecording << endl
                         << "White Balance Ratio: " << camera.BalanceRatio.GetValue() << endl
-                        << "Auto FUnctionProfile: " << camera.AutoFunctionProfile.GetValue() << endl
+                        << "Auto FunctionProfile: " << camera.AutoFunctionProfile.GetValue() << endl
                         << "Balance Ratio Selector: " << camera.BalanceRatioSelector.GetValue() << endl
                         << "White Balance Auto: " << camera.BalanceWhiteAuto.GetValue() << endl
                         << "Auto Exposure: " << camera.ExposureAuto.GetValue() << endl
@@ -496,7 +501,7 @@ int main()
         
         zmq::message_t messageS(reply.size());
         memcpy(messageS.data(), reply.data(), reply.size());
-        server.send(messageS);
+        publisher.send(messageS);
         block = false;
     }
     
