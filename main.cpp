@@ -365,7 +365,7 @@ int main()
     // Listen on port 4999
     zmq::context_t context(1);
     zmq::socket_t client(context, ZMQ_SUB);
-    client.connect("tcp://localhost:4999");
+    client.connect("tcp://127.0.0.1:4999");
     
     // Publish on 4448
     zmq::socket_t publisher(context, ZMQ_PUB);
@@ -382,9 +382,9 @@ int main()
         
         zmq::message_t messageR;
         
-        publisher.recv(&messageR);
+        client.recv(&messageR, ZMQ_NOBLOCK);
         
-        std::string recieved = std::string(static_cast<char*>(messageR.data()), messageR.size());
+        string recieved = string(static_cast<char*>(messageR.data()), messageR.size());
         
         printf("%sn", recieved.c_str());
         
@@ -398,86 +398,95 @@ int main()
 
         s = recieved;
         vector <string>tokens = split(s,delimiter);
-
+		string id_hash;
+		
+		ostringstream oss;
+		
         if (!block) {
 
             try {
-
-                reply = "1";        // Innocent until proven guilty
-                
+				
+                oss << id_hash << "_1";        // Innocent until proven guilty
+                reply = oss.str();
+				
+				id_hash = tokens[0];
+				cout << id_hash;
+				
+				
                 // Choose action
-                if (tokens[0] == "start") {
+                if (tokens[1] == "start") {
                     if (IsRecording) {
-                        reply = "0_NotRecording";
+                        oss << id_hash << "_0_NotRecording";
+						reply = oss.str();
                     } else {
                         ret = initialize(ref(camera));
                         
                         thread t (run, ref(camera));
                         t.detach();
                     }
-                } else if (tokens[0] == "stop") {
+                } else if (tokens[1] == "stop") {
                     ret = stop(ref(camera));
-                } else if (tokens[0] == "BalanceWhiteAuto") {
-                    if (tokens[1] == "BalanceWhiteAuto_Once") {
+                } else if (tokens[1] == "BalanceWhiteAuto") {
+                    if (tokens[2] == "BalanceWhiteAuto_Once") {
                         camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
-                    } else if (tokens[1] == "BalanceWhiteAuto_Continuous") {
+                    } else if (tokens[2] == "BalanceWhiteAuto_Continuous") {
                         camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
-                    } else if (tokens[1] == "BalanceWhiteAuto_Off") {
+                    } else if (tokens[2] == "BalanceWhiteAuto_Off") {
                         camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
                     }
-                } else if (tokens[0] == "ExposureAuto") {
-                    if (tokens[1] == "Once") {
+                } else if (tokens[1] == "ExposureAuto") {
+                    if (tokens[2] == "Once") {
                         camera.ExposureAuto.SetValue(ExposureAuto_Once);
                     }
-                } else if (tokens[0] == "AutoFunctionProfile") {
-                    if (tokens[1] == "AutoFunctionProfile_MinimizeExposure") {
+                } else if (tokens[1] == "AutoFunctionProfile") {
+                    if (tokens[2] == "AutoFunctionProfile_MinimizeExposure") {
                         camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-                    } else if (tokens[1] == "AutoFunctionProfile_MinimizeGain") {
+                    } else if (tokens[2] == "AutoFunctionProfile_MinimizeGain") {
                         camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
                     }
-                } else if (tokens[0] == "GainAuto") {
-                    if (tokens[1] == "GainAuto_Once") {
+                } else if (tokens[1] == "GainAuto") {
+                    if (tokens[2] == "GainAuto_Once") {
                         camera.GainAuto.SetValue(GainAuto_Once);
-                    } else if (tokens[1] == "GainAuto_Continuous") {
+                    } else if (tokens[2] == "GainAuto_Continuous") {
                         camera.GainAuto.SetValue(GainAuto_Continuous);
-                    } else if (tokens[1] == "GainAuto_Off") {
+                    } else if (tokens[2] == "GainAuto_Off") {
                         camera.GainAuto.SetValue(GainAuto_Off);
                     }
-                } else if (tokens[0] == "ExposureAuto") {
-                    if (tokens[1] == "Exposure_Once") {
+                } else if (tokens[1] == "ExposureAuto") {
+                    if (tokens[2] == "Exposure_Once") {
                         camera.ExposureAuto.SetValue(ExposureAuto_Once);
-                    } else if (tokens[1] == "ExposureAuto_Continuous") {
+                    } else if (tokens[2] == "ExposureAuto_Continuous") {
                         camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-                    } else if (tokens[1] == "ExposureAuto_Off") {
+                    } else if (tokens[2] == "ExposureAuto_Off") {
                         camera.ExposureAuto.SetValue(ExposureAuto_Off);
                     }
-                } else if (tokens[0] == "BalanceRatioSelector") {
-                    if (tokens[1] == "BalanceRatioSelector_Green") {
+                } else if (tokens[1] == "BalanceRatioSelector") {
+                    if (tokens[2] == "BalanceRatioSelector_Green") {
                         camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
-                    } else if (tokens[1] == "BalanceRatioSelector_Red") {
+                    } else if (tokens[2] == "BalanceRatioSelector_Red") {
                         camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
-                    } else if (tokens[1] == "BalanceRatioSelector_Blue") {
+                    } else if (tokens[2] == "BalanceRatioSelector_Blue") {
                         camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
                     }
-                } else if (tokens[0] == "GainSelector") {
+                } else if (tokens[1] == "GainSelector") {
                     camera.GainSelector.SetValue(GainSelector_All);
-                } else if (tokens[0] == "Gain") {
+                } else if (tokens[1] == "Gain") {
                     camera.Gain.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "BalanceRatio") {
+                } else if (tokens[1] == "BalanceRatio") {
                     camera.BalanceRatio.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "AutoTargetBrightness") {
+                } else if (tokens[1] == "AutoTargetBrightness") {
                     camera.AutoTargetBrightness.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "AutoExposureTimeUpperLimit") {
+                } else if (tokens[1] == "AutoExposureTimeUpperLimit") {
                     camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "AutoGainUpperLimit") {
+                } else if (tokens[1] == "AutoGainUpperLimit") {
                     camera.GainSelector.SetValue(GainSelector_All);     // Backup in case we forget
                     camera.AutoGainUpperLimit.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "AutoGainLowerLimit") {         // Backup incase we forget
+                } else if (tokens[1] == "AutoGainLowerLimit") {         // Backup incase we forget
                     camera.GainSelector.SetValue(GainSelector_All);
                     camera.AutoGainLowerLimit.SetValue(atof(tokens[1].c_str()));
-                } else if (tokens[0] == "GetStatus") {
-                    ostringstream oss;
-                    oss << "Is recording: " << IsRecording << endl
+                } else if (tokens[1] == "GetStatus") {
+                    oss << id_hash << "_"
+						<< "Is recording: " << IsRecording << endl
                         << "White Balance Ratio: " << camera.BalanceRatio.GetValue() << endl
                         << "Auto FunctionProfile: " << camera.AutoFunctionProfile.GetValue() << endl
                         << "Balance Ratio Selector: " << camera.BalanceRatioSelector.GetValue() << endl
@@ -490,14 +499,18 @@ int main()
                         << "Target Brightness: " << camera.AutoTargetBrightness.GetValue() << endl;
                     reply = oss.str();    
                 } else {
-                    reply ="0_CommandNotFound";
+                    oss << id_hash << "_0_CommandNotFound";
+					reply = oss.str();
                 }
             } catch (...) {
-                reply = "0_ExceptionProcessingCommand";
+                oss << id_hash << "_0_ExceptionProcessingCommand";
+				reply = oss.str();
             }
         } else {
-            reply = "0_CameraIsBusy";
+            oss << id_hash << "_0_CameraIsBusy";
+			reply = oss.str();
         }
+		cout << reply;
         
         zmq::message_t messageS(reply.size());
         memcpy(messageS.data(), reply.data(), reply.size());
