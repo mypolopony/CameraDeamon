@@ -370,6 +370,8 @@ int main()
     // Publish on 4448
     zmq::socket_t publisher(context, ZMQ_PUB);
     publisher.bind("tcp://*:4998");
+	
+	client.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 
     
     zmq_sleep(1.5); // Wait for sockets
@@ -384,10 +386,8 @@ int main()
         
         client.recv(&messageR, ZMQ_NOBLOCK);
         
-        string recieved = string(static_cast<char*>(messageR.data()), messageR.size());
-        
-        printf("%sn", recieved.c_str());
-        
+        string received = string(static_cast<char*>(messageR.data()), messageR.size());
+                
         //Parse the string
         char** argv;
         int argc = 0;
@@ -396,19 +396,16 @@ int main()
         char delimiter = '_';
         string reply;
 
-        s = recieved;
+        s = received;
         vector <string>tokens = split(s,delimiter);
 		string id_hash;
 		
 		ostringstream oss;
 		
-        if (!block) {
+        if (!block && !received.empty()) {
 
             try {
-				
-                oss << id_hash << "_1";        // Innocent until proven guilty
-                reply = oss.str();
-				
+								
 				id_hash = tokens[0];
 				cout << id_hash;
 				
@@ -507,8 +504,8 @@ int main()
 				reply = oss.str();
             }
         } else {
-            oss << id_hash << "_0_CameraIsBusy";
-			reply = oss.str();
+            //oss << id_hash << "_0_CameraIsBusy";
+			//reply = oss.str();
         }
 		cout << reply;
         
