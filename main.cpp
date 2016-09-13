@@ -434,7 +434,7 @@ int main() {
         // Choose action
         if (tokens[1] == "start") {
           if (IsRecording()) {
-            oss << id_hash << "_0_AlreadyRecording";
+            oss << id_hash << "_1_AlreadyRecording";
           } else {
             ret = initialize(ref(camera));
 
