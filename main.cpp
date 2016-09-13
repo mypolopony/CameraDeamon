@@ -558,7 +558,7 @@ int main() {
         oss << id_hash << "_0_ExceptionProcessingCommand";
       }
     } else {
-      oss << id_hash << "_0_SomethingBad";
+      //oss << id_hash << "_0_SomethingBad";
     }
     reply = oss.str();
 
