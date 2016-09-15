@@ -45,7 +45,7 @@ using namespace std;
 int cFramesPerSecond;
 string save_path_ori;
 string logfile;
-double timelimit = 10.0;  // In Minutes
+double timelimit = 5.0;  // In Minutes
 
 // convers pylon video stream into CPylonImage object
 CPylonImage image;
@@ -235,7 +235,7 @@ void run(CBaslerUsbInstantCamera &camera) {
   time (&rawtime);
   timeinfo = localtime (&rawtime);
 
-  strftime (buffer,80,"%a %h %e %H_%M_%S %Y.",timeinfo);
+  strftime (buffer,80,"%a %h %e %H_%M_%S %Y",timeinfo);
   string timenow(buffer);
    
   save_path_ori = "/home/agridata/output/" + timenow + ".avi";
