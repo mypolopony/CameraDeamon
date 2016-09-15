@@ -84,7 +84,7 @@ int initialize(CBaslerUsbInstantCamera &camera) {
   save_path_ori = "/home/agridata/output/" + tm + ".avi";
 
   // FPS
-  cFramesPerSecond = 180;
+  cFramesPerSecond = 20;
 
   // default hard coded settings if Config.cfg file is not present or
   // in-complete/commented
@@ -246,17 +246,25 @@ void run(CBaslerUsbInstantCamera &camera) {
   // Enable the acquisition frame rate parameter and set the frame rate.
   camera.AcquisitionFrameRateEnable.SetValue(true);
   camera.AcquisitionFrameRate.SetValue(cFramesPerSecond);
-
+  
+  // Exposure time limits
+  camera.AutoExposureTimeLowerLimit.SetValue(400);
+  camera.AutoExposureTimeUpperLimit.SetValue(1200);
+  
+  // Minimize Exposure 
+  camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+  
+  // Continuous Auto Gain
+  // camera.GainAutoEnable.SetValue(true);
+  camera.GainAuto.SetValue(GainAuto_Continuous);
+  camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+  
   // Get native width and height from connected camera
   GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
   GenApi::CIntegerPtr height(camera.GetNodeMap().GetNode("Height"));
 
-  // Continuous Auto Gain
-  // camera.GainAutoEnable.SetValue(true);
-  camera.GainAuto.SetValue(GainAuto_Continuous);
-  
-	// create Mat image template
-    Mat cv_img(width->GetValue(), height->GetValue(), CV_8UC3);
+  // create Mat image template
+  Mat cv_img(width->GetValue(), height->GetValue(), CV_8UC3);
 
   // open video file
   cout << Size(width->GetValue(), height->GetValue()) << endl;
@@ -407,7 +415,7 @@ int main() {
   int argc = 0;
   size_t pos = 0;
   string s;
-  char delimiter = '_';
+  char delimiter = '-';
   string reply;
   ostringstream oss;
   string id_hash;
@@ -426,7 +434,12 @@ int main() {
       received = string(static_cast<char *>(messageR.data()), messageR.size());
 
       s = received;
+	  cout << s << endl;
       tokens = split(s, delimiter);
+	  
+	  for (int i=0;i<tokens.size();i++) {
+		  cout << tokens[i] << endl;
+	  }
 
       try {
         id_hash = tokens[0];
@@ -434,7 +447,7 @@ int main() {
         // Choose action
         if (tokens[1] == "start") {
           if (IsRecording()) {
-            oss << id_hash << "_0_AlreadyRecording";
+            oss << id_hash << "_1_AlreadyRecording";
           } else {
             ret = initialize(ref(camera));
 
@@ -453,6 +466,7 @@ int main() {
           if (tokens[2] == "BalanceWhiteAuto_Once") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
             oss << id_hash << "_1_" << tokens[2];
+			cout << id_hash << "_1_" << tokens[2];
           } else if (tokens[2] == "BalanceWhiteAuto_Continuous") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
             oss << id_hash << "_1_" << tokens[2];
@@ -549,6 +563,10 @@ int main() {
               << "Gain: " << camera.Gain.GetValue() << endl
               << "Gain Auto: " << camera.GainAuto.GetValue() << endl
               << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << endl
+			  << "Gain Lower Limit: " << camera.AutoGainLowerLimit.GetValue() << endl
+			  << "Gain Upper Limit: " << camera.AutoGainUpperLimit.GetValue() << endl
+			  << "Exposure Lower Limit: " << camera.AutoExposureTimeLowerLimit.GetValue() << endl
+			  << "Exposure Uppwer Limit: " << camera.AutoExposureTimeUpperLimit.GetValue() << endl
               << "Target Brightness: " << camera.AutoTargetBrightness.GetValue()
               << endl;
         } else {
@@ -557,10 +575,13 @@ int main() {
       } catch (...) {
         oss << id_hash << "_0_ExceptionProcessingCommand";
       }
+	reply = oss.str();
+	cout << reply << endl;
     } else {
       //oss << id_hash << "_0_SomethingBad";
     }
     reply = oss.str();
+	
 
     // CLear the string buffer
     oss.str("");
