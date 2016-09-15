@@ -30,12 +30,12 @@
 #include <string>
 #include <thread>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdio.h>
 
 using namespace Basler_UsbCameraParams;
 using namespace Pylon;
@@ -56,14 +56,14 @@ CGrabResultPtr ptrGrabResult;
 
 string RecordingFile = "/home/agridata/CameraDeamon/IsRecording";
 
-inline bool IsRecording () {
-  struct stat buffer;   
-  return (stat (RecordingFile.c_str(), &buffer) == 0); 
+inline bool IsRecording() {
+  struct stat buffer;
+  return (stat(RecordingFile.c_str(), &buffer) == 0);
 }
 
 void SetRecording(bool val) {
   if (val) {
-    ofstream outfile (RecordingFile);
+    ofstream outfile(RecordingFile);
     outfile << "." << std::endl;
     outfile.close();
   }
@@ -246,19 +246,19 @@ void run(CBaslerUsbInstantCamera &camera) {
   // Enable the acquisition frame rate parameter and set the frame rate.
   camera.AcquisitionFrameRateEnable.SetValue(true);
   camera.AcquisitionFrameRate.SetValue(cFramesPerSecond);
-  
+
   // Exposure time limits
   camera.AutoExposureTimeLowerLimit.SetValue(400);
   camera.AutoExposureTimeUpperLimit.SetValue(1200);
-  
-  // Minimize Exposure 
+
+  // Minimize Exposure
   camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-  
+
   // Continuous Auto Gain
   // camera.GainAutoEnable.SetValue(true);
   camera.GainAuto.SetValue(GainAuto_Continuous);
   camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-  
+
   // Get native width and height from connected camera
   GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
   GenApi::CIntegerPtr height(camera.GetNodeMap().GetNode("Height"));
@@ -296,7 +296,8 @@ void run(CBaslerUsbInstantCamera &camera) {
       if (ptrGrabResult->GrabSucceeded()) {
         // convert to Mat - openCV format for analysis
         fc.Convert(image, ptrGrabResult);
-        cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t*)image.GetBuffer());
+        cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
+                     CV_8UC3, (uint8_t *)image.GetBuffer());
 
         // write the original stream into file
         // cvtColor(cv_img, cv_img, CV_GRAY2BGR);
@@ -314,28 +315,28 @@ void run(CBaslerUsbInstantCamera &camera) {
         }
 
         // Check file size
-		/*
-        if (heartbeat == 0) {
-          stat(save_path_ori.c_str(), &filestatus);
-          int size = filestatus.st_size;
-          if (size > 200 * 1024000) {  // 1GB = 1073741824 bytes
-            stringstream ss;
-            time_t result = time(NULL);
-            ss.str(asctime(localtime(&result)));
-            string tm = ss.str();
-            tm.resize(tm.size() - 1);
-            save_path_ori = "/home/agridata/output/" + tm + ".avi";
+        /*
+if (heartbeat == 0) {
+  stat(save_path_ori.c_str(), &filestatus);
+  int size = filestatus.st_size;
+  if (size > 200 * 1024000) {  // 1GB = 1073741824 bytes
+    stringstream ss;
+    time_t result = time(NULL);
+    ss.str(asctime(localtime(&result)));
+    string tm = ss.str();
+    tm.resize(tm.size() - 1);
+    save_path_ori = "/home/agridata/output/" + tm + ".avi";
 
-            original =
-                VideoWriter(save_path_ori.c_str(),
-                            CV_FOURCC('M', 'P', 'E', 'G'), cFramesPerSecond,
-                            Size(width->GetValue(), height->GetValue()), true);
-          }
-          heartbeat = 200;
-        } else {
-          heartbeat--;
-        }
-		 */
+    original =
+        VideoWriter(save_path_ori.c_str(),
+                    CV_FOURCC('M', 'P', 'E', 'G'), cFramesPerSecond,
+                    Size(width->GetValue(), height->GetValue()), true);
+  }
+  heartbeat = 200;
+} else {
+  heartbeat--;
+}
+         */
       }
 
     } catch (const GenericException &e) {
@@ -420,11 +421,11 @@ int main() {
   ostringstream oss;
   string id_hash;
   vector<string> tokens;
-  
+
   if (IsRecording()) {
-	  ret = initialize(ref(camera));
-	  thread t(run, ref(camera));
-	  t.detach();
+    ret = initialize(ref(camera));
+    thread t(run, ref(camera));
+    t.detach();
   }
 
   while (true) {
@@ -434,12 +435,12 @@ int main() {
       received = string(static_cast<char *>(messageR.data()), messageR.size());
 
       s = received;
-	  cout << s << endl;
+      cout << s << endl;
       tokens = split(s, delimiter);
-	  
-	  for (int i=0;i<tokens.size();i++) {
-		  cout << tokens[i] << endl;
-	  }
+
+      for (int i = 0; i < tokens.size(); i++) {
+        cout << tokens[i] << endl;
+      }
 
       try {
         id_hash = tokens[0];
@@ -466,7 +467,7 @@ int main() {
           if (tokens[2] == "BalanceWhiteAuto_Once") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
             oss << id_hash << "_1_" << tokens[2];
-			cout << id_hash << "_1_" << tokens[2];
+            cout << id_hash << "_1_" << tokens[2];
           } else if (tokens[2] == "BalanceWhiteAuto_Continuous") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
             oss << id_hash << "_1_" << tokens[2];
@@ -537,6 +538,9 @@ int main() {
         } else if (tokens[1] == "AutoExposureTimeUpperLimit") {
           camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
           oss << id_hash << "_1_" << tokens[1];
+        } else if (tokens[1] == "AutoExposureTimeLowerLimit") {
+          camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
+          oss << id_hash << "_1_" << tokens[1];
         } else if (tokens[1] == "AutoGainUpperLimit") {
           camera.GainSelector.SetValue(
               GainSelector_All);  // Backup in case we forget
@@ -563,10 +567,14 @@ int main() {
               << "Gain: " << camera.Gain.GetValue() << endl
               << "Gain Auto: " << camera.GainAuto.GetValue() << endl
               << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << endl
-			  << "Gain Lower Limit: " << camera.AutoGainLowerLimit.GetValue() << endl
-			  << "Gain Upper Limit: " << camera.AutoGainUpperLimit.GetValue() << endl
-			  << "Exposure Lower Limit: " << camera.AutoExposureTimeLowerLimit.GetValue() << endl
-			  << "Exposure Uppwer Limit: " << camera.AutoExposureTimeUpperLimit.GetValue() << endl
+              << "Gain Lower Limit: " << camera.AutoGainLowerLimit.GetValue()
+              << endl
+              << "Gain Upper Limit: " << camera.AutoGainUpperLimit.GetValue()
+              << endl
+              << "Exposure Lower Limit: "
+              << camera.AutoExposureTimeLowerLimit.GetValue() << endl
+              << "Exposure Upper Limit: "
+              << camera.AutoExposureTimeUpperLimit.GetValue() << endl
               << "Target Brightness: " << camera.AutoTargetBrightness.GetValue()
               << endl;
         } else {
@@ -575,13 +583,12 @@ int main() {
       } catch (...) {
         oss << id_hash << "_0_ExceptionProcessingCommand";
       }
-	reply = oss.str();
-	cout << reply << endl;
+      reply = oss.str();
+      cout << reply << endl;
     } else {
-      //oss << id_hash << "_0_SomethingBad";
+      // oss << id_hash << "_0_SomethingBad";
     }
     reply = oss.str();
-	
 
     // CLear the string buffer
     oss.str("");
@@ -591,8 +598,8 @@ int main() {
     publisher.send(messageS);
 
     // Check time
-    seconds = difftime(time(&future),start);
-    if (seconds >  60.0 *timelimit) {
+    seconds = difftime(time(&future), start);
+    if (seconds > 60.0 * timelimit) {
       return 0;
     }
   }
