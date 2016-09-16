@@ -248,7 +248,7 @@ void run(CBaslerUsbInstantCamera &camera) {
 	  << "AutoFunctionProfile"  << "," 
       << "BalanceRatioSelector" << "," 
       << "BalanceWhiteAuto" << "," 
-	  << "Black Level" << ","
+	  << "BlackLevel" << ","
 	  << "Gamma" << ","
 	  << "ExposureAuto" << "," 
 	  << "ExposureMode" << "," 
@@ -537,17 +537,11 @@ int main() {
           if (tokens[2] == "BalanceWhiteAuto_Once") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
             oss << id_hash << "_1_" << tokens[2];
-            cout << id_hash << "_1_" << tokens[2];
           } else if (tokens[2] == "BalanceWhiteAuto_Continuous") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
             oss << id_hash << "_1_" << tokens[2];
           } else if (tokens[2] == "BalanceWhiteAuto_Off") {
             camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
-            oss << id_hash << "_1_" << tokens[2];
-          }
-        } else if (tokens[1] == "ExposureAuto") {
-          if (tokens[2] == "Once") {
-            camera.ExposureAuto.SetValue(ExposureAuto_Once);
             oss << id_hash << "_1_" << tokens[2];
           }
         } else if (tokens[1] == "AutoFunctionProfile") {
@@ -572,7 +566,7 @@ int main() {
             oss << id_hash << "_1_" << tokens[2];
           }
         } else if (tokens[1] == "ExposureAuto") {
-          if (tokens[2] == "Exposure_Once") {
+          if (tokens[2] == "ExposureAuto_Once") {
             camera.ExposureAuto.SetValue(ExposureAuto_Once);
             oss << id_hash << "_1_" << tokens[2];
           } else if (tokens[2] == "ExposureAuto_Continuous") {
@@ -595,32 +589,32 @@ int main() {
           }
         } else if (tokens[1] == "GainSelector") {
           camera.GainSelector.SetValue(GainSelector_All);
-          oss << id_hash << "_1_" << tokens[1];
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "Gain") {
-          camera.Gain.SetValue(atof(tokens[1].c_str()));
-          oss << id_hash << "_1_" << tokens[1];
+          camera.Gain.SetValue(atof(tokens[2].c_str()));
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "BalanceRatio") {
-          camera.BalanceRatio.SetValue(atof(tokens[1].c_str()));
-          oss << id_hash << "_1_" << tokens[1];
+          camera.BalanceRatio.SetValue(atof(tokens[2].c_str()));
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "AutoTargetBrightness") {
-          camera.AutoTargetBrightness.SetValue(atof(tokens[1].c_str()));
-          oss << id_hash << "_1_" << tokens[1];
+          camera.AutoTargetBrightness.SetValue(atof(tokens[2].c_str()));
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "AutoExposureTimeUpperLimit") {
-          camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
-          oss << id_hash << "_1_" << tokens[1];
+          camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[2].c_str()));
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "AutoExposureTimeLowerLimit") {
-          camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[1].c_str()));
-          oss << id_hash << "_1_" << tokens[1];
+          camera.AutoExposureTimeLowerLimit.SetValue(atof(tokens[2].c_str()));
+          oss << id_hash << "_1_" << tokens[2];
         } else if (tokens[1] == "AutoGainUpperLimit") {
           camera.GainSelector.SetValue(
               GainSelector_All);  // Backup in case we forget
-          camera.AutoGainUpperLimit.SetValue(atof(tokens[1].c_str()));
+          camera.AutoGainUpperLimit.SetValue(atof(tokens[2].c_str()));
           oss << id_hash << "_1_" << tokens[1];
         } else if (tokens[1] ==
                    "AutoGainLowerLimit") {  // Backup incase we forget
           camera.GainSelector.SetValue(GainSelector_All);
           oss << id_hash << "_1_" << tokens[1];
-          camera.AutoGainLowerLimit.SetValue(atof(tokens[1].c_str()));
+          camera.AutoGainLowerLimit.SetValue(atof(tokens[2].c_str()));
         } else if (tokens[1] == "GetStatus") {
           oss << id_hash << "_"
               << "Is recording: " << IsRecording() << endl
@@ -655,7 +649,7 @@ int main() {
         oss << id_hash << "_0_ExceptionProcessingCommand";
       }
       reply = oss.str();
-      cout << reply << endl;
+      //cout << reply << endl;
     } else {
       // oss << id_hash << "_0_SomethingBad";
     }
