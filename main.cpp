@@ -308,7 +308,7 @@ void run(CBaslerUsbInstantCamera &camera) {
   // Continuous Auto Gain
   // camera.GainAutoEnable.SetValue(true);
   camera.GainAuto.SetValue(GainAuto_Continuous);
-  // camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+  camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 
   // Get native width and height from connected camera
   GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
