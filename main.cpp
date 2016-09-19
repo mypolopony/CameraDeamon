@@ -4,6 +4,11 @@
 // Copyright © 2016 AgriData. All rights reserved.
 //
 
+// Redis
+#include <redis3m/redis3m.hpp>
+
+using namespace redis3m;
+
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
 #include <pylon/usb/BaslerUsbInstantCamera.h>
@@ -41,6 +46,8 @@ using namespace Basler_UsbCameraParams;
 using namespace Pylon;
 using namespace cv;
 using namespace std;
+using namespace redis3m;
+
 
 int cFramesPerSecond;
 string save_path_ori;
@@ -218,6 +225,7 @@ void run(CBaslerUsbInstantCamera &camera) {
   ofstream fout;
   ostringstream oss;
   struct stat filestatus;
+  connection::ptr_t conn = connection::create();
   
   // Timestamp
   /*
@@ -300,7 +308,7 @@ void run(CBaslerUsbInstantCamera &camera) {
   // Continuous Auto Gain
   // camera.GainAutoEnable.SetValue(true);
   camera.GainAuto.SetValue(GainAuto_Continuous);
-  camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+  // camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 
   // Get native width and height from connected camera
   GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
@@ -325,6 +333,31 @@ void run(CBaslerUsbInstantCamera &camera) {
   if (!original.isOpened()) {
     cout << "ERROR: Failed to write the video (ORIGINAL)" << endl;
   }
+
+  // Read parameters from redis
+  try {
+  	reply r = conn->run(command("GET") << "AutoExposureTimeLowerLimit" );
+  	camera.AutoExposureTimeLowerLimit.SetValue(stof(r.str()));
+
+	r = conn->run(command("GET") << "AutoExposureTimeUpperLimit" );
+	camera.AutoExposureTimeUpperLimit.SetValue(stof(r.str()));
+
+	r = conn->run(command("GET") << "AutoGainLowerLimit" );
+	camera.AutoGainLowerLimit.SetValue(stof(r.str()));
+
+	r = conn->run(command("GET") << "AutoGainUpperLimit" );
+	int upper = stof(r.str());
+	if (upper > 12) {				// Hard limit
+		upper = 12;
+	}
+	camera.AutoGainUpperLimit.SetValue(upper);
+
+	cout << "Done" << endl;
+  } catch (const GenericException &e) {
+	cout << "Parameters not read" << endl;
+	cout << e.what() << endl;
+  }
+
 
   // initiate main loop with algorithm
   while (IsRecording()) {
@@ -356,7 +389,8 @@ void run(CBaslerUsbInstantCamera &camera) {
         } else {
           stream_counter--;
         }
-		
+	try {
+		// Write to log file
 		if (heartbeat_log == 0) {
 			oss << camera.DeviceSerialNumber.GetValue() << "," 
 			    << camera.BalanceRatio.GetValue() << "," 
@@ -379,10 +413,20 @@ void run(CBaslerUsbInstantCamera &camera) {
 				<< endl;
 			fout << oss.str();
 			oss.str("");
+
+			// To redis
+			conn->run(command("SET") << "AutoGainLowerLimit" << camera.AutoGainLowerLimit.GetValue() );
+			conn->run(command("SET") << "AutoGainUpperLimit" << camera.AutoGainUpperLimit.GetValue() );
+			conn->run(command("SET") << "AutoExposureTimeLowerLimit" << camera.AutoExposureTimeLowerLimit.GetValue() );
+			conn->run(command("SET") << "AutoExposureTimeUpperLimit" << camera.AutoExposureTimeUpperLimit.GetValue() );
+
 			heartbeat_log = 0;
 		} else {
 			heartbeat_log--;
 		}
+	} catch (const GenericException &e) {
+		cout << "Something bad has occurred. . ." << endl;	
+	}
 
         // Check file size
         /*

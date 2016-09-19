@@ -37,7 +37,7 @@
         <IncludePath Value="/home/agridata/jeayeson/include/jeayeson/"/>
         <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
       </Compiler>
-      <Linker Options="`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
+      <Linker Options="`pkg-config opencv --cflags --libs`;`pkg-config --cflags --libs redis3m`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
         <LibraryPath Value="/usr/lib/x86_64-linux-gnu/"/>
         <Library Value="pylonbase"/>
