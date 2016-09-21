@@ -12,15 +12,15 @@ OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
-User                   :=Selwyn-Lloyd McPherson
-Date                   :=19/09/16
+User                   :=agridata
+Date                   :=20/09/16
 CodeLitePath           :=/home/agridata/.codelite
-LinkerName             :=g++
-SharedObjectLinkerName :=g++ -shared -fPIC
+LinkerName             :=/usr/bin/g++
+SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
 ObjectSuffix           :=.o
 DependSuffix           :=.o.d
-PreprocessSuffix       :=.o.i
-DebugSwitch            :=-gstab
+PreprocessSuffix       :=.i
+DebugSwitch            :=-g 
 IncludeSwitch          :=-I
 LibrarySwitch          :=-l
 OutputSwitch           :=-o 
@@ -31,29 +31,29 @@ OutputFile             :=$(IntermediateDirectory)/$(ProjectName)
 Preprocessors          :=
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
-PreprocessOnlySwitch   :=-E 
+PreprocessOnlySwitch   :=-E
 ObjectsFileList        :="CameraDeamon.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  `pkg-config opencv --cflags --libs` `pkg-config --cflags --libs redis3m` `/opt/pylon5/bin/pylon-config --libs-rpath`
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include/ $(IncludeSwitch)/usr/include/opencv2/ $(IncludeSwitch)/home/agridata/spdlog/include/ $(IncludeSwitch)/home/agridata/jeayeson/include/jeayeson/ $(IncludeSwitch)/home/agridata/CameraDeamon/CameraDeamon/library/ 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include/ $(IncludeSwitch)/usr/include/opencv2/ $(IncludeSwitch)/home/agridata/CameraDeamon/CameraDeamon/library/ 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread 
 ArLibs                 :=  "pylonbase" "pylonutility" "GenApi_gcc_v3_0_Basler_pylon_v5_0" "GCBase_gcc_v3_0_Basler_pylon_v5_0" "boost_python" "zmq" "pthread" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 $(LibraryPathSwitch)/usr/lib/x86_64-linux-gnu/ 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 
 
 ##
 ## Common variables
 ## AR, CXX, CC, AS, CXXFLAGS and CFLAGS can be overriden using an environment variables
 ##
-AR       := ar rcus
-CXX      := g++
-CC       := gcc
+AR       := /usr/bin/ar rcu
+CXX      := /usr/bin/g++
+CC       := /usr/bin/gcc
 CXXFLAGS :=  -g -O0 -w -std=c++11 -Wall -Wunknown-pragmas `/opt/pylon5/bin/pylon-config --cflags` $(Preprocessors)
 CFLAGS   :=  -g -O0 -Wall $(Preprocessors)
 ASFLAGS  := 
-AS       := as
+AS       := /usr/bin/as
 
 
 ##
