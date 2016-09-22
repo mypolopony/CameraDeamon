@@ -133,7 +133,7 @@ Debug/main.cpp.o: ../main.cpp /opt/pylon5/include/pylon/PylonIncludes.h \
  /opt/pylon5/include/pylon/private/DeviceSpecificCameraEventHandlerTie.h \
  /opt/pylon5/include/pylon/usb/_UsbStreamParams.h \
  /opt/pylon5/include/pylon/usb/_UsbEventParams.h \
- /opt/pylon5/include/pylon/usb/_UsbTLParams.h ../zmq.hpp
+ /opt/pylon5/include/pylon/usb/_UsbTLParams.h ../zmq.hpp ../rfc3339.h
 
 /opt/pylon5/include/pylon/PylonIncludes.h:
 
@@ -424,3 +424,5 @@ Debug/main.cpp.o: ../main.cpp /opt/pylon5/include/pylon/PylonIncludes.h \
 /opt/pylon5/include/pylon/usb/_UsbTLParams.h:
 
 ../zmq.hpp:
+
+../rfc3339.h:

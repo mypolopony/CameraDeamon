@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=agridata
-Date                   :=21/09/16
+Date                   :=22/09/16
 CodeLitePath           :=/home/agridata/.codelite
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
@@ -60,7 +60,7 @@ AS       := as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/rfc3339.cpp$(ObjectSuffix) 
 
 
 
@@ -98,6 +98,14 @@ $(IntermediateDirectory)/main.cpp$(DependSuffix): ../main.cpp
 
 $(IntermediateDirectory)/main.cpp$(PreprocessSuffix): ../main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix)../main.cpp
+
+$(IntermediateDirectory)/rfc3339.cpp$(ObjectSuffix): ../rfc3339.cpp $(IntermediateDirectory)/rfc3339.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/rfc3339.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/rfc3339.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/rfc3339.cpp$(DependSuffix): ../rfc3339.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/rfc3339.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/rfc3339.cpp$(DependSuffix) -MM ../rfc3339.cpp
+
+$(IntermediateDirectory)/rfc3339.cpp$(PreprocessSuffix): ../rfc3339.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/rfc3339.cpp$(PreprocessSuffix)../rfc3339.cpp
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

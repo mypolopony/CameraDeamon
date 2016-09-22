@@ -1,16 +1,8 @@
-/**
-  * @Author: 		Selwyn-Lloyd McPherson
-  * @Date:	   	September 2016
-  * @Organization:	AgriData
-  * 
-  * This is the main image capturing algorithm used to 
-  * save frames from the camera to disk. This is intended
-  * to be used as a daemon. Logging is to /var/log/agridata
-  * and output can be found at /home/agridata/output
-  *
-  * This driver interacts with the endpoints accessible
-  * via server_logic.py
-*/
+// ZMQCPPTEST
+//
+// Created by Selwyn-Lloyd on 9/5/16.
+// Copyright © 2016 AgriData. All rights reserved.
+//
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
@@ -27,6 +19,9 @@
 
 // Utilities
 #include "zmq.hpp"
+
+// RFC-3339
+#include "rfc3339.h"
 
 // Additional include files.
 #include <atomic>
@@ -92,19 +87,14 @@ vector<string> split(const string& s, char delim)
     return tokens;
 }
 
+// This function thanks to kajiiiro
 string grabTime()
 {
-    time_t rawtime;
-    struct tm* timeinfo;
-    char buffer[80];
+    date::Rfc3339 rfc3339;
+    rfc3339.setLocalTime(true);
+    time_t now = time(NULL);
 
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-
-    strftime(buffer, 80, "%a %h %e %H_%M_%S %Y", timeinfo);
-    string timenow(buffer);
-
-    return timenow;
+    return rfc3339.serialize(now);
 }
 
 string pipe_to_string(const char* command)
@@ -135,8 +125,8 @@ void writeHeaders(ofstream& fout)
     ostringstream oss;
     oss << "Recording,"
         << "Timestamp,"
-        << "DeviceSerialNumber,"
-        << "Auto FunctionProfile,"
+        << "Device Seria lNumber,"
+        << "Auto Function Profile,"
         << "White Balance Ratio,"
         << "White Balance Ratio Selector,"
         << "White Balance Auto,"
@@ -152,34 +142,59 @@ void writeHeaders(ofstream& fout)
         << "Gamma,"
         << "Framerate,"
         << "Target Brightness,"
+        << "Black Level,"
         << "Actual Brightness" << endl;
     fout << oss.str();
 }
 
 void writeFrameLog(ofstream& fout, CBaslerUsbInstantCamera& camera, string timenow, Scalar brightness)
 {
-	ostringstream oss;
-	oss << isRecording << ","
-		<< timenow << ","
-		<< camera.DeviceSerialNumber.GetValue() << ","
-		<< camera.AutoFunctionProfile.GetValue() << ","
-		<< camera.BalanceRatio.GetValue() << ","
-		<< camera.BalanceRatioSelector.GetValue() << ","
-		<< camera.BalanceWhiteAuto.GetValue() << ","
-		<< camera.ExposureMode.GetValue() << ","
-		<< camera.ExposureAuto.GetValue() << ","
-		<< camera.ExposureTime.GetValue() << ","
-		<< camera.AutoExposureTimeLowerLimit.GetValue() << ","
-		<< camera.AutoExposureTimeUpperLimit.GetValue() << ","
-		<< camera.Gain.GetValue() << "," 
-		<< camera.GainAuto.GetValue() << ","
-		<< camera.AutoGainLowerLimit.GetValue() << ","
-		<< camera.AutoGainUpperLimit.GetValue() << ","
-		<< camera.AcquisitionFrameRate.GetValue() << ","
-		<< camera.AutoTargetBrightness.GetValue() << ","
-		<< brightness << endl;
-		
+    ostringstream oss;
+    oss << isRecording << "," << timenow << "," << camera.DeviceSerialNumber.GetValue() << ","
+        << camera.AutoFunctionProfile.GetValue() << "," << camera.BalanceRatio.GetValue() << ","
+        << camera.BalanceRatioSelector.GetValue() << "," << camera.BalanceWhiteAuto.GetValue() << ","
+        << camera.ExposureMode.GetValue() << "," << camera.ExposureAuto.GetValue() << ","
+        << camera.ExposureTime.GetValue() << "," << camera.AutoExposureTimeLowerLimit.GetValue() << ","
+        << camera.AutoExposureTimeUpperLimit.GetValue() << "," << camera.Gain.GetValue() << ","
+        << camera.GainAuto.GetValue() << "," << camera.AutoGainLowerLimit.GetValue() << ","
+        << camera.AutoGainUpperLimit.GetValue() << "," << camera.AcquisitionFrameRate.GetValue() << ","
+        << camera.AutoTargetBrightness.GetValue() << "," << camera.BlackLevel.GetValue() << "," << brightness << endl;
+
     fout << oss.str();
+}
+
+void initializeCamera(CBaslerUsbInstantCamera& camera)
+{
+    logmessage = "Initializing Camera";
+    syslog(LOG_INFO, logmessage.c_str());
+
+    // Variables
+    int frames_per_second = 20;
+    int exposure_lower_limit = 61;
+    int exposure_upper_limit = 1200;
+
+    // Open camera object
+	camera.Open();
+
+    // The camera device is parameterized with a default configuration
+    // which sets up free-running continuous acquisition.
+	camera.StartGrabbing();
+
+	// Enable the acquisition frame rate parameter and set the frame rate.
+	camera.AcquisitionFrameRateEnable.SetValue(true);
+	camera.AcquisitionFrameRate.SetValue(frames_per_second);
+
+	// Exposure time limits
+	camera.AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
+	camera.AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
+
+	// Minimize Exposure
+	camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+
+	// Continuous Auto Gain
+	// camera.GainAutoEnable.SetValue(true);
+	camera.GainAuto.SetValue(GainAuto_Continuous);
+	camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 }
 
 void run(CBaslerUsbInstantCamera& camera)
@@ -189,7 +204,6 @@ void run(CBaslerUsbInstantCamera& camera)
     int heartbeat_log = 20;
     int heartbeat = 0;
     int stream_counter = 200;
-    int frames_per_second = 20;
 
     isRecording = true;
 
@@ -216,31 +230,6 @@ void run(CBaslerUsbInstantCamera& camera)
     // Print the model name of the camera.
     cout << endl << endl << "Connected Basler USB 3.0 device, type : " << camera.GetDeviceInfo().GetModelName() << endl;
 
-    // open camera object to parse frame# etc.
-    camera.Open();
-
-    // Start the grabbing of c_countOfImagesToGrab images.
-    // The camera device is parameterized with a default configuration
-    // which
-    // sets up free-running continuous acquisition.
-    camera.StartGrabbing();
-
-    // Enable the acquisition frame rate parameter and set the frame rate.
-    camera.AcquisitionFrameRateEnable.SetValue(true);
-    camera.AcquisitionFrameRate.SetValue(frames_per_second);
-
-    // Exposure time limits
-    camera.AutoExposureTimeLowerLimit.SetValue(61);
-    camera.AutoExposureTimeUpperLimit.SetValue(1200);
-
-    // Minimize Exposure
-    camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-
-    // Continuous Auto Gain
-    // camera.GainAutoEnable.SetValue(true);
-    camera.GainAuto.SetValue(GainAuto_Continuous);
-    camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-
     // Get native width and height from connected camera
     GenApi::CIntegerPtr width(camera.GetNodeMap().GetNode("Width"));
     GenApi::CIntegerPtr height(camera.GetNodeMap().GetNode("Height"));
@@ -248,8 +237,8 @@ void run(CBaslerUsbInstantCamera& camera)
     // create Mat image template
     Mat cv_img(width->GetValue(), height->GetValue(), CV_8UC3);
 
-	// Time
-	timenow = grabTime();
+    // Time
+    timenow = grabTime();
 
     // Open and write frame logfile headers
     framefile = "/home/agridata/output/" + runid + '_' + timenow + ".txt";
@@ -260,7 +249,7 @@ void run(CBaslerUsbInstantCamera& camera)
     save_path = "/home/agridata/output/" + runid + '_' + timenow + ".avi";
 
     cout << Size(width->GetValue(), height->GetValue()) << endl;
-    original = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), frames_per_second,
+    original = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), camera.AcquisitionFrameRate.GetValue(),
         Size(width->GetValue(), height->GetValue()), true);
 
     // Log
@@ -285,7 +274,7 @@ void run(CBaslerUsbInstantCamera& camera)
 	    // Wait for an image and then retrieve it. A timeout of 5000
 	    // ms is used.
 	    camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-	    fc.OutputPixelFormat = PixelType_RGB8packed;
+	    fc.OutputPixelFormat = PixelType_BGR8packed;
 
 	    // Image grabbed successfully?
 	    if(ptrGrabResult->GrabSucceeded()) {
@@ -314,17 +303,18 @@ void run(CBaslerUsbInstantCamera& camera)
 
 		    // Calculate brightness (we can reuse cv_img)
 		    cvtColor(cv_img, cv_img, CV_RGB2HSV);
-		        cv::split(cv_img, channels); // Don't get mixed up with user defined split function!
+		    cv::split(cv_img, channels); // Don't get mixed up with user defined split function!
 		    brightness = mean(channels[2]);
 
 		    // Write log
-		    writeFrameLog(frameout, camera, timenow, brightness);
+		    writeFrameLog(frameout, camera, timenow, brightness[0]);
 		}
 
 		if(heartbeat % heartbeat_filesize == 0) {
+		    // Floats are required here to prevent int overflow
 		    stat(save_path.c_str(), &filestatus);
-		    int size = filestatus.st_size;
-		    if(size > 3000 * 1024000) { // 1GB = 1073741824 bytes
+		    float size = (float)filestatus.st_size;
+		    if(size > (float)3 * (float)1073741824) { // 1GB = 1073741824 bytes
 			frameout.close();
 			original.release(); // This is done automatically but is included here for clarity
 
@@ -336,17 +326,28 @@ void run(CBaslerUsbInstantCamera& camera)
 			frameout.open(framefile.c_str(), ios::app);
 			writeHeaders(frameout);
 
-			original = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), frames_per_second,
-			    Size(width->GetValue(), height->GetValue()), true);
-				logmessage =  "Opened video file: " + runid + '_' + save_path;
-			syslog(LOG_INFO,logmessage.c_str());
+			original = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'),
+			    camera.AcquisitionFrameRate.GetValue(), Size(width->GetValue(), height->GetValue()), true);
+			logmessage = "Opened video file: " + runid + '_' + save_path;
+			syslog(LOG_INFO, logmessage.c_str());
 		    }
 		}
 	    }
+	}
 
-	} catch(const GenericException& e) {
-		logmessage = ptrGrabResult->GetErrorCode() + " " + ptrGrabResult->GetErrorDescription();
+	catch(const GenICam_3_0_Basler_pylon_v5_0::RuntimeException& e) {
+	    logmessage = "GenICam Runtime Exception";
+	    if(!camera.IsCameraDeviceRemoved()) {
+		logmessage = logmessage + " -- Camera has become disconnected";
+	    }
 	    syslog(LOG_ERR, logmessage.c_str());
+	    isRecording = false;
+	}
+
+	catch(const GenericException& e) {
+	    logmessage = ptrGrabResult->GetErrorCode() + " " + ptrGrabResult->GetErrorDescription();
+	    syslog(LOG_ERR, logmessage.c_str());
+	    isRecording = false;
 	}
     }
     camera.StopGrabbing();
@@ -354,7 +355,7 @@ void run(CBaslerUsbInstantCamera& camera)
 
 int stop(CBaslerUsbInstantCamera& camera)
 {
-	logmessage = "Recording Stopped";
+    logmessage = "Recording Stopped";
     syslog(LOG_INFO, logmessage.c_str());
     isRecording = false;
     cout << endl << endl << " *** Done ***" << endl << endl;
@@ -387,7 +388,7 @@ int main()
 {
     // Enable logging (to /var/log/agridata.log)
     openlog("CameraDeamon", LOG_CONS | LOG_PID, LOG_LOCAL1);
-	logmessage = "Camera Deamon has been started";
+    logmessage = "Camera Deamon has been started";
     syslog(LOG_INFO, logmessage.c_str());
 
     // Set Up Timer
@@ -412,8 +413,11 @@ int main()
     // Wait for sockets
     zmq_sleep(1.5);
 
-    // Initialize variables
+    // Initialize the Camera
     CBaslerUsbInstantCamera camera(CTlFactory::GetInstance().CreateFirstDevice());
+    initializeCamera(camera);
+
+    // Initialize variables
     char** argv;
     char delimiter = '-';
     int argc = 0;
@@ -440,127 +444,134 @@ int main()
 	    tokens = split(s, delimiter);
 
 	    try {
+
 		id_hash = tokens[0];
 
-		// Choose action
-		if(tokens[1] == "start") {
-		    if(isRecording) {
-			oss << id_hash << "_1_AlreadyRecording";
-		    } else {
-
-			thread t(run, ref(camera));
-			t.detach();
-			oss << id_hash << "_1_RecordingStarted";
-		    }
-		} else if(tokens[1] == "stop") {
-		    if(isRecording) {
-			ret = stop(ref(camera));
-			oss << id_hash << "_1_CameraStopped";
-		    } else {
-			oss << id_hash << "_1_AlreadyStopped";
-		    }
-		} else if(tokens[1] == "BalanceWhiteAuto") {
-		    if(tokens[2] == "BalanceWhiteAuto_Once") {
-			camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "BalanceWhiteAuto_Continuous") {
-			camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "BalanceWhiteAuto_Off") {
-			camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
-			oss << id_hash << "_1_" << tokens[2];
-		    }
-		} else if(tokens[1] == "AutoFunctionProfile") {
-		    if(tokens[2] == "AutoFunctionProfile_MinimizeExposure") {
-			camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "AutoFunctionProfile_MinimizeGain") {
-			camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
-			oss << id_hash << "_1_" << tokens[2];
-		    }
-		} else if(tokens[1] == "GainAuto") {
-		    if(tokens[2] == "GainAuto_Once") {
-			camera.GainAuto.SetValue(GainAuto_Once);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "GainAuto_Continuous") {
-			camera.GainAuto.SetValue(GainAuto_Continuous);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "GainAuto_Off") {
-			camera.GainAuto.SetValue(GainAuto_Off);
-			oss << id_hash << "_1_" << tokens[2];
-		    }
-		} else if(tokens[1] == "ExposureAuto") {
-		    if(tokens[2] == "ExposureAuto_Once") {
-			camera.ExposureAuto.SetValue(ExposureAuto_Once);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "ExposureAuto_Continuous") {
-			camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "ExposureAuto_Off") {
-			camera.ExposureAuto.SetValue(ExposureAuto_Off);
-			oss << id_hash << "_1_" << tokens[2];
-		    }
-		} else if(tokens[1] == "BalanceRatioSelector") {
-		    if(tokens[2] == "BalanceRatioSelector_Green") {
-			camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "BalanceRatioSelector_Red") {
-			camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
-			oss << id_hash << "_1_" << tokens[2];
-		    } else if(tokens[2] == "BalanceRatioSelector_Blue") {
-			camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
-			oss << id_hash << "_1_" << tokens[2];
-		    }
-		} else if(tokens[1] == "GainSelector") {
-		    camera.GainSelector.SetValue(GainSelector_All);
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "Gain") {
-		    camera.Gain.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "BalanceRatio") {
-		    camera.BalanceRatio.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "AutoTargetBrightness") {
-		    camera.AutoTargetBrightness.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "AutoExposureTimeUpperLimit") {
-		    camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "AutoExposureTimeLowerLimit") {
-		    camera.AutoExposureTimeLowerLimit.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[2];
-		} else if(tokens[1] == "AutoGainUpperLimit") {
-		    camera.GainSelector.SetValue(GainSelector_All); // Backup in case we forget
-		    camera.AutoGainUpperLimit.SetValue(atof(tokens[2].c_str()));
-		    oss << id_hash << "_1_" << tokens[1];
-		} else if(tokens[1] == "AutoGainLowerLimit") { // Backup incase we forget
-		    camera.GainSelector.SetValue(GainSelector_All);
-		    oss << id_hash << "_1_" << tokens[1];
-		    camera.AutoGainLowerLimit.SetValue(atof(tokens[2].c_str()));
-		} else if(tokens[1] == "RowDirection") {
-		    oss << id_hash << "_1_" << tokens[1];
-			logmessage = "RowDirection: " + tokens[2];
-		    syslog(LOG_INFO, logmessage.c_str());
-		} else if(tokens[1] == "GetStatus") {
-		    oss << id_hash << "_1_"
-		        << "Is recording: " << isRecording << endl
-		        << "Auto FunctionProfile: " << camera.AutoFunctionProfile.GetValue() << endl
-		        << "White Balance Ratio: " << camera.BalanceRatio.GetValue() << endl
-		        << "White Balance Ratio Selector: " << camera.BalanceRatioSelector.GetValue() << endl
-		        << "White Balance Auto: " << camera.BalanceWhiteAuto.GetValue() << endl
-		        << "Exposure Mode: " << camera.ExposureMode.GetValue() << endl
-		        << "Exposure Auto: " << camera.ExposureAuto.GetValue() << endl
-		        << "ExposureTime: " << camera.ExposureTime.GetValue() << endl
-		        << "Exposure Lower Limit: " << camera.AutoExposureTimeLowerLimit.GetValue() << endl
-		        << "Exposure Upper Limit: " << camera.AutoExposureTimeUpperLimit.GetValue() << endl
-		        << "Gain: " << camera.Gain.GetValue() << endl
-		        << "Gain Auto: " << camera.GainAuto.GetValue() << endl
-		        << "Gain Lower Limit: " << camera.AutoGainLowerLimit.GetValue() << endl
-		        << "Gain Upper Limit: " << camera.AutoGainUpperLimit.GetValue() << endl
-		        << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << endl
-		        << "Target Brightness: " << camera.AutoTargetBrightness.GetValue() << endl;
+		// If the camera has become disconnected, don't try anything new
+		if(camera.IsCameraDeviceRemoved()) {
+		    oss << id_hash << "_0_DeviceIsNotConnected";
 		} else {
-		    oss << id_hash << "_0_CommandNotFound";
+
+		    // Choose action
+		    if(tokens[1] == "start") {
+			if(isRecording) {
+			    oss << id_hash << "_1_AlreadyRecording";
+			} else {
+
+			    thread t(run, ref(camera));
+			    t.detach();
+			    oss << id_hash << "_1_RecordingStarted";
+			}
+		    } else if(tokens[1] == "stop") {
+			if(isRecording) {
+			    ret = stop(ref(camera));
+			    oss << id_hash << "_1_CameraStopped";
+			} else {
+			    oss << id_hash << "_1_AlreadyStopped";
+			}
+		    } else if(tokens[1] == "BalanceWhiteAuto") {
+			if(tokens[2] == "BalanceWhiteAuto_Once") {
+			    camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "BalanceWhiteAuto_Continuous") {
+			    camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "BalanceWhiteAuto_Off") {
+			    camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
+			    oss << id_hash << "_1_" << tokens[2];
+			}
+		    } else if(tokens[1] == "AutoFunctionProfile") {
+			if(tokens[2] == "AutoFunctionProfile_MinimizeExposure") {
+			    camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "AutoFunctionProfile_MinimizeGain") {
+			    camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
+			    oss << id_hash << "_1_" << tokens[2];
+			}
+		    } else if(tokens[1] == "GainAuto") {
+			if(tokens[2] == "GainAuto_Once") {
+			    camera.GainAuto.SetValue(GainAuto_Once);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "GainAuto_Continuous") {
+			    camera.GainAuto.SetValue(GainAuto_Continuous);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "GainAuto_Off") {
+			    camera.GainAuto.SetValue(GainAuto_Off);
+			    oss << id_hash << "_1_" << tokens[2];
+			}
+		    } else if(tokens[1] == "ExposureAuto") {
+			if(tokens[2] == "ExposureAuto_Once") {
+			    camera.ExposureAuto.SetValue(ExposureAuto_Once);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "ExposureAuto_Continuous") {
+			    camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "ExposureAuto_Off") {
+			    camera.ExposureAuto.SetValue(ExposureAuto_Off);
+			    oss << id_hash << "_1_" << tokens[2];
+			}
+		    } else if(tokens[1] == "BalanceRatioSelector") {
+			if(tokens[2] == "BalanceRatioSelector_Green") {
+			    camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "BalanceRatioSelector_Red") {
+			    camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
+			    oss << id_hash << "_1_" << tokens[2];
+			} else if(tokens[2] == "BalanceRatioSelector_Blue") {
+			    camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
+			    oss << id_hash << "_1_" << tokens[2];
+			}
+		    } else if(tokens[1] == "GainSelector") {
+			camera.GainSelector.SetValue(GainSelector_All);
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "Gain") {
+			camera.Gain.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "BalanceRatio") {
+			camera.BalanceRatio.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "AutoTargetBrightness") {
+			camera.AutoTargetBrightness.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "AutoExposureTimeUpperLimit") {
+			camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "AutoExposureTimeLowerLimit") {
+			camera.AutoExposureTimeLowerLimit.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[2];
+		    } else if(tokens[1] == "AutoGainUpperLimit") {
+			camera.GainSelector.SetValue(GainSelector_All); // Backup in case we forget
+			camera.AutoGainUpperLimit.SetValue(atof(tokens[2].c_str()));
+			oss << id_hash << "_1_" << tokens[1];
+		    } else if(tokens[1] == "AutoGainLowerLimit") { // Backup incase we forget
+			camera.GainSelector.SetValue(GainSelector_All);
+			oss << id_hash << "_1_" << tokens[1];
+			camera.AutoGainLowerLimit.SetValue(atof(tokens[2].c_str()));
+		    } else if(tokens[1] == "RowDirection") {
+			oss << id_hash << "_1_" << tokens[1];
+			logmessage = "RowDirection: " + tokens[2];
+			syslog(LOG_INFO, logmessage.c_str());
+		    } else if(tokens[1] == "GetStatus") {
+			oss << id_hash << "_1_"
+			    << "Is recording: " << isRecording << " | "
+			    << "Auto FunctionProfile: " << camera.AutoFunctionProfile.GetValue() << " | "
+			    << "White Balance Ratio: " << camera.BalanceRatio.GetValue() << " | "
+			    << "White Balance Ratio Selector: " << camera.BalanceRatioSelector.GetValue() << " | "
+			    << "White Balance Auto: " << camera.BalanceWhiteAuto.GetValue() << " | "
+			    << "Exposure Mode: " << camera.ExposureMode.GetValue() << " | "
+			    << "Exposure Auto: " << camera.ExposureAuto.GetValue() << " | "
+			    << "ExposureTime: " << camera.ExposureTime.GetValue() << " | "
+			    << "Exposure Lower Limit: " << camera.AutoExposureTimeLowerLimit.GetValue() << " | "
+			    << "Exposure Upper Limit: " << camera.AutoExposureTimeUpperLimit.GetValue() << " | "
+			    << "Gain: " << camera.Gain.GetValue() << " | "
+			    << "Gain Auto: " << camera.GainAuto.GetValue() << " | "
+			    << "Gain Lower Limit: " << camera.AutoGainLowerLimit.GetValue() << " | "
+			    << "Gain Upper Limit: " << camera.AutoGainUpperLimit.GetValue() << " | "
+			    << "Framerate: " << camera.AcquisitionFrameRate.GetValue() << " | "
+			    << "Target Brightness: " << camera.AutoTargetBrightness.GetValue() << " | ";
+		    } else {
+			oss << id_hash << "_0_CommandNotFound";
+		    }
 		}
 	    } catch(...) {
 		oss << id_hash << "_0_ExceptionProcessingCommand";
@@ -588,6 +599,5 @@ int main()
     }
 
     syslog(LOG_INFO, "CameraDeamon is shuttting down gracefully. . .");
-
     return 0;
 }

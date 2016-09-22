@@ -10,12 +10,13 @@
   <VirtualDirectory Name="src">
     <File Name="../acquire.cpp" ExcludeProjConfig="Debug"/>
     <File Name="../main.cpp"/>
-    <File Name="../camera.h" ExcludeProjConfig="Debug"/>
     <File Name="../camera.cpp" ExcludeProjConfig="Debug"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>
     <File Name="../zmq.hpp"/>
+    <File Name="../rfc3339.cpp"/>
+    <File Name="../rfc3339.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
