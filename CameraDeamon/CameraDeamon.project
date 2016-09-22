@@ -35,7 +35,7 @@
         <IncludePath Value="/usr/include/opencv2/"/>
         <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
       </Compiler>
-      <Linker Options="`pkg-config opencv --cflags --libs`;`pkg-config --cflags --libs redis3m`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
+      <Linker Options="`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
         <Library Value="pylonbase"/>
         <Library Value="pylonutility"/>
