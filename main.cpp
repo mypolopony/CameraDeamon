@@ -337,7 +337,7 @@ void run(CBaslerUsbInstantCamera& camera)
 
 	catch(const GenICam_3_0_Basler_pylon_v5_0::RuntimeException& e) {
 	    logmessage = "GenICam Runtime Exception";
-	    if(!camera.IsCameraDeviceRemoved()) {
+	    if(camera.IsCameraDeviceRemoved()) {
 		logmessage = logmessage + " -- Camera has become disconnected";
 	    }
 	    syslog(LOG_ERR, logmessage.c_str());
@@ -350,7 +350,6 @@ void run(CBaslerUsbInstantCamera& camera)
 	    isRecording = false;
 	}
     }
-    camera.StopGrabbing();
 }
 
 int stop(CBaslerUsbInstantCamera& camera)
