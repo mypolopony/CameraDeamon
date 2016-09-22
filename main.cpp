@@ -368,9 +368,9 @@ int snap(CBaslerUsbInstantCamera& camera)
     // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
     camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
 
-    fc.OutputPixelFormat = PixelType_Mono8;
 
     // Image grabbed successfully?
+    fc.OutputPixelFormat = PixelType_Mono8;
     if(ptrGrabResult->GrabSucceeded()) {
 	// convert to Mat - openCV format for analysis
 	fc.Convert(image, ptrGrabResult);
