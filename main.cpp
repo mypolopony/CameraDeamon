@@ -1,8 +1,16 @@
-// ZMQCPPTEST
-//
-// Created by Selwyn-Lloyd on 9/5/16.
-// Copyright © 2016 AgriData. All rights reserved.
-//
+/**
+  * @Author: 		Selwyn-Lloyd McPherson
+  * @Date:	   	September 2016
+  * @Organization:	AgriData
+  * 
+  * This is the main image capturing algorithm used to 
+  * save frames from the camera to disk. This is intended
+  * to be used as a daemon. Logging is to /var/log/agridata
+  * and output can be found at /home/agridata/output
+  *
+  * This driver interacts with the endpoints accessible
+  * via server_logic.py
+*/
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
