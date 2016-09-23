@@ -15,8 +15,6 @@
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>
     <File Name="../zmq.hpp"/>
-    <File Name="../rfc3339.cpp"/>
-    <File Name="../rfc3339.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

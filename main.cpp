@@ -20,9 +20,6 @@
 // Utilities
 #include "zmq.hpp"
 
-// RFC-3339
-#include "rfc3339.h"
-
 // Additional include files.
 #include <atomic>
 #include <ctime>
@@ -87,15 +84,6 @@ vector<string> split(const string& s, char delim)
     return tokens;
 }
 
-// This function thanks to kajiiiro
-string grabTime()
-{
-    date::Rfc3339 rfc3339;
-    rfc3339.setLocalTime(true);
-    time_t now = time(NULL);
-
-    return rfc3339.serialize(now);
-}
 
 string pipe_to_string(const char* command)
 {
@@ -118,6 +106,12 @@ string pipe_to_string(const char* command)
     }
 
     return "";
+}
+
+string grabTime()
+{
+	// Many ways to get the string, but this is the easiest
+    return pipe_to_string("date --rfc-3339=ns | sed 's/ /T/; s/\(\.......\).*-/\1-/g'");
 }
 
 void writeHeaders(ofstream& fout)
@@ -427,6 +421,8 @@ int main()
     string received;
     string reply;
     string s;
+	string row = "";
+	string direction = "";
     vector<string> tokens;
 
     while(true) {
@@ -456,6 +452,13 @@ int main()
 			if(isRecording) {
 			    oss << id_hash << "_1_AlreadyRecording";
 			} else {
+				// There is a double call to split here, which is better
+				// then initializing a new variable (I think)
+				row = split(tokens[2],'_')[0];
+				direction = split(tokens[2],'_')[1];
+				
+				logmessage = "Row: " + row + ", Direction: " + direction;
+				syslog(LOG_INFO, logmessage.c_str());
 
 			    thread t(run, ref(camera));
 			    t.detach();
