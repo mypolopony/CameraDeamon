@@ -84,7 +84,6 @@ vector<string> split(const string& s, char delim)
     return tokens;
 }
 
-
 string pipe_to_string(const char* command)
 {
     FILE* popen(const char* command, const char* mode);
@@ -110,8 +109,11 @@ string pipe_to_string(const char* command)
 
 string grabTime()
 {
-	// Many ways to get the string, but this is the easiest
-    return pipe_to_string("date --rfc-3339=ns | sed 's/ /T/; s/\(\.......\).*-/\1-/g'");
+    // Many ways to get the string, but this is the easiest
+    string time = pipe_to_string("date --rfc-3339=ns | sed 's/ /T/; s/\(\.......\).*-/\1-/g'");
+	time.pop_back();
+	time.pop_back();
+	return(time);
 }
 
 void writeHeaders(ofstream& fout)
@@ -168,27 +170,27 @@ void initializeCamera(CBaslerUsbInstantCamera& camera)
     int exposure_upper_limit = 1200;
 
     // Open camera object
-	camera.Open();
+    camera.Open();
 
     // The camera device is parameterized with a default configuration
     // which sets up free-running continuous acquisition.
-	camera.StartGrabbing();
+    camera.StartGrabbing();
 
-	// Enable the acquisition frame rate parameter and set the frame rate.
-	camera.AcquisitionFrameRateEnable.SetValue(true);
-	camera.AcquisitionFrameRate.SetValue(frames_per_second);
+    // Enable the acquisition frame rate parameter and set the frame rate.
+    camera.AcquisitionFrameRateEnable.SetValue(true);
+    camera.AcquisitionFrameRate.SetValue(frames_per_second);
 
-	// Exposure time limits
-	camera.AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
-	camera.AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
+    // Exposure time limits
+    camera.AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
+    camera.AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
 
-	// Minimize Exposure
-	camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+    // Minimize Exposure
+    camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
 
-	// Continuous Auto Gain
-	// camera.GainAutoEnable.SetValue(true);
-	camera.GainAuto.SetValue(GainAuto_Continuous);
-	camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
+    // Continuous Auto Gain
+    // camera.GainAutoEnable.SetValue(true);
+    camera.GainAuto.SetValue(GainAuto_Continuous);
+    camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 }
 
 void run(CBaslerUsbInstantCamera& camera)
@@ -361,7 +363,6 @@ int snap(CBaslerUsbInstantCamera& camera)
     // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
     camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
 
-
     // Image grabbed successfully?
     fc.OutputPixelFormat = PixelType_Mono8;
     if(ptrGrabResult->GrabSucceeded()) {
@@ -421,8 +422,8 @@ int main()
     string received;
     string reply;
     string s;
-	string row = "";
-	string direction = "";
+    string row = "";
+    string direction = "";
     vector<string> tokens;
 
     while(true) {
@@ -452,13 +453,13 @@ int main()
 			if(isRecording) {
 			    oss << id_hash << "_1_AlreadyRecording";
 			} else {
-				// There is a double call to split here, which is better
-				// then initializing a new variable (I think)
-				row = split(tokens[2],'_')[0];
-				direction = split(tokens[2],'_')[1];
-				
-				logmessage = "Row: " + row + ", Direction: " + direction;
-				syslog(LOG_INFO, logmessage.c_str());
+			    // There is a double call to split here, which is better
+			    // then initializing a new variable (I think)
+			    row = split(tokens[2], '_')[0];
+			    direction = split(tokens[2], '_')[1];
+
+			    logmessage = "Row: " + row + ", Direction: " + direction;
+			    syslog(LOG_INFO, logmessage.c_str());
 
 			    thread t(run, ref(camera));
 			    t.detach();
