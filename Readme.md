@@ -4,6 +4,6 @@
 
 **main.cpp** The main driver code.
 
-**type1_config.conf** Example configuration script for a Basler Camera.
+**basler.conf.sample** Example configuration script for a Basler Camera.
 
 **watchme.sh**	Memory monitor.
