@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=agridata
-Date                   :=23/09/16
+Date                   :=28/09/16
 CodeLitePath           :=/home/agridata/.codelite
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -60,7 +60,7 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/cams.cpp$(ObjectSuffix) 
 
 
 
@@ -98,6 +98,14 @@ $(IntermediateDirectory)/main.cpp$(DependSuffix): ../main.cpp
 
 $(IntermediateDirectory)/main.cpp$(PreprocessSuffix): ../main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix)../main.cpp
+
+$(IntermediateDirectory)/cams.cpp$(ObjectSuffix): ../cams.cpp $(IntermediateDirectory)/cams.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/cams.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cams.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/cams.cpp$(DependSuffix): ../cams.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cams.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/cams.cpp$(DependSuffix) -MM ../cams.cpp
+
+$(IntermediateDirectory)/cams.cpp$(PreprocessSuffix): ../cams.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cams.cpp$(PreprocessSuffix)../cams.cpp
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

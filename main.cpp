@@ -385,7 +385,7 @@ int snap(CBaslerUsbInstantCamera& camera)
   return 0;
 }
 
-int main()
+int hide_main()
 {
   // Enable logging (to /var/log/agridata.log)
   openlog("CameraDeamon", LOG_CONS | LOG_PID, LOG_LOCAL1);
