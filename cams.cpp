@@ -40,7 +40,7 @@ static const uint32_t c_countOfImagesToGrab = 10;
 // The bandwidth used by a FireWire camera device can be limited by adjusting the packet size.
 static const size_t c_maxCamerasToUse = 2;
 
-int main(int argc, char* argv[])
+int fnord(int argc, char* argv[])
 {
     // The exit code of the sample application.
     int exitCode = 0;
