@@ -121,6 +121,9 @@ string grabTime()
   string time = pipe_to_string("date --rfc-3339=ns | sed 's/ /T/; s/\(\.......\).*-/\1-/g'");
   time.pop_back();
   time.pop_back();
+
+  // Fix colon issue if necessary
+  // replace(time.begin(), time.end(), ':', '_');
   return (time);
 }
 
