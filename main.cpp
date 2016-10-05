@@ -56,34 +56,6 @@ CImageFormatConverter fc;
 // This smart pointer will receive the grab result data. (Pylon).
 CGrabResultPtr ptrGrabResult;
 
-void printIntro()
-{
-  cout << endl << endl;
-  cout << "*------------------------------------------------------*" << endl;
-  cout << "*****               Program Parameters             *****" << endl;
-  cout << "*------------------------------------------------------*" << endl;
-  cout << "*" << endl;
-  cout << "* OpenCV version : " << CV_VERSION << endl;
-  cout << "* Major version : " << CV_MAJOR_VERSION << endl;
-  cout << "* Minor version : " << CV_MINOR_VERSION << endl;
-  cout << "* Subminor version : " << CV_SUBMINOR_VERSION << endl;
-  cout << "*" << endl;
-  cout << "*------------------------------------------------------*" << endl;
-  cout << "*******     Ready to start acquisition. . .     ******** " << endl;
-  cout << "*------------------------------------------------------*" << endl;
-}
-
-vector<string> split(const string& s, char delim)
-{
-  stringstream ss(s);
-  string item;
-  vector<string> tokens;
-  while(getline(ss, item, delim)) {
-    tokens.push_back(item);
-  }
-  return tokens;
-}
-
 string pipe_to_string(const char* command)
 {
   FILE* popen(const char* command, const char* mode);
@@ -105,6 +77,42 @@ string pipe_to_string(const char* command)
   }
 
   return "";
+}
+
+void printIntro()
+{
+  cout << endl << endl;
+  cout << "*------------------------------------------------------*" << endl;
+  cout << "*****               Program Parameters             *****" << endl;
+  cout << "*------------------------------------------------------*" << endl;
+  cout << "*" << endl;
+  cout << "* OpenCV version : " << CV_VERSION << endl;
+  cout << "* Major version : " << CV_MAJOR_VERSION << endl;
+  cout << "* Minor version : " << CV_MINOR_VERSION << endl;
+  cout << "* Subminor version : " << CV_SUBMINOR_VERSION << endl;
+  
+  cout << "*" << endl;
+  cout << "*------------------------------------------------------*" << endl;
+  cout << "*******     Ready to start acquisition. . .     ******** " << endl;
+  cout << "*------------------------------------------------------*" << endl;
+  
+  // Version information
+  string version = pipe_to_string("git rev-parse HEAD");
+  version.pop_back();
+  version.pop_back();
+  logmessage = "Camera Deamon Version: " + version;
+  syslog(LOG_INFO,version.c_str());
+}
+
+vector<string> split(const string& s, char delim)
+{
+  stringstream ss(s);
+  string item;
+  vector<string> tokens;
+  while(getline(ss, item, delim)) {
+    tokens.push_back(item);
+  }
+  return tokens;
 }
 
 string grabTime()
@@ -241,6 +249,7 @@ void run(CBaslerUsbInstantCamera& camera)
 
   // create Mat image template
   Mat cv_img(width->GetValue(), height->GetValue(), CV_8UC3);
+  Mat last_img(width->GetValue(), height->GetValue(), CV_8UC3);
 
   // Time
   timenow = grabTime();
@@ -292,7 +301,8 @@ void run(CBaslerUsbInstantCamera& camera)
 
         // write to streaming jpeg
         if(stream_counter == 0) {
-          thread t(writeLatestImage, ref(cv_img), ref(compression_params));
+          memcpy(&last_img, &cv_img, sizeof cv_img);
+          thread t(writeLatestImage, last_img, ref(compression_params));
           t.detach();
           stream_counter = 200;
         } else {
