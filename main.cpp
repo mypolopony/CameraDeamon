@@ -304,7 +304,8 @@ void run(CBaslerUsbInstantCamera& camera)
 
         // write to streaming jpeg
         if(stream_counter == 0) {
-          memcpy(&last_img, &cv_img, sizeof cv_img);
+          cv_img.copyTo(last_img);
+
           thread t(writeLatestImage, last_img, ref(compression_params));
           t.detach();
           stream_counter = 200;
