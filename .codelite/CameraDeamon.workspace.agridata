@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Workspace>
   <WorkspaceParserPaths>
-    <Include Path="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
-    <Include Path="/usr/include/opencv2/"/>
-    <Include Path="/opt/pylon5/include/"/>
-    <Include Path="/usr/include/lib"/>
     <Include Path="../lib"/>
+    <Include Path="/usr/include/lib"/>
+    <Include Path="/opt/pylon5/include/"/>
+    <Include Path="/usr/include/opencv2/"/>
+    <Include Path="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
   </WorkspaceParserPaths>
   <Environment Name="&lt;Use Defaults&gt;"/>
   <WorkspaceParserFlags flags="1"/>

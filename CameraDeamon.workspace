@@ -6,9 +6,11 @@
       <Environment/>
       <Project Name="CameraDeamon" ConfigName="Debug"/>
       <Project Name="CameraDeamon" ConfigName="Debug"/>
+      <Project Name="CameraDeamon" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
+      <Project Name="CameraDeamon" ConfigName="Release"/>
       <Project Name="CameraDeamon" ConfigName="Release"/>
       <Project Name="CameraDeamon" ConfigName="Release"/>
     </WorkspaceConfiguration>
