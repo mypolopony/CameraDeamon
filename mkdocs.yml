@@ -6,7 +6,9 @@ pages:
 - Communication: communication.md
 - Deamonization: deamonization.md
 - Logging: logging.md
-- Single Camera: single.md
 - Multi Camera: multi.md
-- Output / Analyses: output.md
+- Output / Analysis: output.md
 theme: readthedocs
+repo_url: https://github.com/motioniq/CameraDeamon
+repo_name: CameraDeamon
+site_author: Selwyn-Lloyd McPherson
