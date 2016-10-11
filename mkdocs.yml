@@ -1,0 +1,12 @@
+site_name: CameraDeamon Documentation
+pages:
+- About: index.md
+- Dependencies and Environment: env.md
+- Basic Camera Operation: basic.md
+- Communication: communication.md
+- Deamonization: deamonization.md
+- Logging: logging.md
+- Single Camera: single.md
+- Multi Camera: multi.md
+- Output / Analyses: output.md
+theme: readthedocs

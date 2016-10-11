@@ -1,6 +1,5 @@
-// ZMQCPPTEST
-//
-// Created by Selwyn-Lloyd on 9/5/16.
+// CameraDeamon
+// Initiated by Selwyn-Lloyd on 9/5/16.
 // Copyright © 2016 AgriData. All rights reserved.
 //
 

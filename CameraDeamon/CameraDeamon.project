@@ -10,6 +10,7 @@
   <VirtualDirectory Name="src">
     <File Name="../main.cpp"/>
     <File Name="../cams.cpp"/>
+    <File Name="../mkdocs.yml"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>
@@ -118,4 +119,11 @@
       </Completion>
     </Configuration>
   </Settings>
+  <VirtualDirectory Name="docs">
+    <File Name="../docs/index.md"/>
+    <File Name="../docs/env.md"/>
+    <File Name="../docs/communication.md"/>
+    <File Name="../docs/deamonization.md"/>
+    <File Name="../docs/logging.md"/>
+  </VirtualDirectory>
 </CodeLite_Project>
