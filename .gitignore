@@ -1,3 +1,10 @@
+# CodeLite
+.*.workspace
+*.workspace
+
+# Hidden
+.*
+
 # Apple 
 *.DS_Store
 

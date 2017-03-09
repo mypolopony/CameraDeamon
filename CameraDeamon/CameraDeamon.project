@@ -16,6 +16,13 @@
     <File Name="../zhelpers.hpp"/>
     <File Name="../zmq.hpp"/>
   </VirtualDirectory>
+  <VirtualDirectory Name="docs">
+    <File Name="../docs/index.md"/>
+    <File Name="../docs/env.md"/>
+    <File Name="../docs/communication.md"/>
+    <File Name="../docs/deamonization.md"/>
+    <File Name="../docs/logging.md"/>
+  </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -28,13 +35,13 @@
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;`/opt/pylon5/bin/pylon-config --cflags`" C_Options="-g;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="../lib"/>
+        <IncludePath Value="../zmq"/>
         <IncludePath Value="/usr/include/lib"/>
         <IncludePath Value="/opt/pylon5/include/"/>
         <IncludePath Value="/usr/include/opencv2/"/>
         <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
       </Compiler>
-      <Linker Options="`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
+      <Linker Options="-g; `pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
         <Library Value="pylonbase"/>
         <Library Value="pylonutility"/>
@@ -119,11 +126,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <VirtualDirectory Name="docs">
-    <File Name="../docs/index.md"/>
-    <File Name="../docs/env.md"/>
-    <File Name="../docs/communication.md"/>
-    <File Name="../docs/deamonization.md"/>
-    <File Name="../docs/logging.md"/>
-  </VirtualDirectory>
 </CodeLite_Project>

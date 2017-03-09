@@ -37,6 +37,10 @@
 #include <time.h>
 #include <unistd.h>
 
+// uncomment this if debugging
+//#define DEBUG
+
+
 using namespace Basler_UsbCameraParams;
 using namespace Pylon;
 using namespace cv;
@@ -131,6 +135,7 @@ void writeHeaders(ofstream& fout)
   ostringstream oss;
   oss << "Recording,"
       << "Timestamp,"
+      << "timestamp2,"
       << "Device Seria lNumber,"
       << "Auto Function Profile,"
       << "White Balance Ratio,"
@@ -148,15 +153,14 @@ void writeHeaders(ofstream& fout)
       << "Gamma,"
       << "Framerate,"
       << "Target Brightness,"
-      << "Black Level,"
-      << "Actual Brightness" << endl;
+      << "Black Level" << endl;
   fout << oss.str();
 }
 
-void writeFrameLog(ofstream& fout, CBaslerUsbInstantCamera& camera, string timenow, Scalar brightness)
+void writeFrameLog(ofstream& fout, CBaslerUsbInstantCamera& camera, string timenow, uint64_t camtime)
 {
   ostringstream oss;
-  oss << isRecording << "," << timenow << "," << camera.DeviceSerialNumber.GetValue() << ","
+  oss << isRecording << "," << timenow << "," << camtime << ',' << camera.DeviceSerialNumber.GetValue() << ","
       << camera.AutoFunctionProfile.GetValue() << "," << camera.BalanceRatio.GetValue() << ","
       << camera.BalanceRatioSelector.GetValue() << "," << camera.BalanceWhiteAuto.GetValue() << ","
       << camera.ExposureMode.GetValue() << "," << camera.ExposureAuto.GetValue() << ","
@@ -164,7 +168,7 @@ void writeFrameLog(ofstream& fout, CBaslerUsbInstantCamera& camera, string timen
       << camera.AutoExposureTimeUpperLimit.GetValue() << "," << camera.Gain.GetValue() << ","
       << camera.GainAuto.GetValue() << "," << camera.AutoGainLowerLimit.GetValue() << ","
       << camera.AutoGainUpperLimit.GetValue() << "," << camera.AcquisitionFrameRate.GetValue() << ","
-      << camera.AutoTargetBrightness.GetValue() << "," << camera.BlackLevel.GetValue() << "," << brightness << endl;
+      << camera.AutoTargetBrightness.GetValue() << "," << camera.BlackLevel.GetValue() << endl;
 
   fout << oss.str();
 }
@@ -318,12 +322,19 @@ void run(CBaslerUsbInstantCamera& camera)
           timenow = grabTime();
 
           // Calculate brightness (we can reuse cv_img)
-          cvtColor(cv_img, cv_img, CV_RGB2HSV);
-          cv::split(cv_img, channels); // Don't get mixed up with user defined split function!
-          brightness = mean(channels[2]);
+          //cvtColor(cv_img, cv_img, CV_RGB2HSV);
+          //cv::split(cv_img, channels); // Don't get mixed up with user defined split function!
+          //brightness = mean(channels[2]);
+          //cout << "Camera " <<  "0" << ": " << camera.GetDeviceInfo().GetModelName() << endl;
+          //cout << "GrabSucceeded: " << ptrGrabResult->GrabSucceeded() << endl;
+          //cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
+          //cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
+          const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
+          //cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl;
+          //cout << "Timestamp: " << ptrGrabResult->GetTimeStamp() << endl << endl;
 
           // Write log
-          writeFrameLog(frameout, camera, timenow, brightness[0]);
+          writeFrameLog(frameout, camera, timenow, ptrGrabResult->GetTimeStamp());
         }
 
         if(heartbeat % heartbeat_filesize == 0) {
