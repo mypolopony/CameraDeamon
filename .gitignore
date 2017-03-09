@@ -1,6 +1,7 @@
 # CodeLite
-.*.workspace
 *.workspace
+*.project
+.codelite/
 
 # Hidden
 .*
