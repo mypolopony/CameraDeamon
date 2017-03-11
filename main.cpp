@@ -18,6 +18,7 @@
 
 // Utilities
 #include "zmq.hpp"
+#include <google/profiler.h>
 
 // Additional include files.
 #include <atomic>
@@ -307,6 +308,7 @@ void writeLatestImage(Mat cv_img, size_t camindex, vector<int> compression_param
 * Main loop
 */
 void run(CBaslerUsbInstantCameraArray &cameras) {
+	ProfilerStart("/tmp/profile.pprof");
     // Configuration / Initialization
     // These heartbeats are in units of images captured
     // or, in seconds: HEARTBEAT/FRAME_RATE/NUM_CAMS
@@ -506,6 +508,7 @@ void run(CBaslerUsbInstantCameraArray &cameras) {
             isRecording = false;
         }
     }
+	ProfilerStop();
 }
 
 
@@ -582,6 +585,7 @@ int main() {
     char delimiter = '-';
     int argc = 0;
     int ret;
+	int rec;
     ostringstream oss;
     size_t pos = 0;
     string id_hash;
@@ -616,8 +620,16 @@ int main() {
             return 0;
         }
         
-        // Non-blocking message handling
-        if (client.recv(&messageR, ZMQ_NOBLOCK)) {
+        // Non-blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
+		// throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are constantly
+		// interrogating processes, they are interrupted very often. Use the catch to allow things to
+		// proceed on smoothly
+		try {
+			rec = client.recv(&messageR, ZMQ_NOBLOCK);
+		} catch (zmq::error_t error) {
+			if (errno == EINTR) continue;
+		}
+		if (rec) {
             received = string(static_cast<char *>(messageR.data()), messageR.size());
             
             // Parse message
@@ -626,7 +638,6 @@ int main() {
             tokens = split(s, delimiter);
             
             try {
-                
                 id_hash = tokens[0];
 				reply = "";
                     
