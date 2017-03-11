@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="CameraDeamon" InternalType="Console">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
+  </Plugins>
   <Reconciliation>
     <Regexes/>
     <Excludepaths/>
@@ -9,11 +14,6 @@
     </Extensions>
     <Topleveldir>../CameraDeamon</Topleveldir>
   </Reconciliation>
-  <Plugins>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
-    </Plugin>
-  </Plugins>
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
@@ -44,7 +44,7 @@
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;`/opt/pylon5/bin/pylon-config --cflags`" C_Options="-g;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="../zmq"/>
+        <IncludePath Value="../lib"/>
         <IncludePath Value="/usr/include/lib"/>
         <IncludePath Value="/opt/pylon5/include/"/>
         <IncludePath Value="/usr/include/opencv2/"/>
@@ -59,6 +59,7 @@
         <Library Value="boost_python"/>
         <Library Value="zmq"/>
         <Library Value="pthread"/>
+        <Library Value="profiler"/>
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>

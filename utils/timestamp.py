@@ -2,6 +2,7 @@ import re
 from numpy import diff, linspace
 import plotly
 import plotly.graph_objs as go
+import os
 
 # Nanoseconds to frames per second
 def nsec2fps(nsec):
@@ -40,11 +41,12 @@ for key in cameras.keys():
 from dateutil import parser
 import pandas as pd
 
-logfile='/home/agridata/output/d3cd6a96_2017-03-08T18:13:59.757956934-08:00.txt'
-df = pd.read_csv(logfile)
+cameras = {'21815767': 'acA1920-155uc', '21990430': 'acA1300-200uc'}
+logfiles = ['/home/agridata/output/d7a3f6e6/21815767_2017-03-10T16:22:38.848208299-08:00.txt',
+            '/home/agridata/output/d7a3f6e6/21990430_2017-03-10T16:22:38.848208299-08:00.txt']
+traces = list()
 
-traces=list()
-
+'''
 oldts = diff([parser.parse(time) for time in df['Timestamp'].as_matrix()])
 oldts = [usec2fps(time.microseconds) for time in oldts]
 traces.append(go.Scatter(
@@ -52,13 +54,16 @@ traces.append(go.Scatter(
     y = oldts,
     name = 'Old Timestamps',
     mode = 'lines'))
+'''
 
-newts = [nsec2fps(time) for time in diff(df['timestamp2'].as_matrix())]
-traces.append(go.Scatter(
-    x = linspace(1, len(newts), len(newts)),
-    y = newts,
-    name = 'New Timestamps',
-    mode = 'lines'))
+for l in logfiles:
+    df = pd.read_csv(l)
+    newts = [nsec2fps(time) for time in diff(df['Timestamp'].as_matrix())]
+    traces.append(go.Scatter(
+        x = linspace(1, len(newts), len(newts)),
+        y = newts,
+        name = cameras[os.path.basename(l).split('_')[0]],
+        mode = 'markers'))
 
 layout = go.Layout(
     title='Frame Rate Analysis',
@@ -81,4 +86,4 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=traces, layout=layout)
-plotly.offline.plot(fig, filename='comparison2.html')
+plotly.offline.plot(fig, filename='comparison_together.html')
