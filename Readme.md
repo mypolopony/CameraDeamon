@@ -9,7 +9,7 @@ Documentation: http://motioniq.github.io/CameraDeamon
 
 - catch zmq errors (check out comments in code)
 
-- execute via `LD_PRELOAD=/usr/lib/libprofiler.so CPUPROFILE=/tmp/profile.out CameraDeamon/Debug/CameraDeamon`
+- execute via `LD_PRELOAD=/usr/lib/libprofiler.so CPUPROFILE=/tmp/profile.out CameraDeamon/Debug/CameraDeamon` (**or** use ProfilerStart("/tmp/profile.pprof") and ProfileStop() to isolate certain coid (avoid ZMQ calls)
 
 - create a text profile: `pprof --text /home/agridata/CameraDeamon/CameraDeamon/Debug/CameraDeamon /tmp/profile.out > profiles/short/short.txt`
 
