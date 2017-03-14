@@ -42,8 +42,8 @@ from dateutil import parser
 import pandas as pd
 
 cameras = {'21815767': 'acA1920-155uc', '21990430': 'acA1300-200uc'}
-logfiles = ['/home/agridata/output/d7a3f6e6/21815767_2017-03-10T16:22:38.848208299-08:00.txt',
-            '/home/agridata/output/d7a3f6e6/21990430_2017-03-10T16:22:38.848208299-08:00.txt']
+logfiles = ['/home/agridata/output/a2780022/21990430_2017-03-13T17:19:58.798931331-07:.txt',
+            '/home/agridata/output/a2780022/21815767_2017-03-13T17:19:58.798803340-07:.txt']
 traces = list()
 
 '''
@@ -86,4 +86,4 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=traces, layout=layout)
-plotly.offline.plot(fig, filename='comparison_together.html')
+plotly.offline.plot(fig, filename='refactored.html')

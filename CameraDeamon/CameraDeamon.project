@@ -18,8 +18,11 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="../main.cpp"/>
-    <File Name="../cams.cpp"/>
     <File Name="../mkdocs.yml"/>
+    <File Name="../AgriDataCamera.cpp"/>
+    <File Name="../AgriDataCamera.h"/>
+    <File Name="../AGDUtils.cpp"/>
+    <File Name="../AGDUtils.h"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>

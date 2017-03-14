@@ -1,1 +1,1 @@
-./Debug/main.cpp.o ./Debug/cams.cpp.o
+./Debug/CameraDeamon_main.cpp.o ./Debug/CameraDeamon_AgriDataCamera.cpp.o ./Debug/CameraDeamon_AGDUtils.cpp.o

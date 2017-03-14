@@ -5,16 +5,16 @@
 ## Debug
 ProjectName            :=CameraDeamon
 ConfigurationName      :=Debug
-WorkspacePath          :=/home/agridata/CameraDeamon
-ProjectPath            :=/home/agridata/CameraDeamon/CameraDeamon
+WorkspacePath          := "/home/agridata/CameraDeamon"
+ProjectPath            := "/home/agridata/CameraDeamon/CameraDeamon"
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=agridata
-Date                   :=10/03/17
-CodeLitePath           :=/home/agridata/.codelite
+Date                   :=13/03/17
+CodeLitePath           :="/home/agridata/.codelite"
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
 ObjectSuffix           :=.o
@@ -60,7 +60,7 @@ AS       := as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/cams.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) 
 
 
 
@@ -91,21 +91,29 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/main.cpp$(ObjectSuffix): ../main.cpp $(IntermediateDirectory)/main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/main.cpp$(DependSuffix): ../main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/main.cpp$(DependSuffix) -MM ../main.cpp
+$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix): ../main.cpp $(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix): ../main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix) -MM "../main.cpp"
 
-$(IntermediateDirectory)/main.cpp$(PreprocessSuffix): ../main.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix)../main.cpp
+$(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix): ../main.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix) "../main.cpp"
 
-$(IntermediateDirectory)/cams.cpp$(ObjectSuffix): ../cams.cpp $(IntermediateDirectory)/cams.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/cams.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cams.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/cams.cpp$(DependSuffix): ../cams.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cams.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/cams.cpp$(DependSuffix) -MM ../cams.cpp
+$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix): ../AgriDataCamera.cpp $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/AgriDataCamera.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix): ../AgriDataCamera.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix) -MM "../AgriDataCamera.cpp"
 
-$(IntermediateDirectory)/cams.cpp$(PreprocessSuffix): ../cams.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cams.cpp$(PreprocessSuffix)../cams.cpp
+$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(PreprocessSuffix): ../AgriDataCamera.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(PreprocessSuffix) "../AgriDataCamera.cpp"
+
+$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix): ../AGDUtils.cpp $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/agridata/CameraDeamon/AGDUtils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix): ../AGDUtils.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix) -MM "../AGDUtils.cpp"
+
+$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix): ../AGDUtils.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix) "../AGDUtils.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
