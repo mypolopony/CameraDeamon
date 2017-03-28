@@ -20,7 +20,6 @@
 // Utilities
 #include "zmq.hpp"
 #include "AGDUtils.h"
-#include <google/profiler.h>
 
 // Additional include files.
 #include <atomic>

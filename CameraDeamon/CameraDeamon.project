@@ -46,14 +46,14 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;`/opt/pylon5/bin/pylon-config --cflags`" C_Options="-g;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+      <Compiler Options="-pg;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;`/opt/pylon5/bin/pylon-config --cflags`" C_Options="-pg;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="../lib"/>
         <IncludePath Value="/usr/include/lib"/>
         <IncludePath Value="/opt/pylon5/include/"/>
         <IncludePath Value="/usr/include/opencv2/"/>
         <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library/"/>
       </Compiler>
-      <Linker Options="-g; `pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
+      <Linker Options="-pg; `pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
         <Library Value="pylonbase"/>
         <Library Value="pylonutility"/>
@@ -66,7 +66,6 @@
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -106,7 +105,6 @@
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Release" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>

@@ -1,3 +1,6 @@
+# Profiling
+*callgrind*
+
 # CodeLite
 *.workspace
 *.project

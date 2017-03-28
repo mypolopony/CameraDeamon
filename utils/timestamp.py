@@ -40,10 +40,11 @@ for key in cameras.keys():
 
 from dateutil import parser
 import pandas as pd
+import glob
 
 cameras = {'21815767': 'acA1920-155uc', '21990430': 'acA1300-200uc'}
-logfiles = ['/home/agridata/output/a2780022/21990430_2017-03-13T17:19:58.798931331-07:.txt',
-            '/home/agridata/output/a2780022/21815767_2017-03-13T17:19:58.798803340-07:.txt']
+indir = '/home/agridata/output/3629c019/'
+logfiles = glob.glob(indir + '*.txt')
 traces = list()
 
 '''
