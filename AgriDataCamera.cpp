@@ -15,7 +15,7 @@
 #include <pylon/usb/_BaslerUsbCameraParams.h>
 
 // Profiler
-#include <google/profiler.h>
+// #include <google/profiler.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -98,8 +98,8 @@ void AgriDataCamera::Initialize() {
 
     // Continuous Auto Gain
     // camera.GainAutoEnable.SetValue(true);
-    this->GainAuto.SetValue(GainAuto_Continuous);
-    this->ExposureAuto.SetValue(ExposureAuto_Continuous);
+    this->GainAuto.SetValue(GainAuto_Once);
+    this->ExposureAuto.SetValue(ExposureAuto_Once);
 }
 
 /**
@@ -108,7 +108,7 @@ void AgriDataCamera::Initialize() {
  * Main loop
  */
 void AgriDataCamera::Run() {
-	//ProfilerStart("/tmp/profile.out");
+	// ProfilerStart("/tmp/profile.out");
     // Configuration / Initialization
     // These heartbeats are in units of images captured
     // or, in seconds: HEARTBEAT/FRAME_RATE
@@ -180,8 +180,8 @@ void AgriDataCamera::Run() {
 	writeHeaders(frameout);
 
 	// Open the video file
-	save_path = output_dir + serialnumber + '_' + timenow + ".mp4";
-	videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('L','A','G', 'S'), this->AcquisitionFrameRate.GetValue(),
+	save_path = output_dir + serialnumber + '_' + timenow + ".avi";
+	videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M','P','E','G'), this->AcquisitionFrameRate.GetValue(),
 			Size(width->GetValue(), height->GetValue()), true);
 
 	// Make sure videowriter was opened successfully

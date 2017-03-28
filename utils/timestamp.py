@@ -43,7 +43,9 @@ import pandas as pd
 import glob
 
 cameras = {'21815767': 'acA1920-155uc', '21990430': 'acA1300-200uc'}
-indir = '/home/agridata/output/3629c019/'
+
+scan = 'aa46f1c6'
+indir = '/home/agridata/output/{}/'.format(scan)
 logfiles = glob.glob(indir + '*.txt')
 traces = list()
 
@@ -87,4 +89,4 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=traces, layout=layout)
-plotly.offline.plot(fig, filename='refactored.html')
+plotly.offline.plot(fig, filename='{}.html'.format(scan))
