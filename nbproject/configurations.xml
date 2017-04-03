@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="97">
+<configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
+      <in>AGDUtils.cpp</in>
       <in>AgriDataCamera.cpp</in>
       <in>main.cpp</in>
       <in>test.cpp</in>
@@ -30,7 +31,6 @@
       <flagsDictionary>
         <element flagsID="0"
                  commonFlags="-mtune=generic -march=x86-64 -std=c++11 -fstack-protector-strong"/>
-        <element flagsID="1" commonFlags="-std=c++11"/>
       </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
@@ -46,19 +46,15 @@
           <preBuildCommand>cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${IDE_CC} -DCMAKE_CXX_COMPILER=${IDE_CXX} -DCMAKE_C_FLAGS_DEBUG="-g3 -gdwarf-2" -DCMAKE_CXX_FLAGS_DEBUG="-g3 -gdwarf-2" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .</preBuildCommand>
         </preBuild>
       </makefileType>
-      <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
+      <item path="AGDUtils.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
           <incDir>
-            <pElem>/opt/pylon5/include</pElem>
+            <pElem>.</pElem>
             <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
           </incDir>
         </ccTool>
       </item>
-      <item path="main.cpp" ex="false" tool="1" flavor2="8">
+      <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
           <incDir>
             <pElem>/opt/pylon5/include/Base</pElem>
@@ -68,11 +64,27 @@
             <pElem>/opt/pylon5/include/pylon/private</pElem>
             <pElem>/usr/local/include/opencv2/core</pElem>
             <pElem>/usr/local/include/opencv2/videoio</pElem>
-            <pElem>lib</pElem>
             <pElem>.</pElem>
             <pElem>/usr/local/include/opencv2</pElem>
             <pElem>/usr/local/include/opencv2/core/hal</pElem>
+            <pElem>/usr/local/include/opencv2/imgproc</pElem>
             <pElem>/usr/local/include/opencv2/imgcodecs</pElem>
+            <pElem>/usr/local/include/opencv2/highgui</pElem>
+            <pElem>/opt/pylon5/include</pElem>
+            <pElem>CameraDeamon</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="main.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>/opt/pylon5/include/Base</pElem>
+            <pElem>/opt/pylon5/include/pylon</pElem>
+            <pElem>lib</pElem>
+            <pElem>.</pElem>
+            <pElem>/opt/pylon5/include/GenApi</pElem>
+            <pElem>/opt/pylon5/include/pylon/usb</pElem>
+            <pElem>/usr/local/include/opencv2/core</pElem>
             <pElem>/opt/pylon5/include</pElem>
             <pElem>CameraDeamon</pElem>
           </incDir>

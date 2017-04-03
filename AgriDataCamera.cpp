@@ -42,12 +42,17 @@ using namespace GenApi;
 using namespace std;
 using namespace cv;
 
+
+/**
+ * Constructor
+ */
 AgriDataCamera::AgriDataCamera() {
 }
 
-AgriDataCamera::AgriDataCamera(const AgriDataCamera& orig) {
-}
 
+/**
+ * Destructor
+ */
 AgriDataCamera::~AgriDataCamera() {
 }
 
@@ -58,48 +63,72 @@ AgriDataCamera::~AgriDataCamera() {
  * Opens the camera and initializes it with some settings
  */
 void AgriDataCamera::Initialize() {
-    INodeMap& nodemap = this->GetNodeMap();
-	CIntegerPtr width;
-    CIntegerPtr height;
-
+        
     // Print the model name of the camera.
-    cout << "Initializing device " << this->GetDeviceInfo().GetModelName() << endl;
-
+    cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
+        
     // Open camera object ahead of time
-    this->Open();
+    Open();
+    
+    frames_per_second = 30;
+    exposure_lower_limit = 61;
+    exposure_upper_limit = 1200;
+    isRecording = false;
+        
+    width = this->Width.GetValue();
+    height = this->Height.GetValue();
+    
+    // create Mat image template
+    cv_img = Mat(width, height, CV_8UC3);
+    last_img = Mat(width, height, CV_8UC3);
+    
+    // Define pixel output format (to match algorithm optimalization)
+    fc.OutputPixelFormat = PixelType_BGR8packed;
+    
+    // Event timers
+    filesize_timer = 200;
+    latest_timer = 300;
+    
+    // Streaming image compression
+    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(3);
+    
+    // Output parameters
+    max_filesize = 3;
+    output_dir = "/home/agridata/output/";
 
     // Get camera device information.
     cout << "Camera Device Information" << endl
             << "=========================" << endl;
     cout << "Vendor : "
-            << CStringPtr(nodemap.GetNode("DeviceVendorName"))->GetValue() << endl;
+            << CStringPtr(GetNodeMap().GetNode("DeviceVendorName"))->GetValue() << endl;
     cout << "Model : "
-            << CStringPtr(nodemap.GetNode("DeviceModelName"))->GetValue() << endl;
+            << CStringPtr(GetNodeMap().GetNode("DeviceModelName"))->GetValue() << endl;
     cout << "Firmware version : "
-            << CStringPtr(nodemap.GetNode("DeviceFirmwareVersion"))->GetValue() << endl;
+            << CStringPtr(GetNodeMap().GetNode("DeviceFirmwareVersion"))->GetValue() << endl;
     cout << "Serial Number : "
-            << CStringPtr(nodemap.GetNode("DeviceSerialNumber"))->GetValue() << endl;
+            << CStringPtr(GetNodeMap().GetNode("DeviceSerialNumber"))->GetValue() << endl;
     cout << "Frame Size  : "
-            << CIntegerPtr(nodemap.GetNode("Width"))->GetValue() << 'x' << CIntegerPtr(nodemap.GetNode("Height"))->GetValue() << endl << endl;
+            << width << 'x' << height << endl << endl;
 
     // prevent parsing of xml during each StartGrabbing()
-    this->StaticChunkNodeMapPoolSize = this->MaxNumBuffer.GetValue();
+    StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
 
     // Enable the acquisition frame rate parameter and set the frame rate.
-    this->AcquisitionFrameRateEnable.SetValue(true);
-    this->AcquisitionFrameRate.SetValue(this->frames_per_second);
+    AcquisitionFrameRateEnable.SetValue(true);
+    AcquisitionFrameRate.SetValue(frames_per_second);
 
     // Exposure time limits
-    this->AutoExposureTimeLowerLimit.SetValue(this->exposure_lower_limit);
-    this->AutoExposureTimeUpperLimit.SetValue(this->exposure_upper_limit);
+    AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
+    AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
 
     // Minimize Exposure
-    this->AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+    AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
 
     // Continuous Auto Gain
     // camera.GainAutoEnable.SetValue(true);
-    this->GainAuto.SetValue(GainAuto_Once);
-    this->ExposureAuto.SetValue(ExposureAuto_Once);
+    GainAuto.SetValue(GainAuto_Once);
+    ExposureAuto.SetValue(ExposureAuto_Once);
 }
 
 /**
@@ -108,41 +137,10 @@ void AgriDataCamera::Initialize() {
  * Main loop
  */
 void AgriDataCamera::Run() {
-	// ProfilerStart("/tmp/profile.out");
-    // Configuration / Initialization
-    // These heartbeats are in units of images captured
-    // or, in seconds: HEARTBEAT/FRAME_RATE
-    int heartbeat_filesize = 200;
-    int heartbeat_log = 20;
-    int heartbeat = 0;
-    int stream_counter = 200;
-
-    // Maximum file size (in GB)
-    int max_filesize = 3;
-
-    string output_dir = "/home/agridata/output/";
-
     // Strings and streams
-    ofstream frameout;
-    string timenow;
     string save_path;
     string framefile;
     string logmessage;
-    string serialnumber;
-
-    // Height / Width
-    CIntegerPtr width;
-    CIntegerPtr height;
-
-    // CPylonImage object as a destination for reformatted image stream
-    CPylonImage image;
-
-	// This smart pointer will receive the grab result data
-	CGrabResultPtr ptrGrabResult;
-
-    // Define 'pixel' output format (to match algorithm optimalization).
-    CImageFormatConverter fc;
-    fc.OutputPixelFormat = PixelType_BGR8packed;
 
     // Filestatus for periodically checking filesize
     struct stat filestatus;
@@ -150,130 +148,45 @@ void AgriDataCamera::Run() {
     output_dir += this->scanid + '/';
     int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    // Time
-    timenow = AGDUtils::grabTime();
+    // Open the video file
+    save_path = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime(); + ".avi";
+    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M','P','E','G'), AcquisitionFrameRate.GetValue(),
+                    Size(width, height), true);
 
-    // VideoWriter
-    VideoWriter videowriter;
-    Mat cv_img;
-    Mat last_img;
-
-    // Streaming image compression
-    vector<int> compression_params;
-    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    compression_params.push_back(3);
-
-	// Get native width and height from connected camera
-	width = this->GetNodeMap().GetNode("Width");
-	height = this->GetNodeMap().GetNode("Height");
-
-	// create Mat image template
-	cv_img = Mat(width->GetValue(), height->GetValue(), CV_8UC3);
-	last_img = Mat(width->GetValue(), height->GetValue(), CV_8UC3);
-
-	// Grab serial number
-	serialnumber = this->DeviceSerialNumber.GetValue();
-
-	// Open the log file and write headers
-	framefile = output_dir + serialnumber + '_' + timenow + ".txt";
-	frameout.open(framefile.c_str());
-	writeHeaders(frameout);
-
-	// Open the video file
-	save_path = output_dir + serialnumber + '_' + timenow + ".avi";
-	videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M','P','E','G'), this->AcquisitionFrameRate.GetValue(),
-			Size(width->GetValue(), height->GetValue()), true);
-
-	// Make sure videowriter was opened successfully
-	if (videowriter.isOpened()) {
-		logmessage = "Opened video file: " + save_path;
-		syslog(LOG_INFO, logmessage.c_str());
-	} else {
-		logmessage = "Failed to write the video file: " + save_path;
-		syslog(LOG_ERR, logmessage.c_str());
-	}
+    // Make sure videowriter was opened successfully
+    if (videowriter.isOpened()) {
+            logmessage = "Opened video file: " + save_path;
+            syslog(LOG_INFO, logmessage.c_str());
+    } else {
+            logmessage = "Failed to write the video file: " + save_path;
+            syslog(LOG_ERR, logmessage.c_str());
+    }
+    
+    framefile = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime() + ".txt";
+    frameout.open(framefile);
+    if (frameout.is_open()) {
+        logmessage = "Opened log file: " + framefile;
+        syslog(LOG_INFO, logmessage.c_str());
+        writeHeaders();
+    } else {
+        logmessage = "Failed to open log file: " + framefile;
+        syslog(LOG_ERR, logmessage.c_str());
+    }
 
     // Set recording to true and start grabbing
-    this->isRecording = true;
-    this->StartGrabbing();
+    isRecording = true;
+    StartGrabbing();
 
     // initiate main loop with algorithm
-    while (this->isRecording) {
+    while (isRecording) {
         // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
         this->RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
 
         try {
             // Image grabbed successfully?
             if (ptrGrabResult->GrabSucceeded()) {
-                // convert to Mat (OpenCV) format for analysis
-                fc.Convert(image, ptrGrabResult);
-                cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
-                        (uint8_t *) image.GetBuffer());
-
-                // Write the original stream into file
-                videowriter << cv_img;
-
-                // Write to streaming image (All Cameras)
-                if (stream_counter == 0) {
-					cv_img.copyTo(last_img);
-					
-					thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
-					t.detach();
-					stream_counter = 200;
-                } else {
-                    stream_counter--;
-                }
-
-                // Logging frame values
-                if (heartbeat % heartbeat_log == 0) {
-#if DEBUG
-                    // Calculate brightness (we can reuse cv_img)
-                    //cvtColor(cv_img, cv_img, CV_RGB2HSV);
-                    //cv::split(cv_img, channels); // Don't get mixed up with user defined split function!
-                    //brightness = mean(channels[2]);
-                    //cout << "Camera " << "0" << ": " << camera.GetDeviceInfo().GetModelName() << endl;
-                    //cout << "GrabSucceeded: " << ptrGrabResult->GrabSucceeded() << endl;
-                    //cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
-                    //cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
-                    //const uint8_t *pImageBuffer = (uint8_t *) ptrGrabResult->GetBuffer();
-                    //cout << "Gray value of first pixel: " << (uint32_t) pImageBuffer[0] << endl;
-                    //cout << "Timestamp: " << ptrGrabResult->GetTimeStamp() << endl << endl;
-#endif
-                    // Write log
-                    writeFrameLog(frameout, ptrGrabResult->GetTimeStamp());
-                }
-
-                if (heartbeat % heartbeat_filesize == 0) {
-                    // Floats are required here to prevent int overflow
-                    stat(save_path.c_str(), &filestatus);
-                    float size = (float) filestatus.st_size;
-                    timenow = AGDUtils::grabTime();
-
-                    if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
-						frameout.close();
-						videowriter.release(); // This is done automatically but is included here for clarity
-
-						save_path = output_dir + serialnumber + '_' + timenow + ".avi";
-						framefile = output_dir + serialnumber + '_' + timenow + ".txt";
-
-						// Open and write logfile headers
-						frameout.open(framefile.c_str());
-						writeHeaders(frameout);
-						
-						videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), this->AcquisitionFrameRate.GetValue(), Size(width->GetValue(), height->GetValue()), true);
-						logmessage = "Opened video file: " + save_path;
-						syslog(LOG_INFO, logmessage.c_str());
-                    }
-                }
+                HandleFrame(ptrGrabResult);
             }
-
-        } catch (const GenICam_3_0_Basler_pylon_v5_0::RuntimeException &e) {
-            logmessage = "GenICam Runtime Exception";
-                if (this->IsCameraDeviceRemoved()) {
-                    logmessage = logmessage + "\nCamera " + this->DeviceSerialNumber.GetValue() + " has become disconnected";
-                }
-            syslog(LOG_ERR, logmessage.c_str());
-            this->isRecording = false;
         } catch (const GenericException &e) {
             logmessage = ptrGrabResult->GetErrorCode() + " " + ptrGrabResult->GetErrorDescription();
             syslog(LOG_ERR, logmessage.c_str());
@@ -288,7 +201,7 @@ void AgriDataCamera::Run() {
  *
  * All good logfiles have headers. These are they
  */
-void AgriDataCamera::writeHeaders(ofstream &fout) {
+void AgriDataCamera::writeHeaders() {
     ostringstream oss;
     oss << "Recording,"
             << "Timestamp,"
@@ -308,8 +221,8 @@ void AgriDataCamera::writeHeaders(ofstream &fout) {
             << "Gain Upper Limit,"
             << "Framerate,"
             << "Target Brightness,"
-            << "Black Level" << endl;
-    fout << oss.str();
+            << "Black Level\n";
+    frameout << oss.str();
 }
 
 /**
@@ -317,19 +230,81 @@ void AgriDataCamera::writeHeaders(ofstream &fout) {
  *
  * Output relevant data to the log, one line per frame
  */
-void AgriDataCamera::writeFrameLog(ofstream &fout, uint64_t camtime) {
+void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
+    // convert to Mat (OpenCV) format for analysis
+    fc.Convert(image, ptrGrabResult);
+    cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
+            (uint8_t *) image.GetBuffer());
+
+    // Write the original stream into file
+    videowriter << cv_img;
+
+    // Write to streaming image (All Cameras)
+    if (latest_timer == 0) {
+        cv_img.copyTo(last_img);
+
+        //thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
+        //t.detach();
+        writeLatestImage(last_img);
+        latest_timer = 300;
+    } else {
+        latest_timer--;
+    }
+
+    if (filesize_timer == 0) {
+        string timenow = AGDUtils::grabTime();
+        string save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
+        struct stat filestatus;
+        
+        // Floats are required here to prevent int overflow
+        stat(save_path.c_str(), &filestatus);
+        float size = (float) filestatus.st_size;
+        string logmessage;
+
+        if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
+            frameout.close();
+            videowriter.release(); // This is done automatically but is included here for clarity
+
+            save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
+            string framefile = output_dir + DeviceSerialNumber() + '_' + timenow + ".txt";
+            
+            // Open and write logfile headers
+            frameout.open(framefile.c_str());
+             if (frameout.is_open()) {
+                logmessage = "Opened log file: " + framefile;
+                syslog(LOG_INFO, logmessage.c_str());
+            } else {
+                logmessage = "Failed to open log file: " + framefile;
+                syslog(LOG_ERR, logmessage.c_str());
+            }
+            writeHeaders();
+
+            videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
+            if (videowriter.isOpened()) {
+                logmessage = "Opened video file: " + save_path;
+                syslog(LOG_INFO, logmessage.c_str());
+            } else {
+                logmessage = "Failed to write the video file: " + save_path;
+                syslog(LOG_ERR, logmessage.c_str());
+            }
+        } else {
+            filesize_timer = 200;
+        }
+    }
+                
+    // Write to frame log
     ostringstream oss;
-    oss << this->isRecording << "," << camtime << ',' << this->DeviceSerialNumber.GetValue() << ","
+    oss << this->isRecording << "," << ptrGrabResult->GetTimeStamp() << ',' << this->DeviceSerialNumber.GetValue() << ","
             << this->AutoFunctionProfile.GetValue() << "," << this->BalanceRatio.GetValue() << ","
             << this->BalanceRatioSelector.GetValue() << "," << this->BalanceWhiteAuto.GetValue() << ","
             << this->ExposureMode.GetValue() << "," << this->ExposureAuto.GetValue() << ","
             << this->ExposureTime.GetValue() << "," << this->AutoExposureTimeLowerLimit.GetValue() << ","
             << this->AutoExposureTimeUpperLimit.GetValue() << "," << this->Gain.GetValue() << ","
             << this->GainAuto.GetValue() << "," << this->AutoGainLowerLimit.GetValue() << ","
-            << this->AutoGainUpperLimit.GetValue() << "," << this->AcquisitionFrameRate.GetValue() << ","
+            << this->AutoGainUpperLimit.GetValue() << "," << this->ResultingFrameRate.GetValue() << ","
             << this->AutoTargetBrightness.GetValue() << "," << this->BlackLevel.GetValue() << endl;
 
-    fout << oss.str();
+    frameout << oss.str();
 }
 
 /**
@@ -339,12 +314,12 @@ void AgriDataCamera::writeFrameLog(ofstream &fout, uint64_t camtime) {
  * This is intended to run in a separate thread so as not to block. Compression_params
  * is an OpenCV construct to define the level of compression.
  */
-void AgriDataCamera::writeLatestImage(Mat cv_img, vector<int> compression_params) {
+void AgriDataCamera::writeLatestImage(Mat img) {
 	string snumber;
 	snumber = this->DeviceSerialNumber.GetValue();
     imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/" + snumber + '_' +
             "streaming.png",
-            cv_img, compression_params);
+            img, compression_params);
 }
 
 
@@ -357,8 +332,8 @@ void AgriDataCamera::Stop() {
     syslog(LOG_INFO, "Recording Stopped");
     this->isRecording = false;
     this->StopGrabbing();
-	//ProfilerStop();
     syslog(LOG_INFO, "*** Done ***");
+    frameout.close();
 }
 
 /**
@@ -383,7 +358,7 @@ void AgriDataCamera::Stop() {
     << "Gain Auto: " << this->GainAuto.GetValue() << " | "
     << "Gain Lower Limit: " << this->AutoGainLowerLimit.GetValue() << " | "
     << "Gain Upper Limit: " << this->AutoGainUpperLimit.GetValue() << " | "
-    << "Framerate: " << this->AcquisitionFrameRate.GetValue() << " | "
+    << "Framerate: " << this->ResultingFrameRate.GetValue() << " | "
     << "Target Brightness: " << this->AutoTargetBrightness.GetValue() << " \n ";
     
     return infostream.str();

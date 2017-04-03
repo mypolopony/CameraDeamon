@@ -76,9 +76,9 @@ void sigint_function(int sig) {
  */
 static void printIntro() {
     cout << endl << endl;
-    cout << "*------------------------------------------------------*" << endl;
-    cout << "***** OpenCV Parameters  ******" << endl;
-    cout << "*------------------------------------------------------*" << endl;
+    cout << "*------------------------------*" << endl;
+    cout << "*****  OpenCV Parameters  ******" << endl;
+    cout << "*------------------------------*" << endl;
     cout << "*" << endl;
     cout << "* OpenCV version : " << CV_VERSION << endl;
     cout << "* Major version : " << CV_MAJOR_VERSION << endl;
@@ -88,32 +88,30 @@ static void printIntro() {
     int major, minor, patch;
     zmq_version(&major, &minor, &patch);
 
-    cout << endl << endl;
-    cout << "*------------------------------------------------------*" << endl;
-    cout << "***** ZeroMQ Parameters  ******" << endl;
-    cout << "*------------------------------------------------------*" << endl;
+    cout << '*' << endl;
+    cout << "*------------------------------*" << endl;
+    cout << "*****  ZeroMQ Parameters  ******" << endl;
+    cout << "*------------------------------*" << endl;
     cout << "*" << endl;
     cout << "* Current version: " << major << "." << minor << "." << patch << endl;
-    cout << "*" << endl;
 
     string version = AGDUtils::pipe_to_string("git rev-parse HEAD");
     version.pop_back();
     version.pop_back();
 
-    cout << endl << endl;
-    cout << "*------------------------------------------------------*" << endl;
+    cout << '*' << endl;
+    cout << "*------------------------------------*" << endl;
     cout << "***** Camera Deamon Parameters  ******" << endl;
-    cout << "*------------------------------------------------------*" << endl;
+    cout << "*------------------------------------*" << endl;
     cout << "*" << endl;
     cout << "* CameraDeamon version: " << version << endl;
-    cout << "*" << endl;
 
-    cout << endl << endl;
-    cout << "*------------------------------------------------------*" << endl;
-    cout << "******* Ready to start acquisition. . . ********" << endl;
-    cout << "*------------------------------------------------------*" << endl;
+    cout << '*' << endl;
+    cout << "*--------------------------------------*" << endl;
+    cout << "****** Ready to start acquisition ******" << endl;
+    cout << "*--------------------------------------*" << endl;
+    cout << endl;
 }
-
 
 /*
  * main
@@ -149,6 +147,7 @@ int main() {
 
     // Initialize Pylon (required for any future Pylon fuctions)
     PylonInitialize();
+    printIntro();
 
     // Get the transport layer factory.
     CTlFactory& tlFactory = CTlFactory::GetInstance();
@@ -163,7 +162,7 @@ int main() {
 	// Initialize the cameras
 	AgriDataCamera * cameras[devices.size()];
     for (size_t i = 0; i < devices.size(); ++i) {
-		cameras[i] = new AgriDataCamera();
+	cameras[i] = new AgriDataCamera();
         cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
         cameras[i]->Initialize();
     }

@@ -8,6 +8,8 @@
 #ifndef AGRIDATACAMERA_H
 #define AGRIDATACAMERA_H
 
+#include <fstream>
+
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
 #include <pylon/usb/BaslerUsbInstantCamera.h>
@@ -19,32 +21,68 @@
 
 // Include files to use openCV.
 #include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
 
 
 class AgriDataCamera : public Pylon::CBaslerUsbInstantCamera {
 public:
     AgriDataCamera();
-    AgriDataCamera(const AgriDataCamera& orig);
 	
-	void Initialize();
-	void Run();
-	void Stop();
-	std::string GetStatus();
+    void Initialize();
+    void Run();
+    void Stop();
+    std::string GetStatus();
 	
     virtual ~AgriDataCamera();
 	
-	std::string scanid;
+    std::string scanid;
 	
 private:
     // Variables (TODO: Move to config file)
-    int frames_per_second = 20;
-    int exposure_lower_limit = 61;
-    int exposure_upper_limit = 1200;
-	bool isRecording = false;
-	
-	static void writeHeaders(std::ofstream &fout);
-	void writeFrameLog(std::ofstream &fout, uint64_t camtime);
-	void writeLatestImage(cv::Mat cv_img, std::vector<int> compression_params);
+    uint8_t frames_per_second;
+    uint8_t exposure_lower_limit;
+    uint8_t exposure_upper_limit;
+    
+    bool isRecording;
+    
+    // Dimensions
+    int64_t width;
+    int64_t height;
+    
+    // Mat image templates
+    cv::Mat cv_img;
+    cv::Mat last_img;
+    
+    // This smart pointer will receive the grab result data
+    Pylon::CGrabResultPtr ptrGrabResult;
+    
+    // CPylonImage object as a destination for reformatted image stream
+    Pylon::CPylonImage image;
+   
+    // Image converter
+    Pylon::CImageFormatConverter fc;
+    
+    // Videowriter
+    cv::VideoWriter videowriter;
+    
+    // Frame log stream
+    std::ofstream frameout;
+    
+    // PNG compression
+    std::vector<int> compression_params;
+    
+    // Timers
+    uint8_t latest_timer;
+    uint8_t filesize_timer;
+    
+    // Output Parameters
+    uint8_t max_filesize = 3;
+    std::string output_dir;
+  
+    // Methods
+    void writeHeaders();
+    void HandleFrame(Pylon::CGrabResultPtr ptrGrabResult);
+    void writeLatestImage(cv::Mat img);
 	
 };
 

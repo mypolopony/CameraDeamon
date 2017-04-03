@@ -3,6 +3,7 @@ from numpy import diff, linspace
 import plotly
 import plotly.graph_objs as go
 import os
+import glob
 
 # Nanoseconds to frames per second
 def nsec2fps(nsec):
@@ -44,9 +45,10 @@ import glob
 
 cameras = {'21815767': 'acA1920-155uc', '21990430': 'acA1300-200uc'}
 
-scan = 'aa46f1c6'
-indir = '/home/agridata/output/{}/'.format(scan)
-logfiles = glob.glob(indir + '*.txt')
+latest = max(glob.glob('/home/agridata/output/*'), key=os.path.getctime)
+
+logfiles = glob.glob(latest + '/*.txt')
+scan = latest.split('/')[-1]
 traces = list()
 
 '''
