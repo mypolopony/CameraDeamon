@@ -42,13 +42,11 @@ using namespace GenApi;
 using namespace std;
 using namespace cv;
 
-
 /**
  * Constructor
  */
 AgriDataCamera::AgriDataCamera() {
 }
-
 
 /**
  * Destructor
@@ -56,48 +54,62 @@ AgriDataCamera::AgriDataCamera() {
 AgriDataCamera::~AgriDataCamera() {
 }
 
-
 /**
  * Initialize
  *
  * Opens the camera and initializes it with some settings
  */
 void AgriDataCamera::Initialize() {
-        
+    PylonAutoInitTerm autoInitTerm;
+
+    INodeMap& nodeMap = GetNodeMap();
+
     // Print the model name of the camera.
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
-        
+
     // Open camera object ahead of time
     Open();
-    
+
+    try {
+        string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
+        cout << "Reading from configuration file: " + config;
+        cout << endl;
+        CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
+    } catch (const GenericException &e) {
+        cerr << "An exception occurred." << endl
+                << e.GetDescription() << endl;
+    }
+
+    /*
     frames_per_second = 30;
     exposure_lower_limit = 61;
     exposure_upper_limit = 1200;
-    isRecording = false;
-        
+
+    // prevent parsing of xml during each StartGrabbing()
+    StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
+
+    // Enable the acquisition frame rate parameter and set the frame rate.
+    AcquisitionFrameRateEnable.SetValue(true);
+    AcquisitionFrameRate.SetValue(frames_per_second);
+
+    // Exposure time limits
+    ExposureAuto.SetValue(ExposureAuto_Continuous);
+    AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
+    AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
+
+    // Minimize Exposure
+    AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+
+    // Continuous Auto Gain
+    // camera.GainAutoEnable.SetValue(true);
+    GainAuto.SetValue(GainAuto_Once);
+     */
+
+    // Get Dimensions
     width = this->Width.GetValue();
     height = this->Height.GetValue();
-    
-    // create Mat image template
-    cv_img = Mat(width, height, CV_8UC3);
-    last_img = Mat(width, height, CV_8UC3);
-    
-    // Define pixel output format (to match algorithm optimalization)
-    fc.OutputPixelFormat = PixelType_BGR8packed;
-    
-    // Event timers
-    filesize_timer = 200;
-    latest_timer = 300;
-    
-    // Streaming image compression
-    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    compression_params.push_back(3);
-    
-    // Output parameters
-    max_filesize = 3;
-    output_dir = "/home/agridata/output/";
 
-    // Get camera device information.
+    // Print camera device information.
     cout << "Camera Device Information" << endl
             << "=========================" << endl;
     cout << "Vendor : "
@@ -111,24 +123,26 @@ void AgriDataCamera::Initialize() {
     cout << "Frame Size  : "
             << width << 'x' << height << endl << endl;
 
-    // prevent parsing of xml during each StartGrabbing()
-    StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
+    // create Mat image template
+    cv_img = Mat(width, height, CV_8UC3);
+    last_img = Mat(width, height, CV_8UC3);
 
-    // Enable the acquisition frame rate parameter and set the frame rate.
-    AcquisitionFrameRateEnable.SetValue(true);
-    AcquisitionFrameRate.SetValue(frames_per_second);
+    // Define pixel output format (to match algorithm optimalization)
+    fc.OutputPixelFormat = PixelType_BGR8packed;
 
-    // Exposure time limits
-    AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
-    AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
+    // Event timers
+    filesize_timer = 200;
+    latest_timer = 300;
 
-    // Minimize Exposure
-    AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+    isRecording = false;
 
-    // Continuous Auto Gain
-    // camera.GainAutoEnable.SetValue(true);
-    GainAuto.SetValue(GainAuto_Once);
-    ExposureAuto.SetValue(ExposureAuto_Once);
+    // Streaming image compression
+    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(3);
+
+    // Output parameters
+    max_filesize = 3;
+    output_dir = "/home/agridata/output/";
 }
 
 /**
@@ -149,19 +163,20 @@ void AgriDataCamera::Run() {
     int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Open the video file
-    save_path = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime(); + ".avi";
-    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M','P','E','G'), AcquisitionFrameRate.GetValue(),
-                    Size(width, height), true);
+    save_path = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime();
+    +".avi";
+    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate.GetValue(),
+            Size(width, height), true);
 
     // Make sure videowriter was opened successfully
     if (videowriter.isOpened()) {
-            logmessage = "Opened video file: " + save_path;
-            syslog(LOG_INFO, logmessage.c_str());
+        logmessage = "Opened video file: " + save_path;
+        syslog(LOG_INFO, logmessage.c_str());
     } else {
-            logmessage = "Failed to write the video file: " + save_path;
-            syslog(LOG_ERR, logmessage.c_str());
+        logmessage = "Failed to write the video file: " + save_path;
+        syslog(LOG_ERR, logmessage.c_str());
     }
-    
+
     framefile = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime() + ".txt";
     frameout.open(framefile);
     if (frameout.is_open()) {
@@ -188,13 +203,12 @@ void AgriDataCamera::Run() {
                 HandleFrame(ptrGrabResult);
             }
         } catch (const GenericException &e) {
-            logmessage = ptrGrabResult->GetErrorCode() + " " + ptrGrabResult->GetErrorDescription();
+            logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
             syslog(LOG_ERR, logmessage.c_str());
             this->isRecording = false;
         }
     }
 }
-
 
 /**
  * writeHeaders
@@ -255,7 +269,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
         string timenow = AGDUtils::grabTime();
         string save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
         struct stat filestatus;
-        
+
         // Floats are required here to prevent int overflow
         stat(save_path.c_str(), &filestatus);
         float size = (float) filestatus.st_size;
@@ -267,10 +281,10 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 
             save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
             string framefile = output_dir + DeviceSerialNumber() + '_' + timenow + ".txt";
-            
+
             // Open and write logfile headers
             frameout.open(framefile.c_str());
-             if (frameout.is_open()) {
+            if (frameout.is_open()) {
                 logmessage = "Opened log file: " + framefile;
                 syslog(LOG_INFO, logmessage.c_str());
             } else {
@@ -291,7 +305,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
             filesize_timer = 200;
         }
     }
-                
+
     // Write to frame log
     ostringstream oss;
     oss << this->isRecording << "," << ptrGrabResult->GetTimeStamp() << ',' << this->DeviceSerialNumber.GetValue() << ","
@@ -315,13 +329,12 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
  * is an OpenCV construct to define the level of compression.
  */
 void AgriDataCamera::writeLatestImage(Mat img) {
-	string snumber;
-	snumber = this->DeviceSerialNumber.GetValue();
+    string snumber;
+    snumber = this->DeviceSerialNumber.GetValue();
     imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/" + snumber + '_' +
             "streaming.png",
             img, compression_params);
 }
-
 
 /**
  * Stop
@@ -330,8 +343,8 @@ void AgriDataCamera::writeLatestImage(Mat img) {
  */
 void AgriDataCamera::Stop() {
     syslog(LOG_INFO, "Recording Stopped");
-    this->isRecording = false;
-    this->StopGrabbing();
+    isRecording = false;
+    this->Close();
     syslog(LOG_INFO, "*** Done ***");
     frameout.close();
 }
@@ -341,25 +354,25 @@ void AgriDataCamera::Stop() {
  *
  * Upon receiving a stop message, set the isRecording flag
  */
- string AgriDataCamera::GetStatus() {
+string AgriDataCamera::GetStatus() {
     ostringstream infostream;
     infostream << "Serial Number: " << this->DeviceSerialNumber.GetValue()
-    << "Is recording: " << this->isRecording << " | "
-    << "Auto Function Profile: " << this->AutoFunctionProfile.GetValue() << " | "
-    << "White Balance Ratio: " << this->BalanceRatio.GetValue() << " | "
-    << "White Balance Ratio Selector: " << this->BalanceRatioSelector.GetValue() << " | "
-    << "White Balance Auto: " << this->BalanceWhiteAuto.GetValue() << " | "
-    << "Exposure Mode: " << this->ExposureMode.GetValue() << " | "
-    << "Exposure Auto: " << this->ExposureAuto.GetValue() << " | "
-    << "ExposureTime: " << this->ExposureTime.GetValue() << " | "
-    << "Exposure Lower Limit: " << this->AutoExposureTimeLowerLimit.GetValue() << " | "
-    << "Exposure Upper Limit: " << this->AutoExposureTimeUpperLimit.GetValue() << " | "
-    << "Gain: " << this->Gain.GetValue() << " | "
-    << "Gain Auto: " << this->GainAuto.GetValue() << " | "
-    << "Gain Lower Limit: " << this->AutoGainLowerLimit.GetValue() << " | "
-    << "Gain Upper Limit: " << this->AutoGainUpperLimit.GetValue() << " | "
-    << "Framerate: " << this->ResultingFrameRate.GetValue() << " | "
-    << "Target Brightness: " << this->AutoTargetBrightness.GetValue() << " \n ";
-    
+            << "Is recording: " << this->isRecording << " | "
+            << "Auto Function Profile: " << this->AutoFunctionProfile.GetValue() << " | "
+            << "White Balance Ratio: " << this->BalanceRatio.GetValue() << " | "
+            << "White Balance Ratio Selector: " << this->BalanceRatioSelector.GetValue() << " | "
+            << "White Balance Auto: " << this->BalanceWhiteAuto.GetValue() << " | "
+            << "Exposure Mode: " << this->ExposureMode.GetValue() << " | "
+            << "Exposure Auto: " << this->ExposureAuto.GetValue() << " | "
+            << "ExposureTime: " << this->ExposureTime.GetValue() << " | "
+            << "Exposure Lower Limit: " << this->AutoExposureTimeLowerLimit.GetValue() << " | "
+            << "Exposure Upper Limit: " << this->AutoExposureTimeUpperLimit.GetValue() << " | "
+            << "Gain: " << this->Gain.GetValue() << " | "
+            << "Gain Auto: " << this->GainAuto.GetValue() << " | "
+            << "Gain Lower Limit: " << this->AutoGainLowerLimit.GetValue() << " | "
+            << "Gain Upper Limit: " << this->AutoGainUpperLimit.GetValue() << " | "
+            << "Framerate: " << this->ResultingFrameRate.GetValue() << " | "
+            << "Target Brightness: " << this->AutoTargetBrightness.GetValue() << " \n ";
+
     return infostream.str();
- }
+}

@@ -6,6 +6,8 @@
         <df name="Debug">
         </df>
       </df>
+      <df name="config">
+      </df>
       <df name="docs">
       </df>
       <df name="lib">

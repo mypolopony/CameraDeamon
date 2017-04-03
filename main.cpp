@@ -155,14 +155,14 @@ int main() {
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) == 0) {
-		syslog(LOG_ERR, "No camera present!");
+        syslog(LOG_ERR, "No camera present!");
         throw RUNTIME_EXCEPTION("No camera present.");
     }
-	
-	// Initialize the cameras
-	AgriDataCamera * cameras[devices.size()];
+
+    // Initialize the cameras
+    AgriDataCamera * cameras[devices.size()];
     for (size_t i = 0; i < devices.size(); ++i) {
-	cameras[i] = new AgriDataCamera();
+        cameras[i] = new AgriDataCamera();
         cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
         cameras[i]->Initialize();
     }
@@ -194,10 +194,10 @@ int main() {
             syslog(LOG_INFO, "Destroying ZMQ sockets");
             client.close();
             publisher.close();
-			
+
             syslog(LOG_INFO, "Stopping Cameras");
-			for (size_t i = 0; i < devices.size(); ++i)
-				cameras[i]->Stop();
+            for (size_t i = 0; i < devices.size(); ++i)
+                cameras[i]->Stop();
 
             // Wait a second
             usleep(1500000);
@@ -237,25 +237,24 @@ int main() {
 
                         logmessage = "Row: " + row + ", Direction: " + direction;
                         syslog(LOG_INFO, logmessage.c_str());
-						
-						// Generate UUID for scan
-						vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
-						logmessage = "Starting scan " + fulluuid[0];
-						syslog(LOG_INFO, logmessage.c_str());
-						
-						for (size_t i = 0; i < devices.size(); ++i) {
-							cameras[i]->scanid = fulluuid[0];
-							thread t(&AgriDataCamera::Run, cameras[i]);
-							t.detach();
-						}
+
+                        // Generate UUID for scan
+                        vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
+                        logmessage = "Starting scan " + fulluuid[0];
+                        syslog(LOG_INFO, logmessage.c_str());
+
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            cameras[i]->scanid = fulluuid[0];
+                            thread t(&AgriDataCamera::Run, cameras[i]);
+                            t.detach();
+                        }
                         reply = id_hash + "_1_RecordingStarted";
                     }
                 } else if (tokens[1] == "stop") {
-					for (size_t i = 0; i < devices.size(); ++i)
-						cameras[i]->Stop();
-					reply = id_hash + "_1_CameraStopped";
-                }
-                    /*
+                    for (size_t i = 0; i < devices.size(); ++i)
+                        cameras[i]->Stop();
+                    reply = id_hash + "_1_CameraStopped";
+                }                    /*
                                             else if (tokens[1] == "BalanceWhiteAuto") {
                                             if (tokens[2] == "BalanceWhiteAuto_Once") {
                                                 camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
@@ -343,7 +342,7 @@ int main() {
                 else if (tokens[1] == "GetStatus") {
                     reply = id_hash + "_1_";
                     for (size_t i = 0; i < devices.size(); ++i) {
-						reply += cameras[i]->GetStatus();
+                        reply += cameras[i]->GetStatus();
                     }
 
                 } else {
