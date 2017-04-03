@@ -158,7 +158,6 @@ void AgriDataCamera::Run() {
 
     // Filestatus for periodically checking filesize
     struct stat filestatus;
-
     output_dir += this->scanid + '/';
     int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
@@ -331,7 +330,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 void AgriDataCamera::writeLatestImage(Mat img) {
     string snumber;
     snumber = this->DeviceSerialNumber.GetValue();
-    imwrite("/home/agridata/Desktop/embeddedServer/EmbeddedServer/images/" + snumber + '_' +
+    imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
             "streaming.png",
             img, compression_params);
 }
