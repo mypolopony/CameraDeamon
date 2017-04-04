@@ -48,14 +48,10 @@
         </preBuild>
       </makefileType>
       <item path="AGDUtils.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <incDir>
-            <pElem>/opt/pylon5/include</pElem>
+            <pElem>.</pElem>
             <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
           </incDir>
         </ccTool>
       </item>
@@ -72,14 +68,17 @@
         </ccTool>
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
+        <ccTool flags="0">
           <incDir>
+            <pElem>/opt/pylon5/include/Base</pElem>
+            <pElem>/opt/pylon5/include/pylon</pElem>
+            <pElem>lib</pElem>
+            <pElem>.</pElem>
+            <pElem>/opt/pylon5/include/GenApi</pElem>
+            <pElem>/opt/pylon5/include/pylon/usb</pElem>
+            <pElem>/usr/local/include/opencv2/core</pElem>
             <pElem>/opt/pylon5/include</pElem>
             <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
           </incDir>
         </ccTool>
       </item>
