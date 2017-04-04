@@ -23,6 +23,10 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 
+// Utilities
+#include "json.hpp"
+
+
 class AgriDataCamera : public Pylon::CBaslerUsbInstantCamera {
 public:
     AgriDataCamera();
@@ -30,7 +34,7 @@ public:
     void Initialize();
     void Run();
     void Stop();
-    std::string GetStatus();
+    nlohmann::json GetStatus();
 
     virtual ~AgriDataCamera();
 

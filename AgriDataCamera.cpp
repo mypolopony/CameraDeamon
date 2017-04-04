@@ -14,9 +14,6 @@
 #include <pylon/usb/BaslerUsbInstantCameraArray.h>
 #include <pylon/usb/_BaslerUsbCameraParams.h>
 
-// Profiler
-// #include <google/profiler.h>
-
 // GenApi
 #include <GenApi/GenApi.h>
 
@@ -34,6 +31,8 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
+// Utilities
+#include "json.hpp"
 
 // Namespaces
 using namespace Basler_UsbCameraParams;
@@ -41,6 +40,7 @@ using namespace Pylon;
 using namespace GenApi;
 using namespace std;
 using namespace cv;
+using nlohmann::json;
 
 /**
  * Constructor
@@ -353,7 +353,7 @@ void AgriDataCamera::Stop() {
  *
  * Upon receiving a stop message, set the isRecording flag
  */
-string AgriDataCamera::GetStatus() {
+json AgriDataCamera::GetStatus() {
     ostringstream infostream;
     infostream << "Serial Number: " << this->DeviceSerialNumber.GetValue()
             << "Is recording: " << this->isRecording << " | "
