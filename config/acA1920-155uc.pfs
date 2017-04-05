@@ -72,7 +72,7 @@ TriggerActivation	RisingEdge
 TriggerSelector	FrameStart
 TriggerDelay	0
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRate	30.00030
+AcquisitionFrameRate	40.00000
 DeviceLinkSelector	0
 DeviceLinkThroughputLimit	360000000
 DeviceLinkSelector	0
@@ -98,7 +98,7 @@ AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
 AutoGainUpperLimit	6.00000
 AutoExposureTimeLowerLimit	61.0
-AutoExposureTimeUpperLimit	8000.0
+AutoExposureTimeUpperLimit	500.0
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	1936
 AutoFunctionROISelector	ROI2

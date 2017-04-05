@@ -23,6 +23,10 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 
+// Utilities
+#include "json.hpp"
+
+
 class AgriDataCamera : public Pylon::CBaslerUsbInstantCamera {
 public:
     AgriDataCamera();
@@ -30,18 +34,13 @@ public:
     void Initialize();
     void Run();
     void Stop();
-    std::string GetStatus();
+    nlohmann::json GetStatus();
 
     virtual ~AgriDataCamera();
 
     std::string scanid;
 
 private:
-    // Variables (TODO: Move to config file)
-    uint8_t frames_per_second;
-    uint8_t exposure_lower_limit;
-    uint8_t exposure_upper_limit;
-
     bool isRecording;
 
     // Dimensions

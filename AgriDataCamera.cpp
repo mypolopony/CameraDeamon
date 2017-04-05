@@ -7,15 +7,13 @@
 
 #include "AgriDataCamera.h"
 #include "AGDUtils.h"
+#include "json.hpp"
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
 #include <pylon/usb/BaslerUsbInstantCamera.h>
 #include <pylon/usb/BaslerUsbInstantCameraArray.h>
 #include <pylon/usb/_BaslerUsbCameraParams.h>
-
-// Profiler
-// #include <google/profiler.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -34,13 +32,13 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
-
 // Namespaces
 using namespace Basler_UsbCameraParams;
 using namespace Pylon;
 using namespace GenApi;
 using namespace std;
 using namespace cv;
+using json = nlohmann::json;
 
 /**
  * Constructor
@@ -104,6 +102,9 @@ void AgriDataCamera::Initialize() {
     // camera.GainAutoEnable.SetValue(true);
     GainAuto.SetValue(GainAuto_Once);
      */
+    
+    // Number of buffers does not seem to be specified in .pfs file
+    GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
 
     // Get Dimensions
     width = this->Width.GetValue();
@@ -216,25 +217,12 @@ void AgriDataCamera::Run() {
  */
 void AgriDataCamera::writeHeaders() {
     ostringstream oss;
-    oss << "Recording,"
-            << "Timestamp,"
-            << "Device Serial Number,"
-            << "Auto Function Profile,"
-            << "White Balance Ratio,"
-            << "White Balance Ratio Selector,"
-            << "White Balance Auto,"
-            << "Exposure Mode,"
-            << "Exposure Auto,"
-            << "Exposure Time,"
-            << "Exposure Lower Limit,"
-            << "Exposure Upper Limit,"
-            << "Gain,"
-            << "Gain Auto,"
-            << "Gain Lower Limit,"
-            << "Gain Upper Limit,"
-            << "Framerate,"
-            << "Target Brightness,"
-            << "Black Level\n";
+    oss << "Timestamp,"
+        << "Exposure Time,"
+        << "Resulting Frame Rate,"
+        << "Current Bandwidth,"
+        << "Device Temperature" << endl;
+
     frameout << oss.str();
 }
 
@@ -307,18 +295,16 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 
     // Write to frame log
     ostringstream oss;
-    oss << this->isRecording << "," << ptrGrabResult->GetTimeStamp() << ',' << this->DeviceSerialNumber.GetValue() << ","
-            << this->AutoFunctionProfile.GetValue() << "," << this->BalanceRatio.GetValue() << ","
-            << this->BalanceRatioSelector.GetValue() << "," << this->BalanceWhiteAuto.GetValue() << ","
-            << this->ExposureMode.GetValue() << "," << this->ExposureAuto.GetValue() << ","
-            << this->ExposureTime.GetValue() << "," << this->AutoExposureTimeLowerLimit.GetValue() << ","
-            << this->AutoExposureTimeUpperLimit.GetValue() << "," << this->Gain.GetValue() << ","
-            << this->GainAuto.GetValue() << "," << this->AutoGainLowerLimit.GetValue() << ","
-            << this->AutoGainUpperLimit.GetValue() << "," << this->ResultingFrameRate.GetValue() << ","
-            << this->AutoTargetBrightness.GetValue() << "," << this->BlackLevel.GetValue() << endl;
+    oss << ptrGrabResult->GetTimeStamp() << ','
+            << ExposureTime.GetValue() << ',' 
+            << ResultingFrameRate.GetValue() << ','
+            << DeviceLinkCurrentThroughput.GetValue() << ','
+            << DeviceTemperature.GetValue() << endl;
 
     frameout << oss.str();
+
 }
+
 
 /**
  * writeLatestImage
@@ -329,7 +315,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
  */
 void AgriDataCamera::writeLatestImage(Mat img) {
     string snumber;
-    snumber = this->DeviceSerialNumber.GetValue();
+    snumber = DeviceSerialNumber.GetValue();
     imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
             "streaming.png",
             img, compression_params);
@@ -351,27 +337,21 @@ void AgriDataCamera::Stop() {
 /**
  * GetInfo
  *
- * Upon receiving a stop message, set the isRecording flag
+ * Respond to the heartbeat the data about the camera
  */
-string AgriDataCamera::GetStatus() {
-    ostringstream infostream;
-    infostream << "Serial Number: " << this->DeviceSerialNumber.GetValue()
-            << "Is recording: " << this->isRecording << " | "
-            << "Auto Function Profile: " << this->AutoFunctionProfile.GetValue() << " | "
-            << "White Balance Ratio: " << this->BalanceRatio.GetValue() << " | "
-            << "White Balance Ratio Selector: " << this->BalanceRatioSelector.GetValue() << " | "
-            << "White Balance Auto: " << this->BalanceWhiteAuto.GetValue() << " | "
-            << "Exposure Mode: " << this->ExposureMode.GetValue() << " | "
-            << "Exposure Auto: " << this->ExposureAuto.GetValue() << " | "
-            << "ExposureTime: " << this->ExposureTime.GetValue() << " | "
-            << "Exposure Lower Limit: " << this->AutoExposureTimeLowerLimit.GetValue() << " | "
-            << "Exposure Upper Limit: " << this->AutoExposureTimeUpperLimit.GetValue() << " | "
-            << "Gain: " << this->Gain.GetValue() << " | "
-            << "Gain Auto: " << this->GainAuto.GetValue() << " | "
-            << "Gain Lower Limit: " << this->AutoGainLowerLimit.GetValue() << " | "
-            << "Gain Upper Limit: " << this->AutoGainUpperLimit.GetValue() << " | "
-            << "Framerate: " << this->ResultingFrameRate.GetValue() << " | "
-            << "Target Brightness: " << this->AutoTargetBrightness.GetValue() << " \n ";
+json AgriDataCamera::GetStatus() {
+    json status;
+    status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
+    status["Recording"] = isRecording;
+    if (isRecording) {
+        status["Timestamp"] = ptrGrabResult->GetTimeStamp();
+    } else {
+        status["Timestamp"] = "Not Grabbing";
+    }
+    status["Exposure Time"] = ExposureTime.GetValue();
+    status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
+    status["Current Bandwidth"] = DeviceLinkCurrentThroughput.GetValue();
+    status["Temperature"] = DeviceTemperature.GetValue();
 
-    return infostream.str();
+    return status;
 }
