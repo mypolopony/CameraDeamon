@@ -129,11 +129,6 @@ int main() {
     string logmessage = "Camera Deamon has been started";
     syslog(LOG_INFO, logmessage.c_str());
 
-    // Set Up Timer
-    time_t start, future;
-    time(&start);
-    double seconds;
-
     // Subscribe on port 4999
     zmq::context_t context(1);
     zmq::socket_t client(context, ZMQ_SUB);
@@ -172,17 +167,8 @@ int main() {
 
     // Initialize variables
     char **argv;
-    char delimiter = '-';
-   
-    int argc = 0;
-    int ret;
     int rec;
-    
-    ostringstream oss;
-    size_t pos = 0;
-    string id_hash;
-    string row = "";
-    string direction = "";
+
     string receivedstring;
     json received;
     json reply;
@@ -193,7 +179,7 @@ int main() {
     while (true) {
         // Check for and handle signals
         if (sigint_flag) {
-            syslog(LOG_INFO, "SIGINT Caught! Closing gracefully");
+            syslog(LOG_INFO, "SIGINT Caught!");
 
             syslog(LOG_INFO, "Destroying ZMQ sockets");
             client.close();
@@ -202,10 +188,12 @@ int main() {
             syslog(LOG_INFO, "Stopping Cameras");
             for (size_t i = 0; i < devices.size(); ++i)
                 cameras[i]->Stop();
+            
+            closelog();
 
-            // Wait a second (and a half)
+            // Wait a second and a half (I forget why)
             usleep(1500000);
-            return 0;
+            break;
         }
 
         // Non-blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
@@ -217,27 +205,23 @@ int main() {
         } catch (zmq::error_t error) {
             if (errno == EINTR) continue;
         }
+
+        // Good message
         if (rec) {
-            
             receivedstring = string(static_cast<char *> (messageR.data()), messageR.size());
             received = json::parse(receivedstring);
-            cout << receivedstring << endl;
+            cout << "Received: " << receivedstring << endl;
 
             try {
-                reply['id'] = received['id'];
+                reply = {{"id", received["id"]}};
 
                 // Choose action
-                if (tokens[1] == "start") {
+                if (received["action"] == "start") {
                     if (isRecording) {
                         reply["status"] = '1';
                         reply["message"] = "Already Recording";
                     } else {
-                        // There is a double call to split here, which is better
-                        // then initializing a new variable (I think)
-                        row = AGDUtils::split(tokens[2], '_')[0];
-                        direction = AGDUtils::split(tokens[2], '_')[1];
-
-                        logmessage = "Row: " + row + ", Direction: " + direction;
+                        logmessage = "Row: " + received["row"].dump() + ", Direction: " + received["direction"].dump();
                         syslog(LOG_INFO, logmessage.c_str());
 
                         // Generate UUID for scan
@@ -253,98 +237,12 @@ int main() {
                         reply["status"] = '1';
                         reply["message"] = "Recording Started";
                     }
-                } else if (tokens[1] == "stop") {
+                } else if (received["action"] == "stop") {
                     for (size_t i = 0; i < devices.size(); ++i)
                         cameras[i]->Stop();
                     reply["status"] = '1';
                     reply["message"] = "Camera Stopped";
-
-                }                    /*
-                                            else if (tokens[1] == "BalanceWhiteAuto") {
-                                            if (tokens[2] == "BalanceWhiteAuto_Once") {
-                                                camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "BalanceWhiteAuto_Continuous") {
-                                                camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Continuous);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "BalanceWhiteAuto_Off") {
-                                                camera.BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Off);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                            }
-                                            } else if (tokens[1] == "AutoFunctionProfile") {
-                                            if (tokens[2] == "AutoFunctionProfile_MinimizeExposure") {
-                                                camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "AutoFunctionProfile_MinimizeGain") {
-                                                camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                            }
-                                            } else if (tokens[1] == "GainAuto") {
-                                            if (tokens[2] == "GainAuto_Once") {
-                                                camera.GainAuto.SetValue(GainAuto_Once);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "GainAuto_Continuous") {
-                                                camera.GainAuto.SetValue(GainAuto_Continuous);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "GainAuto_Off") {
-                                                camera.GainAuto.SetValue(GainAuto_Off);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                            }
-                                            } else if (tokens[1] == "ExposureAuto") {
-                                            if (tokens[2] == "ExposureAuto_Once") {
-                                                camera.ExposureAuto.SetValue(ExposureAuto_Once);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "ExposureAuto_Continuous") {
-                                                camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "ExposureAuto_Off") {
-                                                camera.ExposureAuto.SetValue(ExposureAuto_Off);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                            }
-                                            } else if (tokens[1] == "BalanceRatioSelector") {
-                                            if (tokens[2] == "BalanceRatioSelector_Green") {
-                                                camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "BalanceRatioSelector_Red") {
-                                                camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                                } else if (tokens[2] == "BalanceRatioSelector_Blue") {
-                                                camera.BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
-                                                oss << id_hash << "_1_" << tokens[2];
-                                            }
-                                            } else if (tokens[1] == "GainSelector") {
-                                            camera.GainSelector.SetValue(GainSelector_All);
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "Gain") {
-                                            camera.Gain.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "BalanceRatio") {
-                                            camera.BalanceRatio.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "AutoTargetBrightness") {
-                                            camera.AutoTargetBrightness.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "AutoExposureTimeUpperLimit") {
-                                            camera.AutoExposureTimeUpperLimit.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "AutoExposureTimeLowerLimit") {
-                                            camera.AutoExposureTimeLowerLimit.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[2];
-                                            } else if (tokens[1] == "AutoGainUpperLimit") {
-                                            camera.GainSelector.SetValue(GainSelector_All); // Backup in case we forget
-                                            camera.AutoGainUpperLimit.SetValue(atof(tokens[2].c_str()));
-                                            oss << id_hash << "_1_" << tokens[1];
-                                            } else if (tokens[1] == "AutoGainLowerLimit") { // Backup incase we forget
-                                            camera.GainSelector.SetValue(GainSelector_All);
-                                            oss << id_hash << "_1_" << tokens[1];
-                                            camera.AutoGainLowerLimit.SetValue(atof(tokens[2].c_str()));
-                                            } else if (tokens[1] == "RowDirection") {
-                                            oss << id_hash << "_1_" << tokens[1];
-                                            logmessage = "RowDirection: " + tokens[2];
-                                            syslog(LOG_INFO, logmessage.c_str());
-                                            } 
-                     */
-                else if (tokens[1] == "GetStatus") {
+                } else if (received["action"] == "status") {
                     reply["status"] = '1';
                     for (size_t i = 0; i < devices.size(); ++i) {
                         status = cameras[i]->GetStatus();
@@ -353,7 +251,8 @@ int main() {
                     }
 
                 } else {
-                    reply = id_hash + "_0_CommandNotFound";
+                    reply["status"] = '0';
+                    reply["message"] = "Command Not Found";
                 }
             } catch (const GenericException &e) {
                 syslog(LOG_ERR, "An exception occurred.");
@@ -367,20 +266,13 @@ int main() {
             memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
             publisher.send(messageS);
 
-            // Log message and reply (if not GetStatus)
-            if (tokens[1] != "GetStatus") {
-               logmessage = (string) "MsgRec: " + s + ", ReplySent: " + reply.dump();
-               syslog(LOG_INFO, logmessage.c_str());
+            if (received["action"] != "status") {
+                cout << "Response: " << reply.dump().c_str() << endl;
             }
-
-            // CLear the string buffer
-            oss.str("");
         }
-
-        // Elapsed time (in seconds)
-        seconds = difftime(time(&future), start);
     }
 
     syslog(LOG_INFO, "CameraDeamon is shuttting down gracefully. . .");
+    closelog();
     return 0;
 }
