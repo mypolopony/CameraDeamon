@@ -104,6 +104,7 @@ void AgriDataCamera::Initialize() {
      */
     
     // Number of buffers does not seem to be specified in .pfs file
+    // I'm pretty sure the max is 10. . . 
     GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
 
     // Get Dimensions
@@ -316,9 +317,11 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 void AgriDataCamera::writeLatestImage(Mat img) {
     string snumber;
     snumber = DeviceSerialNumber.GetValue();
+    Mat dst;
+    resize(img, dst, Size(), 0.2, 0.2);
     imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
             "streaming.png",
-            img, compression_params);
+            dst, compression_params);
 }
 
 /**
