@@ -173,25 +173,25 @@ int main() {
     // Initialize variables
     char **argv;
     char delimiter = '-';
+   
     int argc = 0;
     int ret;
     int rec;
+    
     ostringstream oss;
     size_t pos = 0;
     string id_hash;
-    string received;
-    string s;
     string row = "";
     string direction = "";
+    string receivedstring;
+    json received;
     json reply;
     json status;
     vector <string> tokens;
+    zmq::message_t messageR;
 
     while (true) {
-        // Placeholder for received message
-        zmq::message_t messageR;
-
-        // Check for signals
+        // Check for and handle signals
         if (sigint_flag) {
             syslog(LOG_INFO, "SIGINT Caught! Closing gracefully");
 
@@ -203,7 +203,7 @@ int main() {
             for (size_t i = 0; i < devices.size(); ++i)
                 cameras[i]->Stop();
 
-            // Wait a second
+            // Wait a second (and a half)
             usleep(1500000);
             return 0;
         }
@@ -218,15 +218,13 @@ int main() {
             if (errno == EINTR) continue;
         }
         if (rec) {
-            received = string(static_cast<char *> (messageR.data()), messageR.size());
-
-            // Parse message
-            s = received;
-            cout << s << endl;
-            tokens = AGDUtils::split(s, delimiter);
+            
+            receivedstring = string(static_cast<char *> (messageR.data()), messageR.size());
+            received = json::parse(receivedstring);
+            cout << receivedstring << endl;
 
             try {
-                reply = {{"id_hash", tokens[0]}};
+                reply['id'] = received['id'];
 
                 // Choose action
                 if (tokens[1] == "start") {
