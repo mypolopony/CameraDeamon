@@ -41,6 +41,9 @@
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
           <executablePath>CameraDeamon/Debug/CameraDeamon</executablePath>
+          <ccTool>
+            <standard>8</standard>
+          </ccTool>
         </makeTool>
         <preBuild>
           <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>

@@ -20,6 +20,7 @@
 // Utilities
 #include "zmq.hpp"
 #include "AGDUtils.h"
+#include "json.hpp"
 
 // Additional include files.
 #include <atomic>
@@ -51,6 +52,8 @@ using namespace Pylon;
 using namespace GenApi;
 using namespace cv;
 using namespace std;
+using json = nlohmann::json;
+
 
 // Shared recording boolean
 atomic<bool> isRecording(false);
@@ -177,10 +180,11 @@ int main() {
     size_t pos = 0;
     string id_hash;
     string received;
-    string reply;
     string s;
     string row = "";
     string direction = "";
+    json reply;
+    json status;
     vector <string> tokens;
 
     while (true) {
@@ -222,13 +226,13 @@ int main() {
             tokens = AGDUtils::split(s, delimiter);
 
             try {
-                id_hash = tokens[0];
-                reply = "";
+                reply = {{"id_hash", tokens[0]}};
 
                 // Choose action
                 if (tokens[1] == "start") {
                     if (isRecording) {
-                        reply = id_hash + "_1_AlreadyRecording";
+                        reply["status"] = '1';
+                        reply["message"] = "Already Recording";
                     } else {
                         // There is a double call to split here, which is better
                         // then initializing a new variable (I think)
@@ -248,12 +252,15 @@ int main() {
                             thread t(&AgriDataCamera::Run, cameras[i]);
                             t.detach();
                         }
-                        reply = id_hash + "_1_RecordingStarted";
+                        reply["status"] = '1';
+                        reply["message"] = "Recording Started";
                     }
                 } else if (tokens[1] == "stop") {
                     for (size_t i = 0; i < devices.size(); ++i)
                         cameras[i]->Stop();
-                    reply = id_hash + "_1_CameraStopped";
+                    reply["status"] = '1';
+                    reply["message"] = "Camera Stopped";
+
                 }                    /*
                                             else if (tokens[1] == "BalanceWhiteAuto") {
                                             if (tokens[2] == "BalanceWhiteAuto_Once") {
@@ -340,26 +347,32 @@ int main() {
                                             } 
                      */
                 else if (tokens[1] == "GetStatus") {
-                    reply = id_hash + "_1_";
+                    reply["status"] = '1';
                     for (size_t i = 0; i < devices.size(); ++i) {
-                        reply += cameras[i]->GetStatus();
+                        status = cameras[i]->GetStatus();
+                        string sn = status["Serial Number"];
+                        reply["message"][sn] = status;
                     }
 
                 } else {
                     reply = id_hash + "_0_CommandNotFound";
                 }
-            } catch (...) {
-                reply = id_hash + "_0_ExceptionProcessingCommand";
+            } catch (const GenericException &e) {
+                syslog(LOG_ERR, "An exception occurred.");
+                syslog(LOG_ERR, e.GetDescription());
+
+                reply["status"] = '0';
+                reply["message"] = "Exception Processing Command";
             }
 
-            zmq::message_t messageS(reply.size());
-            memcpy(messageS.data(), reply.data(), reply.size());
+            zmq::message_t messageS(reply.dump().size());
+            memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
             publisher.send(messageS);
 
             // Log message and reply (if not GetStatus)
             if (tokens[1] != "GetStatus") {
-                logmessage = (string) "MsgRec: " + s + ", ReplySent: " + reply;
-                syslog(LOG_INFO, logmessage.c_str());
+               logmessage = (string) "MsgRec: " + s + ", ReplySent: " + reply.dump();
+               syslog(LOG_INFO, logmessage.c_str());
             }
 
             // CLear the string buffer

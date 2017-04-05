@@ -91,4 +91,4 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=traces, layout=layout)
-plotly.offline.plot(fig, filename='{}.html'.format(scan))
+plotly.offline.plot(fig, filename='utils/{}.html'.format(scan))
