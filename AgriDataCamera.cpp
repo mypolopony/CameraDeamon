@@ -334,7 +334,7 @@ void AgriDataCamera::Stop() {
     isRecording = false;
     this->Close();
     syslog(LOG_INFO, "*** Done ***");
-    frameout.close();
+    frameout.close(); 
 }
 
 /**
@@ -345,6 +345,7 @@ void AgriDataCamera::Stop() {
 json AgriDataCamera::GetStatus() {
     json status;
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
+    status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
     if (isRecording) {
         status["Timestamp"] = ptrGrabResult->GetTimeStamp();
@@ -355,6 +356,7 @@ json AgriDataCamera::GetStatus() {
     status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
     status["Current Bandwidth"] = DeviceLinkCurrentThroughput.GetValue();
     status["Temperature"] = DeviceTemperature.GetValue();
+    
 
     return status;
 }
