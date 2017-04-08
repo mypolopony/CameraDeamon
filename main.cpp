@@ -186,8 +186,9 @@ int main() {
             publisher.close();
 
             syslog(LOG_INFO, "Stopping Cameras");
-            for (size_t i = 0; i < devices.size(); ++i)
-                cameras[i]->Stop();
+            for (size_t i = 0; i < devices.size(); ++i) {
+                cameras[i]->Close();
+            }
             
             closelog();
 
@@ -215,13 +216,13 @@ int main() {
             try {
                 reply = {{"id", received["id"]}};
 
-                // Choose action
+                // Start
                 if (received["action"] == "start") {
                     if (isRecording) {
-                        reply["status"] = '1';
+                        reply["status"] = "1";
                         reply["message"] = "Already Recording";
                     } else {
-                        logmessage = "Row: " + received["row"].dump() + ", Direction: " + received["direction"].dump();
+                        logmessage = "Row: " + received["row"].get<string>() + ", Direction: " + received["direction"].get<string>();
                         syslog(LOG_INFO, logmessage.c_str());
 
                         // Generate UUID for scan
@@ -234,31 +235,64 @@ int main() {
                             thread t(&AgriDataCamera::Run, cameras[i]);
                             t.detach();
                         }
-                        reply["status"] = '1';
+                        isRecording = true;
+                        reply["status"] = "1";
                         reply["message"] = "Recording Started";
                     }
-                } else if (received["action"] == "stop") {
-                    for (size_t i = 0; i < devices.size(); ++i)
-                        cameras[i]->Stop();
-                    reply["status"] = '1';
-                    reply["message"] = "Camera Stopped";
-                } else if (received["action"] == "status") {
-                    reply["status"] = '1';
+                }
+                
+                // Stop
+                else if (received["action"] == "stop") {
+                    if (!isRecording) {
+                        reply["status"] = "1";
+                        reply["message"] = "Already Stopped";
+                    } else {
+                        for (size_t i = 0; i < devices.size(); ++i)
+                            cameras[i]->Stop();
+                        isRecording = false;
+                        reply["status"] = "1";
+                        reply["message"] = "Recording Stopped";
+                    }
+                }
+                
+                // Status
+                else if (received["action"] == "status") {
                     for (size_t i = 0; i < devices.size(); ++i) {
                         status = cameras[i]->GetStatus();
                         string sn = status["Serial Number"];
                         reply["message"][sn] = status;
+                        reply["status"] = "1";
                     }
-
-                } else {
-                    reply["status"] = '0';
+                } 
+                
+                // Snap
+                else if (received["action"] == "snap") {
+                    for (size_t i = 0; i< devices.size(); ++i) {
+                        cameras[i]->Snap();
+                    }
+                    reply["message"] = "Snapshot Taken";
+                    reply["status"] = "1";
+                }
+                
+                // White Balance
+                else if (received["action"] == "whitebalance") {
+                    for (size_t i = 0; i < devices.size(); ++i) {
+                         cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                    }
+                    reply["status"] = "1";
+                    reply["message"] = "White Balance Set";
+                }
+               
+                // Fail
+                else {
+                    reply["status"] = "0";
                     reply["message"] = "Command Not Found";
                 }
-            } catch (const GenericException &e) {
+            } catch (const GenericException &e) {   
                 syslog(LOG_ERR, "An exception occurred.");
                 syslog(LOG_ERR, e.GetDescription());
 
-                reply["status"] = '0';
+                reply["status"] = "0";
                 reply["message"] = "Exception Processing Command";
             }
 
@@ -266,13 +300,15 @@ int main() {
             memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
             publisher.send(messageS);
 
-            if (received["action"] != "status") {
+            //if (received["action"] != "status") {
                 cout << "Response: " << reply.dump().c_str() << endl;
-            }
+            //}
         }
     }
-
-    syslog(LOG_INFO, "CameraDeamon is shuttting down gracefully. . .");
-    closelog();
+    
+    // This code is actually not reachable; a SIGINT will close the daemon gracefully,
+    // but the other way to end the service is to turn the computer off, which will
+    // probably be the most common end-state. In that case, the cameras never Close(),
+    // though I'm not sure what the implications of this are, if any.
     return 0;
 }

@@ -26,7 +26,7 @@ RemoveParameterLimit	0
 RemoveParameterLimitSelector	ExposureTime
 RemoveParameterLimit	0
 RemoveParameterLimitSelector	Gain
-LightSourcePreset	Daylight5000K
+LightSourcePreset	Off
 BalanceRatioSelector	Red
 BalanceRatio	1.30640
 BalanceRatioSelector	Green
@@ -102,7 +102,7 @@ TriggerActivation	RisingEdge
 TriggerSelector	FrameStart
 TriggerDelay	0
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRate	40.00000
+AcquisitionFrameRate	20.00000
 DeviceLinkSelector	0
 DeviceLinkThroughputLimitMode	On
 DeviceLinkSelector	0
@@ -130,7 +130,7 @@ AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
 AutoGainUpperLimit	5.98861
 AutoExposureTimeLowerLimit	61.0
-AutoExposureTimeUpperLimit	500.0
+AutoExposureTimeUpperLimit	8000.0
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	1280
 AutoFunctionROISelector	ROI2

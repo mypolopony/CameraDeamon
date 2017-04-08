@@ -48,3 +48,5 @@ utils/*.html
 *.out
 *.app
 site/
+/cmake-build-debug/
+/build-clion/

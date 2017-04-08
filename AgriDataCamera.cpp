@@ -157,16 +157,18 @@ void AgriDataCamera::Run() {
     string save_path;
     string framefile;
     string logmessage;
+    string time_now;
 
     // Filestatus for periodically checking filesize
     struct stat filestatus;
     output_dir += this->scanid + '/';
     int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    
+    time_now = AGDUtils::grabTime();
 
     // Open the video file
-    save_path = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime();
-    +".avi";
-    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate.GetValue(),
+    save_path = output_dir + DeviceSerialNumber() + '_' + time_now + ".avi";
+    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
             Size(width, height), true);
 
     // Make sure videowriter was opened successfully
@@ -178,7 +180,7 @@ void AgriDataCamera::Run() {
         syslog(LOG_ERR, logmessage.c_str());
     }
 
-    framefile = output_dir + DeviceSerialNumber() + '_' + AGDUtils::grabTime() + ".txt";
+    framefile = output_dir + DeviceSerialNumber() + '_' + time_now + ".txt";
     frameout.open(framefile);
     if (frameout.is_open()) {
         logmessage = "Opened log file: " + framefile;
@@ -214,7 +216,7 @@ void AgriDataCamera::Run() {
 /**
  * writeHeaders
  *
- * All good logfiles have headers. These are they
+ * All good logfiles have headers. These are them
  */
 void AgriDataCamera::writeHeaders() {
     ostringstream oss;
@@ -240,6 +242,17 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 
     // Write the original stream into file
     videowriter << cv_img;
+    
+    // For writing individual files
+    // ostringstream time;
+    // time << ptrGrabResult->GetTimeStamp();
+    
+    // Dump compressed JPG
+    // imwrite("/home/agridata/output/images/" + time.str() + ".jpg", cv_img);
+    
+    // Dumping raw TIFF
+    // CImagePersistence::Save(ImageFileFormat_Tiff,("/home/agridata/output/raw/" + time.str() + ".tiff").c_str(), ptrGrabResult);
+    
 
     // Write to streaming image (All Cameras)
     if (latest_timer == 0) {
@@ -289,8 +302,9 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
                 logmessage = "Failed to write the video file: " + save_path;
                 syslog(LOG_ERR, logmessage.c_str());
             }
-        } else {
             filesize_timer = 200;
+        } else {
+            filesize_timer--;
         }
     }
 
@@ -304,6 +318,44 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 
     frameout << oss.str();
 
+}
+
+/**
+ * Snap
+ * 
+ * Snap will take one photo, in isolatation, and save it to the standard steaming
+ * image location.
+ * 
+ * Consider making this json instead of void to return success
+ * 
+ */
+
+void AgriDataCamera::Snap() {    
+    // this !isRecording criterion is enforced becausae I don't know what the camera's
+    // behavior is to ask for one frame while another (continuous) grabbing process is 
+    // ongoing, and really I don't think there should be a need for such feature.
+    if (!isRecording) {
+        CPylonImage image;
+        Mat snap_img = Mat(width, height, CV_8UC3);
+        CGrabResultPtr ptrGrabResult;
+
+        // There might be a reason to allow the camera to take a few shots first to 
+        // allow any auto adjustments to take place.
+        uint32_t c_countOfImagesToGrab = 21;
+    
+        StartGrabbing();
+
+        for (size_t i = 0; i < c_countOfImagesToGrab; ++i) {
+            RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+        }
+        
+        fc.Convert(image, ptrGrabResult);
+        snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
+            (uint8_t *) image.GetBuffer());
+        
+        writeLatestImage(snap_img);
+        StopGrabbing();
+    }
 }
 
 
@@ -332,7 +384,6 @@ void AgriDataCamera::writeLatestImage(Mat img) {
 void AgriDataCamera::Stop() {
     syslog(LOG_INFO, "Recording Stopped");
     isRecording = false;
-    this->Close();
     syslog(LOG_INFO, "*** Done ***");
     frameout.close(); 
 }

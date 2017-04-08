@@ -34,6 +34,7 @@ public:
     void Initialize();
     void Run();
     void Stop();
+    void Snap();
     nlohmann::json GetStatus();
 
     virtual ~AgriDataCamera();

@@ -69,6 +69,54 @@
       <in>main.cpp</in>
       <in>test.cpp</in>
     </df>
+    <df root="." name="1">
+      <df name=".idea">
+      </df>
+      <df name="build-clion">
+        <df name="CMakeFiles">
+        </df>
+      </df>
+      <df name="CameraDeamon">
+        <df name="Debug">
+        </df>
+      </df>
+      <df name="cmake-build-debug">
+        <df name="CMakeFiles">
+          <df name="3.7.1">
+            <df name="CompilerIdC">
+            </df>
+            <df name="CompilerIdCXX">
+            </df>
+          </df>
+          <df name="CameraDeamon.dir">
+            <df name="lib">
+            </df>
+          </df>
+          <df name="CMakeTmp">
+          </df>
+          <df name="Progress">
+          </df>
+        </df>
+      </df>
+      <df name="config">
+      </df>
+      <df name="docs">
+      </df>
+      <df name="lib">
+      </df>
+      <df name="profiles">
+        <df name="0">
+        </df>
+        <df name="1">
+          <df name="out.txt">
+          </df>
+        </df>
+        <df name="2">
+        </df>
+      </df>
+      <df name="utils">
+      </df>
+    </df>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -95,8 +143,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
