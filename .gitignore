@@ -9,6 +9,9 @@
 # Hidden
 .*
 
+# Frame rate graphs
+utils/*.html
+
 # Apple 
 *.DS_Store
 
