@@ -40,6 +40,7 @@ public:
     virtual ~AgriDataCamera();
 
     std::string scanid;
+    bool isPaused;
 
 private:
     bool isRecording;

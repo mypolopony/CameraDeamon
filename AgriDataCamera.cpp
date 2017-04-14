@@ -137,6 +137,7 @@ void AgriDataCamera::Initialize() {
     latest_timer = 300;
 
     isRecording = false;
+    isPaused = false;
 
     // Streaming image compression
     compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
@@ -197,20 +198,23 @@ void AgriDataCamera::Run() {
 
     // initiate main loop with algorithm
     while (isRecording) {
-        // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-        this->RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+        if (!isPaused) {
+            // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+            this->RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
 
-        try {
-            // Image grabbed successfully?
-            if (ptrGrabResult->GrabSucceeded()) {
-                HandleFrame(ptrGrabResult);
+            try {
+                // Image grabbed successfully?
+                if (ptrGrabResult->GrabSucceeded()) {
+                    HandleFrame(ptrGrabResult);
+                }
+            } catch (const GenericException &e) {
+                logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
+                syslog(LOG_ERR, logmessage.c_str());
+                isRecording = false;
             }
-        } catch (const GenericException &e) {
-            logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
-            syslog(LOG_ERR, logmessage.c_str());
-            this->isRecording = false;
         }
     }
+    return;
 }
 
 /**
@@ -323,7 +327,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 /**
  * Snap
  * 
- * Snap will take one photo, in isolatation, and save it to the standard steaming
+ * Snap will take one photo, in isolation, and save it to the standard steaming
  * image location.
  * 
  * Consider making this json instead of void to return success
@@ -331,7 +335,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
  */
 
 void AgriDataCamera::Snap() {    
-    // this !isRecording criterion is enforced becausae I don't know what the camera's
+    // this !isRecording criterion is enforced because I don't know what the camera's
     // behavior is to ask for one frame while another (continuous) grabbing process is 
     // ongoing, and really I don't think there should be a need for such feature.
     if (!isRecording) {
@@ -407,6 +411,7 @@ json AgriDataCamera::GetStatus() {
     status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
     status["Current Bandwidth"] = DeviceLinkCurrentThroughput.GetValue();
     status["Temperature"] = DeviceTemperature.GetValue();
+    status["ScanID"] = scanid;
     
 
     return status;

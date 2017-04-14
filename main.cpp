@@ -157,7 +157,7 @@ int main() {
         throw RUNTIME_EXCEPTION("No camera present.");
     }
 
-    // Initialize the cameras
+    // Camera Initialization
     AgriDataCamera * cameras[devices.size()];
     for (size_t i = 0; i < devices.size(); ++i) {
         cameras[i] = new AgriDataCamera();
@@ -173,6 +173,7 @@ int main() {
     json received;
     json reply;
     json status;
+    string sn;
     vector <string> tokens;
     zmq::message_t messageR;
 
@@ -236,8 +237,29 @@ int main() {
                             t.detach();
                         }
                         isRecording = true;
+                        reply["message"] = "Cameras started";
+                        reply["uuid"] = fulluuid[0];
                         reply["status"] = "1";
-                        reply["message"] = "Recording Started";
+                    }
+                }
+                
+                // Pause
+                else if (received["action"] == "pause") {
+                    if (isRecording) {
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            sn = cameras[i]->DeviceSerialNumber();
+                            if (!cameras[i]->isPaused) {
+                                cameras[i]->isPaused = true;
+                                reply["message"][sn] = "Camera paused";
+                            } else {
+                                cameras[i]->isPaused = false;
+                                reply["message"][sn] = "Camera unpaused";
+                            }
+                        }
+                        reply["status"] = "1";
+                    } else {
+                        reply["message"] = "Cameras are not recording!";
+                        reply["status"] = "0";
                     }
                 }
                 
@@ -247,8 +269,20 @@ int main() {
                         reply["status"] = "1";
                         reply["message"] = "Already Stopped";
                     } else {
-                        for (size_t i = 0; i < devices.size(); ++i)
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            // Here we're going to destroy the devices and immediately
+                            // recreate them -- we need them initialized before we can
+                            // return any statuses
                             cameras[i]->Stop();
+                            cameras[i]->DestroyDevice();
+                            
+                            // This sleep is necessary to allow the threads to finish
+                            // and resources to be released
+                            usleep(1500000);
+                            cameras[i] = new AgriDataCamera();
+                            cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
+                            cameras[i]->Initialize();
+                        }
                         isRecording = false;
                         reply["status"] = "1";
                         reply["message"] = "Recording Stopped";
@@ -259,10 +293,10 @@ int main() {
                 else if (received["action"] == "status") {
                     for (size_t i = 0; i < devices.size(); ++i) {
                         status = cameras[i]->GetStatus();
-                        string sn = status["Serial Number"];
+                        sn = status["Serial Number"];
                         reply["message"][sn] = status;
-                        reply["status"] = "1";
                     }
+                    reply["status"] = "1";
                 } 
                 
                 // Snap
@@ -293,7 +327,7 @@ int main() {
                 syslog(LOG_ERR, e.GetDescription());
 
                 reply["status"] = "0";
-                reply["message"] = "Exception Processing Command";
+                reply["message"] = "Exception Processing Command (" + received["action"].get<string>() + ")";
             }
 
             zmq::message_t messageS(reply.dump().size());
