@@ -59,14 +59,18 @@ AgriDataCamera::~AgriDataCamera() {
  */
 void AgriDataCamera::Initialize() {
     PylonAutoInitTerm autoInitTerm;
+    
+    // Open camera object ahead of time
+    // When stopping and restarting the camera, either one must Close() or otherwise
+    // check that the camera is not already open
+    if (!IsOpen()) {
+        Open();
+    }
 
     INodeMap& nodeMap = GetNodeMap();
 
     // Print the model name of the camera.
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
-
-    // Open camera object ahead of time
-    Open();
 
     try {
         string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
@@ -104,12 +108,18 @@ void AgriDataCamera::Initialize() {
      */
     
     // Number of buffers does not seem to be specified in .pfs file
-    // I'm pretty sure the max is 10. . . 
-    GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
+    // I'm pretty sure the max is 10, so I don't think any other values are valid.
+    // Also, this seems to raise trouble when the cameras has already been initialized,
+    // i.e. on stop / reinitialization
+    try {
+        GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
+    } catch (...) {
+        cerr << "MaxNumBuffer already set" << endl;
+    }
 
     // Get Dimensions
-    width = this->Width.GetValue();
-    height = this->Height.GetValue();
+    width = Width.GetValue();
+    height = Height.GetValue();
 
     // Print camera device information.
     cout << "Camera Device Information" << endl
@@ -145,7 +155,7 @@ void AgriDataCamera::Initialize() {
 
     // Output parameters
     max_filesize = 3;
-    output_dir = "/home/agridata/output/";
+    output_prefix = "/home/agridata/output/";
 }
 
 /**
@@ -162,7 +172,7 @@ void AgriDataCamera::Run() {
 
     // Filestatus for periodically checking filesize
     struct stat filestatus;
-    output_dir += this->scanid + '/';
+    output_dir = output_prefix + scanid + '/';
     int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
     time_now = AGDUtils::grabTime();
@@ -194,27 +204,36 @@ void AgriDataCamera::Run() {
 
     // Set recording to true and start grabbing
     isRecording = true;
-    StartGrabbing();
+    cout << "About to Grab" << endl;
+    if (!IsGrabbing()) {
+        StartGrabbing();
+    }
+    cout << "Now Grabbing" << endl;
 
+    cout << "Camera All Good" << endl;
     // initiate main loop with algorithm
     while (isRecording) {
+        cout << "Is Recording" << endl;
         if (!isPaused) {
+            cout << "Is not paused" << endl;
             // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-            this->RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-
+            RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+            cout << "Better Not" << endl;
             try {
+                cout << "Let's try" << endl;
                 // Image grabbed successfully?
                 if (ptrGrabResult->GrabSucceeded()) {
+                    cout << "Got It!" << endl;
                     HandleFrame(ptrGrabResult);
                 }
             } catch (const GenericException &e) {
+                cout << "Sorry, no" << endl;
                 logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
                 syslog(LOG_ERR, logmessage.c_str());
                 isRecording = false;
             }
         }
     }
-    return;
 }
 
 /**
@@ -385,11 +404,12 @@ void AgriDataCamera::writeLatestImage(Mat img) {
  *
  * Upon receiving a stop message, set the isRecording flag
  */
-void AgriDataCamera::Stop() {
+int AgriDataCamera::Stop() {
     syslog(LOG_INFO, "Recording Stopped");
     isRecording = false;
     syslog(LOG_INFO, "*** Done ***");
-    frameout.close(); 
+    frameout.close();
+    return 0;
 }
 
 /**
@@ -402,17 +422,20 @@ json AgriDataCamera::GetStatus() {
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
-    if (isRecording) {
+    try {
         status["Timestamp"] = ptrGrabResult->GetTimeStamp();
-    } else {
+    } catch (...) {
         status["Timestamp"] = "Not Grabbing";
     }
     status["Exposure Time"] = ExposureTime.GetValue();
     status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
     status["Current Bandwidth"] = DeviceLinkCurrentThroughput.GetValue();
     status["Temperature"] = DeviceTemperature.GetValue();
-    status["ScanID"] = scanid;
+    try {
+        status["ScanID"] = scanid;
+    } catch (...) {
+        status["ScanID"] = "";
+    }
     
-
     return status;
 }

@@ -33,7 +33,7 @@ public:
 
     void Initialize();
     void Run();
-    void Stop();
+    int Stop();
     void Snap();
     nlohmann::json GetStatus();
 
@@ -41,10 +41,9 @@ public:
 
     std::string scanid;
     bool isPaused;
+        bool isRecording;
 
 private:
-    bool isRecording;
-
     // Dimensions
     int64_t width;
     int64_t height;
@@ -77,6 +76,7 @@ private:
 
     // Output Parameters
     uint8_t max_filesize = 3;
+    std::string output_prefix;
     std::string output_dir;
 
     // Methods

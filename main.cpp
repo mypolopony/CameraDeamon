@@ -270,22 +270,24 @@ int main() {
                         reply["message"] = "Already Stopped";
                     } else {
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            // Here we're going to destroy the devices and immediately
+                             // Here we're going to destroy the devices and immediately
                             // recreate them -- we need them initialized before we can
                             // return any statuses
                             cameras[i]->Stop();
-                            cameras[i]->DestroyDevice();
-                            
-                            // This sleep is necessary to allow the threads to finish
-                            // and resources to be released
-                            usleep(1500000);
-                            cameras[i] = new AgriDataCamera();
-                            cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
+                            // cameras[i]->DestroyDevice();
+                        }
+
+                        // This sleep (is / may be) necessary to allow the threads to finish
+                        // and resources to be released
+                        usleep(2500000);
+                        
+                        for (size_t i = 0; i < devices.size(); ++i) {
                             cameras[i]->Initialize();
                         }
                         isRecording = false;
+                        reply["message"] = "Recording Stopped, Cameras Reinitialized";
                         reply["status"] = "1";
-                        reply["message"] = "Recording Stopped";
+                        
                     }
                 }
                 
@@ -316,20 +318,15 @@ int main() {
                     reply["status"] = "1";
                     reply["message"] = "White Balance Set";
                 }
-               
-                // Fail
-                else {
-                    reply["status"] = "0";
-                    reply["message"] = "Command Not Found";
-                }
             } catch (const GenericException &e) {   
                 syslog(LOG_ERR, "An exception occurred.");
                 syslog(LOG_ERR, e.GetDescription());
 
                 reply["status"] = "0";
-                reply["message"] = "Exception Processing Command (" + received["action"].get<string>() + ")";
+                reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
             }
 
+            cout << "Sending Response";
             zmq::message_t messageS(reply.dump().size());
             memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
             publisher.send(messageS);
