@@ -204,30 +204,21 @@ void AgriDataCamera::Run() {
 
     // Set recording to true and start grabbing
     isRecording = true;
-    cout << "About to Grab" << endl;
     if (!IsGrabbing()) {
         StartGrabbing();
     }
-    cout << "Now Grabbing" << endl;
 
-    cout << "Camera All Good" << endl;
     // initiate main loop with algorithm
     while (isRecording) {
-        cout << "Is Recording" << endl;
         if (!isPaused) {
-            cout << "Is not paused" << endl;
             // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
             RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-            cout << "Better Not" << endl;
             try {
-                cout << "Let's try" << endl;
                 // Image grabbed successfully?
                 if (ptrGrabResult->GrabSucceeded()) {
-                    cout << "Got It!" << endl;
                     HandleFrame(ptrGrabResult);
                 }
             } catch (const GenericException &e) {
-                cout << "Sorry, no" << endl;
                 logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
                 syslog(LOG_ERR, logmessage.c_str());
                 isRecording = false;

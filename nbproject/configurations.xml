@@ -14,7 +14,6 @@
       <in>AGDUtils.cpp</in>
       <in>AgriDataCamera.cpp</in>
       <in>main.cpp</in>
-      <in>test.cpp</in>
     </df>
     <df root="." name="1">
     </df>
@@ -133,13 +132,6 @@
             flavor2="3">
         <cTool flags="0">
         </cTool>
-      </item>
-      <item path="test.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
-          <incDir>
-            <pElem>.</pElem>
-          </incDir>
-        </ccTool>
       </item>
     </conf>
   </confs>
