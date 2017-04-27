@@ -45,6 +45,20 @@ namespace AGDUtils {
         // replace(time.begin(), time.end(), ':', '_');
         return (time);
     }
+    
+    /** grabSeconds
+     * 
+     * grabTime is a way to get a string from the shell, but this is the more canonical
+     * way to grab seconds since 1970, returning an int64_t
+     
+     */
+    int64_t grabSeconds() {
+        time_t now;
+        time(&now);
+        int64_t itime = *((int64_t*)&now);
+        
+        return (itime);
+    }
 
     /**
      * pipe_to_string

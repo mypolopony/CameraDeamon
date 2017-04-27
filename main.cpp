@@ -17,6 +17,16 @@
 // GenApi
 #include <GenApi/GenApi.h>
 
+// MongoDB & BSON
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/basic/array.hpp>
+#include <bsoncxx/builder/basic/kvp.hpp>
+#include <bsoncxx/json.hpp>
+#include <bsoncxx/types.hpp>
+
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+
 // Utilities
 #include "zmq.hpp"
 #include "AGDUtils.h"
@@ -143,6 +153,14 @@ int main() {
     // Wait for sockets
     zmq_sleep(1.5);
 
+    // Initialize MongoDB connection
+    // The use of auto here is unfortunate, but it is apparently recommended
+    // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
+    mongocxx::instance inst{};
+    mongocxx::client conn{mongocxx::uri{"mongodb://localhost:27017"}};
+    mongocxx::database db = conn["agdb"];
+    mongocxx::collection scans = db["scans"];
+
     // Initialize Pylon (required for any future Pylon fuctions)
     PylonInitialize();
     printIntro();
@@ -190,7 +208,7 @@ int main() {
             for (size_t i = 0; i < devices.size(); ++i) {
                 cameras[i]->Close();
             }
-            
+
             closelog();
 
             // Wait a second and a half (I forget why)
@@ -215,7 +233,8 @@ int main() {
             cout << "Received: " << receivedstring << endl;
 
             try {
-                reply = {{"id", received["id"]}};
+                reply = {
+                    {"id", received["id"]}};
 
                 // Start
                 if (received["action"] == "start") {
@@ -231,11 +250,23 @@ int main() {
                         logmessage = "Starting scan " + fulluuid[0];
                         syslog(LOG_INFO, logmessage.c_str());
 
+                        // Generate MongoDB doc
+                        auto doc = bsoncxx::builder::basic::document{};
+                        auto doc_cameras = bsoncxx::builder::basic::array{};
+                        
+                        doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64{AGDUtils::grabSeconds()}));
+
                         for (size_t i = 0; i < devices.size(); ++i) {
                             cameras[i]->scanid = fulluuid[0];
+                            doc_cameras.append(cameras[i]->DeviceSerialNumber());
+
                             thread t(&AgriDataCamera::Run, cameras[i]);
                             t.detach();
                         }
+
+                        doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
+                        scans.insert_one(doc.view());
+                        
                         isRecording = true;
                         reply["message"] = "Cameras started";
                         reply["uuid"] = fulluuid[0];
@@ -262,15 +293,25 @@ int main() {
                         reply["status"] = "0";
                     }
                 }
-                
-                // Stop
+                    // Stop
                 else if (received["action"] == "stop") {
                     if (!isRecording) {
                         reply["status"] = "1";
                         reply["message"] = "Already Stopped";
                     } else {
+                        // Get scanind from the first camera and close out the db entry
+                        json status = cameras[0]->GetStatus();
+                        string id = status["ScanID"];
+                        
+                        // Using the stream here since it's so popular
+                        scans.update_one(bsoncxx::builder::stream::document{} << "scanid" << id << bsoncxx::builder::stream::finalize,
+                                bsoncxx::builder::stream::document{} << "$set" << 
+                                bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64{AGDUtils::grabSeconds()} << 
+                                bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+                        
+                        // Stop cameras
                         for (size_t i = 0; i < devices.size(); ++i) {
-                             // Here we're going to destroy the devices and immediately
+                            // Here we're going to destroy the devices and immediately
                             // recreate them -- we need them initialized before we can
                             // return any statuses
                             cameras[i]->Stop();
@@ -280,17 +321,16 @@ int main() {
                         // This sleep (is / may be) necessary to allow the threads to finish
                         // and resources to be released
                         usleep(2500000);
-                        
+
                         for (size_t i = 0; i < devices.size(); ++i) {
                             cameras[i]->Initialize();
                         }
                         isRecording = false;
                         reply["message"] = "Recording Stopped, Cameras Reinitialized";
                         reply["status"] = "1";
-                        
+
                     }
                 }
-                
                 // Status
                 else if (received["action"] == "status") {
                     for (size_t i = 0; i < devices.size(); ++i) {
@@ -299,26 +339,25 @@ int main() {
                         reply["message"][sn] = status;
                     }
                     reply["status"] = "1";
-                } 
-                
-                // Snap
+                }
+
+                    // Snap
                 else if (received["action"] == "snap") {
-                    for (size_t i = 0; i< devices.size(); ++i) {
+                    for (size_t i = 0; i < devices.size(); ++i) {
                         cameras[i]->Snap();
                     }
                     reply["message"] = "Snapshot Taken";
                     reply["status"] = "1";
                 }
-                
-                // White Balance
+                    // White Balance
                 else if (received["action"] == "whitebalance") {
                     for (size_t i = 0; i < devices.size(); ++i) {
-                         cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                        cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
                     }
                     reply["status"] = "1";
                     reply["message"] = "White Balance Set";
                 }
-            } catch (const GenericException &e) {   
+            } catch (const GenericException &e) {
                 syslog(LOG_ERR, "An exception occurred.");
                 syslog(LOG_ERR, e.GetDescription());
 
@@ -332,11 +371,11 @@ int main() {
             publisher.send(messageS);
 
             //if (received["action"] != "status") {
-                cout << "Response: " << reply.dump().c_str() << endl;
+            cout << "Response: " << reply.dump().c_str() << endl;
             //}
         }
     }
-    
+
     // This code is actually not reachable; a SIGINT will close the daemon gracefully,
     // but the other way to end the service is to turn the computer off, which will
     // probably be the most common end-state. In that case, the cameras never Close(),

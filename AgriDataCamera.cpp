@@ -413,6 +413,9 @@ json AgriDataCamera::GetStatus() {
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
+
+    // Something funny here, occasionally the ptrGrabResult is not available
+    // even though the camera is grabbing?
     try {
         status["Timestamp"] = ptrGrabResult->GetTimeStamp();
     } catch (...) {

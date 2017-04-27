@@ -98,7 +98,7 @@ AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
 AutoGainUpperLimit	6.00000
 AutoExposureTimeLowerLimit	61.0
-AutoExposureTimeUpperLimit	8000.0
+AutoExposureTimeUpperLimit	45000.0
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	1936
 AutoFunctionROISelector	ROI2

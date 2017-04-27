@@ -90,6 +90,10 @@
         <ccTool flags="3">
           <incDir>
             <pElem>../pylon5/include</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libmongoc-1.0</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libbson-1.0</pElem>
             <pElem>CameraDeamon</pElem>
             <pElem>lib</pElem>
             <pElem>/usr/include/lib</pElem>
@@ -118,6 +122,10 @@
         <ccTool flags="3">
           <incDir>
             <pElem>../pylon5/include</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libmongoc-1.0</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libbson-1.0</pElem>
             <pElem>CameraDeamon</pElem>
             <pElem>lib</pElem>
             <pElem>/usr/include/lib</pElem>

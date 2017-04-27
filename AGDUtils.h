@@ -17,6 +17,7 @@ namespace AGDUtils
 {
 	std::vector <std::string> split(const std::string &s, char delim);
 	std::string grabTime();
+        int64_t grabSeconds();
 	std::string pipe_to_string(const char *command);
 }
 
