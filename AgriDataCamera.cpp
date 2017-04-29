@@ -41,8 +41,8 @@ using namespace cv;
 using json = nlohmann::json;
 
 // Timers
-const T_FILESIZE = 200;
-const T_LATEST = 300;
+const int T_FILESIZE = 200;
+const int T_LATEST = 300;
 
 /**
  * Constructor
@@ -288,7 +288,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
         string logmessage;
         struct stat filestatus;
 
-        videofile = save_prefix ".avi";
+        string videofile = save_prefix + ".avi";
 
         // Floats are required here to prevent int overflow
         stat(videofile.c_str(), &filestatus);
@@ -304,7 +304,7 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
             videowriter.release(); // This is done automatically but is included here for clarity
 
             // New file prefix
-            string timenow = AGDUtils::grabTime();
+            timenow = AGDUtils::grabTime();
             save_prefix = output_dir + DeviceSerialNumber() + '_' + timenow;
 
             // Open the video writer
@@ -371,7 +371,7 @@ void AgriDataCamera::Snap() {
         // allow any auto adjustments to take place.
         uint32_t c_countOfImagesToGrab = 21;
     
-        if (!isGrabbing) {
+        if (!IsGrabbing()) {
             StartGrabbing();
         }
 
@@ -384,7 +384,6 @@ void AgriDataCamera::Snap() {
             (uint8_t *) image.GetBuffer());
         
         writeLatestImage(snap_img);
-        StopGrabbing();
     }
 }
 
