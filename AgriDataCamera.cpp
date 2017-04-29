@@ -40,6 +40,10 @@ using namespace std;
 using namespace cv;
 using json = nlohmann::json;
 
+// Timers
+const T_FILESIZE = 200;
+const T_LATEST = 300;
+
 /**
  * Constructor
  */
@@ -142,10 +146,6 @@ void AgriDataCamera::Initialize() {
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
 
-    // Event timers
-    filesize_timer = 200;
-    latest_timer = 300;
-
     isRecording = false;
     isPaused = false;
 
@@ -165,7 +165,7 @@ void AgriDataCamera::Initialize() {
  */
 void AgriDataCamera::Run() {
     // Strings and streams
-    string save_path;
+    string videofile;
     string framefile;
     string logmessage;
     string time_now;
@@ -177,21 +177,24 @@ void AgriDataCamera::Run() {
     
     time_now = AGDUtils::grabTime();
 
+    // Set current filename
+    save_prefix = output_dir + DeviceSerialNumber() + '_' + time_now;
+
     // Open the video file
-    save_path = output_dir + DeviceSerialNumber() + '_' + time_now + ".avi";
-    videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
+    videofile = save_prefix + ".avi";
+    videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
             Size(width, height), true);
 
     // Make sure videowriter was opened successfully
     if (videowriter.isOpened()) {
-        logmessage = "Opened video file: " + save_path;
+        logmessage = "Opened video file: " + videofile;
         syslog(LOG_INFO, logmessage.c_str());
     } else {
-        logmessage = "Failed to write the video file: " + save_path;
+        logmessage = "Failed to write the video file: " + videofile;
         syslog(LOG_ERR, logmessage.c_str());
     }
 
-    framefile = output_dir + DeviceSerialNumber() + '_' + time_now + ".txt";
+    framefile =  save_prefix + ".txt";
     frameout.open(framefile);
     if (frameout.is_open()) {
         logmessage = "Opened log file: " + framefile;
@@ -268,36 +271,55 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
     // CImagePersistence::Save(ImageFileFormat_Tiff,("/home/agridata/output/raw/" + time.str() + ".tiff").c_str(), ptrGrabResult);
     
 
-    // Write to streaming image (All Cameras)
+    // Write to streaming image
     if (latest_timer == 0) {
         cv_img.copyTo(last_img);
 
         //thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
         //t.detach();
         writeLatestImage(last_img);
-        latest_timer = 300;
+        latest_timer = T_LATEST;
     } else {
         latest_timer--;
     }
 
+    // Check for video rollover
     if (filesize_timer == 0) {
-        string timenow = AGDUtils::grabTime();
-        string save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
+        string logmessage;
         struct stat filestatus;
 
+        videofile = save_prefix ".avi";
+
         // Floats are required here to prevent int overflow
-        stat(save_path.c_str(), &filestatus);
+        stat(videofile.c_str(), &filestatus);
         float size = (float) filestatus.st_size;
-        string logmessage;
 
         if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
+            string videofile;
+            string framefile;
+            string timenow;
+
+            // Close the files
             frameout.close();
             videowriter.release(); // This is done automatically but is included here for clarity
 
-            save_path = output_dir + DeviceSerialNumber() + '_' + timenow + ".avi";
-            string framefile = output_dir + DeviceSerialNumber() + '_' + timenow + ".txt";
+            // New file prefix
+            string timenow = AGDUtils::grabTime();
+            save_prefix = output_dir + DeviceSerialNumber() + '_' + timenow;
+
+            // Open the video writer
+            videofile = save_prefix + ".avi";
+            videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
+            if (videowriter.isOpened()) {
+                logmessage = "Opened video file: " + videofile;
+                syslog(LOG_INFO, logmessage.c_str());
+            } else {
+                logmessage = "Failed to write the video file: " + videofile;
+                syslog(LOG_ERR, logmessage.c_str());
+            }
 
             // Open and write logfile headers
+            framefile = save_prefix + ".txt";
             frameout.open(framefile.c_str());
             if (frameout.is_open()) {
                 logmessage = "Opened log file: " + framefile;
@@ -307,19 +329,11 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
                 syslog(LOG_ERR, logmessage.c_str());
             }
             writeHeaders();
-
-            videowriter = VideoWriter(save_path.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
-            if (videowriter.isOpened()) {
-                logmessage = "Opened video file: " + save_path;
-                syslog(LOG_INFO, logmessage.c_str());
-            } else {
-                logmessage = "Failed to write the video file: " + save_path;
-                syslog(LOG_ERR, logmessage.c_str());
-            }
-            filesize_timer = 200;
-        } else {
-            filesize_timer--;
         }
+
+        filesize_timer = T_FILESIZE;
+    } else {
+        filesize_timer--;
     }
 
     // Write to frame log
@@ -357,7 +371,9 @@ void AgriDataCamera::Snap() {
         // allow any auto adjustments to take place.
         uint32_t c_countOfImagesToGrab = 21;
     
-        StartGrabbing();
+        if (!isGrabbing) {
+            StartGrabbing();
+        }
 
         for (size_t i = 0; i < c_countOfImagesToGrab; ++i) {
             RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);

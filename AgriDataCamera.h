@@ -41,7 +41,7 @@ public:
 
     std::string scanid;
     bool isPaused;
-        bool isRecording;
+    bool isRecording;
 
 private:
     // Dimensions
@@ -61,8 +61,9 @@ private:
     // Image converter
     Pylon::CImageFormatConverter fc;
 
-    // Videowriter
+    // Videowriter and filename
     cv::VideoWriter videowriter;
+    std::string save_prefix;
 
     // Frame log stream
     std::ofstream frameout;
