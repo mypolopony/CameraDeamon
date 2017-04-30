@@ -159,7 +159,7 @@ int main() {
     mongocxx::instance inst{};
     mongocxx::client conn{mongocxx::uri{"mongodb://localhost:27017"}};
     mongocxx::database db = conn["agdb"];
-    mongocxx::collection scans = db["scans"];
+    mongocxx::collection scans = db["scan"];
 
     // Initialize Pylon (required for any future Pylon fuctions)
     PylonInitialize();
@@ -252,19 +252,20 @@ int main() {
 
                         // Generate MongoDB doc
                         auto doc = bsoncxx::builder::basic::document{};
-                        auto doc_cameras = bsoncxx::builder::basic::array{};
+                        //auto doc_cameras = bsoncxx::builder::basic::array{};
                         
+                        doc.append(bsoncxx::builder::basic::kvp("scanid", fulluuid[0]));
                         doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64{AGDUtils::grabSeconds()}));
 
                         for (size_t i = 0; i < devices.size(); ++i) {
                             cameras[i]->scanid = fulluuid[0];
-                            doc_cameras.append(cameras[i]->DeviceSerialNumber());
+                            //doc_cameras.append(cameras[i]->DeviceSerialNumber());
 
                             thread t(&AgriDataCamera::Run, cameras[i]);
                             t.detach();
                         }
-
-                        doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
+                            
+                        //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
                         scans.insert_one(doc.view());
                         
                         isRecording = true;
