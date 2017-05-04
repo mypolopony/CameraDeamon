@@ -2,36 +2,8 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
-      <df name=".idea">
-      </df>
-      <df name="build-clion">
-        <df name="CMakeFiles">
-        </df>
-      </df>
       <df name="CameraDeamon">
         <df name="Debug">
-        </df>
-      </df>
-      <df name="cmake-build-debug">
-        <df name="CMakeFiles">
-          <df name="3.7.1">
-            <df name="CompilerIdC">
-              <in>CMakeCCompilerId.c</in>
-            </df>
-            <df name="CompilerIdCXX">
-              <in>CMakeCXXCompilerId.cpp</in>
-            </df>
-          </df>
-          <df name="CameraDeamon.dir">
-            <df name="lib">
-            </df>
-          </df>
-          <df name="CMakeTmp">
-          </df>
-          <df name="Progress">
-          </df>
-          <in>feature_tests.c</in>
-          <in>feature_tests.cxx</in>
         </df>
       </df>
       <df name="config">
@@ -70,32 +42,8 @@
       <in>main.cpp</in>
     </df>
     <df root="." name="1">
-      <df name=".idea">
-      </df>
-      <df name="build-clion">
-        <df name="CMakeFiles">
-        </df>
-      </df>
       <df name="CameraDeamon">
         <df name="Debug">
-        </df>
-      </df>
-      <df name="cmake-build-debug">
-        <df name="CMakeFiles">
-          <df name="3.7.1">
-            <df name="CompilerIdC">
-            </df>
-            <df name="CompilerIdCXX">
-            </df>
-          </df>
-          <df name="CameraDeamon.dir">
-            <df name="lib">
-            </df>
-          </df>
-          <df name="CMakeTmp">
-          </df>
-          <df name="Progress">
-          </df>
         </df>
       </df>
       <df name="config">
@@ -143,8 +91,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
