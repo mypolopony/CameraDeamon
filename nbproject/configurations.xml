@@ -87,22 +87,18 @@
         </ccTool>
       </item>
       <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
+        <ccTool flags="3">
           <incDir>
-            <pElem>/opt/pylon5/include/Base</pElem>
-            <pElem>/opt/pylon5/include/GenApi</pElem>
-            <pElem>/opt/pylon5/include/pylon</pElem>
-            <pElem>/opt/pylon5/include/pylon/usb</pElem>
-            <pElem>/opt/pylon5/include/pylon/private</pElem>
-            <pElem>/usr/local/include/opencv2/core</pElem>
-            <pElem>/usr/local/include/opencv2/videoio</pElem>
-            <pElem>.</pElem>
-            <pElem>/usr/local/include/opencv2</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/local/include/opencv2/core/hal</pElem>
-            <pElem>/usr/local/include/opencv2/imgcodecs</pElem>
-            <pElem>/opt/pylon5/include</pElem>
+            <pElem>../pylon5/include</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libmongoc-1.0</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libbson-1.0</pElem>
             <pElem>CameraDeamon</pElem>
+            <pElem>lib</pElem>
+            <pElem>/usr/include/lib</pElem>
+            <pElem>/usr/include/opencv2</pElem>
+            <pElem>CameraDeamon/library</pElem>
           </incDir>
         </ccTool>
       </item>

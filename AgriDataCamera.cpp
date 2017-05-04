@@ -398,11 +398,18 @@ void AgriDataCamera::Snap() {
 void AgriDataCamera::writeLatestImage(Mat img) {
     string snumber;
     snumber = DeviceSerialNumber.GetValue();
-    Mat dst;
-    resize(img, dst, Size(), 0.2, 0.2);
+    Mat thumb;
+    resize(img, thumb, Size(), 0.2, 0.2);
+    
+    // Thumbnail
     imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
-            "streaming.png",
-            dst, compression_params);
+            "streaming_t.png",
+            thumb, compression_params);
+    // Full
+    imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
+        "streaming.png",
+        img, compression_params);
+    
 }
 
 /**
