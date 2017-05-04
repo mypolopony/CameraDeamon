@@ -11,7 +11,7 @@ ReverseX	0
 ReverseY	0
 PixelFormat	BayerRG8
 TestImageSelector	Off
-GainAuto	Off
+GainAuto	Continuous
 GainSelector	All
 Gain	0.00000
 GainSelector	All
@@ -93,10 +93,10 @@ ChunkSelector	PayloadCRC16
 ChunkEnable	0
 ChunkSelector	Timestamp
 ChunkModeActive	0
-AutoTargetBrightness	0.21569
+AutoTargetBrightness	0.50196
 AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
-AutoGainUpperLimit	6.00000
+AutoGainUpperLimit	12.00000
 AutoExposureTimeLowerLimit	61.0
 AutoExposureTimeUpperLimit	1200.0
 AutoFunctionROISelector	ROI1
