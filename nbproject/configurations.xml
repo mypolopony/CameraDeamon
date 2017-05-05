@@ -54,7 +54,6 @@
                  commonFlags="-mtune=generic -march=x86-64 -std=c++11 -fstack-protector-strong"/>
         <element flagsID="2"
                  commonFlags="-mtune=generic -march=x86-64 -std=gnu++11 -fstack-protector-strong"/>
-        <element flagsID="3" commonFlags="-std=c++11"/>
       </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
@@ -87,18 +86,22 @@
         </ccTool>
       </item>
       <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="3">
+        <ccTool flags="1">
           <incDir>
-            <pElem>../pylon5/include</pElem>
-            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libmongoc-1.0</pElem>
-            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libbson-1.0</pElem>
-            <pElem>CameraDeamon</pElem>
+            <pElem>../pylon5/include/Base</pElem>
+            <pElem>../pylon5/include/GenApi</pElem>
+            <pElem>../pylon5/include/pylon</pElem>
+            <pElem>../pylon5/include/pylon/usb</pElem>
+            <pElem>../pylon5/include/pylon/private</pElem>
+            <pElem>/usr/local/include/opencv2/core</pElem>
+            <pElem>/usr/local/include/opencv2/videoio</pElem>
+            <pElem>.</pElem>
+            <pElem>/usr/local/include/opencv2</pElem>
             <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
+            <pElem>/usr/local/include/opencv2/core/hal</pElem>
+            <pElem>/usr/local/include/opencv2/imgcodecs</pElem>
+            <pElem>../pylon5/include</pElem>
+            <pElem>CameraDeamon</pElem>
           </incDir>
         </ccTool>
       </item>
@@ -119,18 +122,45 @@
         </ccTool>
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="3">
+        <ccTool flags="1">
           <incDir>
-            <pElem>/opt/pylon5/include</pElem>
-            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libmongoc-1.0</pElem>
-            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libbson-1.0</pElem>
-            <pElem>CameraDeamon</pElem>
+            <pElem>../pylon5/include/Base</pElem>
+            <pElem>../pylon5/include/pylon</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/document</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx</pElem>
+            <pElem>/usr/include/boost/utility</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/builder/basic</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/array</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/string</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/builder/stream</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi/mongocxx/options</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi/mongocxx</pElem>
             <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
+            <pElem>.</pElem>
+            <pElem>/usr/include/boost/optional</pElem>
+            <pElem>/usr/include/boost/move</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi/mongocxx/result</pElem>
+            <pElem>../pylon5/include/GenApi</pElem>
+            <pElem>../pylon5/include/pylon/usb</pElem>
+            <pElem>/usr/local/include/opencv2/core</pElem>
+            <pElem>/usr/include/boost/config</pElem>
+            <pElem>/usr/include/boost/exception</pElem>
+            <pElem>/usr/include/boost</pElem>
+            <pElem>/usr/include/boost/detail</pElem>
+            <pElem>/usr/include/boost/mpl/aux_</pElem>
+            <pElem>/usr/include/boost/mpl</pElem>
+            <pElem>/usr/include/boost/type_traits/detail</pElem>
+            <pElem>/usr/include/boost/type_traits</pElem>
+            <pElem>/usr/include/boost/move/detail</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/stdx</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/types</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/builder</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi/bsoncxx/util</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi/mongocxx/model</pElem>
+            <pElem>../pylon5/include</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
+            <pElem>CameraDeamon</pElem>
           </incDir>
         </ccTool>
       </item>

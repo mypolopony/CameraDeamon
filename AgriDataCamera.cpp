@@ -1,5 +1,5 @@
 /* 
- * File:   AgriDataCamera.cpp
+ * File:   AgriDatacpp
  * Author: agridata
  * 
  * Created on March 13, 2017, 1:33 PM
@@ -70,29 +70,62 @@ void AgriDataCamera::Initialize() {
     if (!IsOpen()) {
         Open();
     }
+    
+    if (!IsGrabbing()) {
+        StartGrabbing();
+    }
 
     INodeMap& nodeMap = GetNodeMap();
 
-    // Print the model name of the camera.
+    // Print the model name of the 
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
-
+    /*
     try {
-        string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
-        cout << "Reading from configuration file: " + config;
-        cout << endl;
-        CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
+        syslog(LOG_INFO, logmessage.c_str());
+
+        // Variables
+        int frames_per_second = 20;
+        int exposure_lower_limit = 61;
+        int exposure_upper_limit = 1200;
+
+        // Open camera object
+        Open();
+
+        // The camera device is parameterized with a default configuration
+        // which sets up free-running continuous acquisition.
+        StartGrabbing();
+
+        // Enable the acquisition frame rate parameter and set the frame rate.
+        AcquisitionFrameRateEnable.SetValue(true);
+        AcquisitionFrameRate.SetValue(frames_per_second);
+
+        // Exposure time limits
+        AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
+        AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
+
+        // Minimize Exposure
+        AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
+
+        // Continuous Auto Gain
+        // GainAutoEnable.SetValue(true);
+        GainAuto.SetValue(GainAuto_Continuous);
+        ExposureAuto.SetValue(ExposureAuto_Continuous);
+        // string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
+        // cout << "Reading from configuration file: " + config;
+        // cout << endl;
+        // CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl
                 << e.GetDescription() << endl;
     }
-
-    /*
-    frames_per_second = 30;
-    exposure_lower_limit = 61;
-    exposure_upper_limit = 1200;
+     */
+    
+    int frames_per_second = 20;
+    int exposure_lower_limit = 52;
+    int exposure_upper_limit = 1200;
 
     // prevent parsing of xml during each StartGrabbing()
-    StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
+    //StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
 
     // Enable the acquisition frame rate parameter and set the frame rate.
     AcquisitionFrameRateEnable.SetValue(true);
@@ -107,9 +140,8 @@ void AgriDataCamera::Initialize() {
     AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
 
     // Continuous Auto Gain
-    // camera.GainAutoEnable.SetValue(true);
-    GainAuto.SetValue(GainAuto_Once);
-     */
+    // GainAutoEnable.SetValue(true);
+    GainAuto.SetValue(GainAuto_Continuous);
     
     // Number of buffers does not seem to be specified in .pfs file
     // I'm pretty sure the max is 10, so I don't think any other values are valid.
