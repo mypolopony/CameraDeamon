@@ -85,14 +85,10 @@ void AgriDataCamera::Initialize() {
         cerr << "An exception occurred." << endl
                 << e.GetDescription() << endl;
     }
-
-    /*
-    frames_per_second = 30;
-    exposure_lower_limit = 61;
-    exposure_upper_limit = 1200;
-
-    // prevent parsing of xml during each StartGrabbing()
-    StaticChunkNodeMapPoolSize = MaxNumBuffer.GetValue();
+    
+    int frames_per_second = 20;
+    int exposure_lower_limit = 61;
+    int exposure_upper_limit = 1200;
 
     // Enable the acquisition frame rate parameter and set the frame rate.
     AcquisitionFrameRateEnable.SetValue(true);
@@ -109,7 +105,6 @@ void AgriDataCamera::Initialize() {
     // Continuous Auto Gain
     // camera.GainAutoEnable.SetValue(true);
     GainAuto.SetValue(GainAuto_Once);
-     */
     
     // Number of buffers does not seem to be specified in .pfs file
     // I'm pretty sure the max is 10, so I don't think any other values are valid.
