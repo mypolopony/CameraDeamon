@@ -76,15 +76,18 @@ void AgriDataCamera::Initialize() {
     // Print the model name of the camera.
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
 
+    /*
     try {
         string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
         cout << "Reading from configuration file: " + config;
         cout << endl;
         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
+        
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl
                 << e.GetDescription() << endl;
     }
+     */
     
     int frames_per_second = 20;
     int exposure_lower_limit = 61;
@@ -104,7 +107,7 @@ void AgriDataCamera::Initialize() {
 
     // Continuous Auto Gain
     // camera.GainAutoEnable.SetValue(true);
-    GainAuto.SetValue(GainAuto_Once);
+    GainAuto.SetValue(GainAuto_Continuous);
     
     // Number of buffers does not seem to be specified in .pfs file
     // I'm pretty sure the max is 10, so I don't think any other values are valid.
@@ -115,6 +118,7 @@ void AgriDataCamera::Initialize() {
     } catch (...) {
         cerr << "MaxNumBuffer already set" << endl;
     }
+   
 
     // Get Dimensions
     width = Width.GetValue();
@@ -164,7 +168,8 @@ void AgriDataCamera::Run() {
     string framefile;
     string logmessage;
     string time_now;
-
+    string config;
+   
     // Filestatus for periodically checking filesize
     struct stat filestatus;
     output_dir = output_prefix + scanid + '/';
@@ -205,6 +210,11 @@ void AgriDataCamera::Run() {
     if (!IsGrabbing()) {
         StartGrabbing();
     }
+    
+    // Save configuration
+    INodeMap& nodeMap = GetNodeMap();
+    config = save_prefix + "-config.txt";
+    CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
     // initiate main loop with algorithm
     while (isRecording) {
