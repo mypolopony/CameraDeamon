@@ -1,5 +1,5 @@
 /* 
- * File:   AgriDataCamera.cpp
+ * File:   AgriDatacpp
  * Author: agridata
  * 
  * Created on March 13, 2017, 1:33 PM
@@ -70,19 +70,23 @@ void AgriDataCamera::Initialize() {
     if (!IsOpen()) {
         Open();
     }
+    
+    if (!IsGrabbing()) {
+        StartGrabbing();
+    }
 
     INodeMap& nodeMap = GetNodeMap();
 
-    // Print the model name of the camera.
+    // Print the model name of the 
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
-
+    
     /*
     try {
         string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
         cout << "Reading from configuration file: " + config;
         cout << endl;
         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
-        
+
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl
                 << e.GetDescription() << endl;
@@ -90,7 +94,7 @@ void AgriDataCamera::Initialize() {
      */
     
     int frames_per_second = 20;
-    int exposure_lower_limit = 61;
+    int exposure_lower_limit = 52;
     int exposure_upper_limit = 1200;
 
     // Enable the acquisition frame rate parameter and set the frame rate.
@@ -106,7 +110,7 @@ void AgriDataCamera::Initialize() {
     AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
 
     // Continuous Auto Gain
-    // camera.GainAutoEnable.SetValue(true);
+    // GainAutoEnable.SetValue(true);
     GainAuto.SetValue(GainAuto_Continuous);
     
     // Number of buffers does not seem to be specified in .pfs file
@@ -119,7 +123,6 @@ void AgriDataCamera::Initialize() {
         cerr << "MaxNumBuffer already set" << endl;
     }
    
-
     // Get Dimensions
     width = Width.GetValue();
     height = Height.GetValue();
