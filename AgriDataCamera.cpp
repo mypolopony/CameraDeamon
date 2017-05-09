@@ -255,9 +255,9 @@ void AgriDataCamera::writeHeaders() {
 }
 
 /**
- * writeFrameLog
+ * HandleFrame
  *
- * Output relevant data to the log, one line per frame
+ * Receive latest frame
  */
 void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
     // convert to Mat (OpenCV) format for analysis
@@ -283,9 +283,9 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
     if (latest_timer == 0) {
         cv_img.copyTo(last_img);
 
-        //thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
-        //t.detach();
-        writeLatestImage(last_img);
+        thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
+        t.detach();
+        // writeLatestImage(last_img);
         latest_timer = T_LATEST;
     } else {
         latest_timer--;
