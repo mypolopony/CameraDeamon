@@ -418,9 +418,11 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
             "streaming_t.png",
             thumb, compression_params);
     // Full
+    /*
     imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
         "streaming.png",
         img, compression_params);
+    */
     
 }
 
