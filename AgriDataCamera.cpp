@@ -391,7 +391,8 @@ void AgriDataCamera::Snap() {
         snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
             (uint8_t *) image.GetBuffer());
         
-        writeLatestImage(snap_img);
+        thread t(&AgriDataCamera::writeLatestImage, this, ref(snap_img), ref(compression_params));
+        t.detach();
     }
 }
 
@@ -403,7 +404,7 @@ void AgriDataCamera::Snap() {
  * This is intended to run in a separate thread so as not to block. Compression_params
  * is an OpenCV construct to define the level of compression.
  */
-void AgriDataCamera::writeLatestImage(Mat img) {
+void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
     string snumber;
     snumber = DeviceSerialNumber.GetValue();
     Mat thumb;

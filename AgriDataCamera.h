@@ -83,7 +83,7 @@ private:
     // Methods
     void writeHeaders();
     void HandleFrame(Pylon::CGrabResultPtr ptrGrabResult);
-    void writeLatestImage(cv::Mat img);
+    void writeLatestImage(cv::Mat img, std::vector<int> compression_params);
 
 };
 
