@@ -281,9 +281,10 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
 
     // Write to streaming image
     if (latest_timer == 0) {
+        Mat last_img;
         cv_img.copyTo(last_img);
 
-        thread t(&AgriDataCamera::writeLatestImage, this, ref(last_img), ref(compression_params));
+        thread t(&AgriDataCamera::writeLatestImage, this, last_img, ref(compression_params));
         t.detach();
         // writeLatestImage(last_img);
         latest_timer = T_LATEST;
@@ -391,7 +392,9 @@ void AgriDataCamera::Snap() {
         snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
             (uint8_t *) image.GetBuffer());
         
-        thread t(&AgriDataCamera::writeLatestImage, this, ref(snap_img), ref(compression_params));
+        Mat last_img;
+        snap_img.copyTo(last_img);
+        thread t(&AgriDataCamera::writeLatestImage, this, last_img, ref(compression_params));
         t.detach();
     }
 }
