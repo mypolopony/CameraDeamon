@@ -80,7 +80,6 @@ void AgriDataCamera::Initialize() {
     // Print the model name of the 
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
     
-    /*
     try {
         string config = "/home/agridata/CameraDeamon/config/" + string(GetDeviceInfo().GetModelName()) + ".pfs";
         cout << "Reading from configuration file: " + config;
@@ -91,8 +90,8 @@ void AgriDataCamera::Initialize() {
         cerr << "An exception occurred." << endl
                 << e.GetDescription() << endl;
     }
-     */
     
+    /*
     int frames_per_second = 20;
     int exposure_lower_limit = 52;
     int exposure_upper_limit = 1200;
@@ -112,6 +111,7 @@ void AgriDataCamera::Initialize() {
     // Continuous Auto Gain
     // GainAutoEnable.SetValue(true);
     GainAuto.SetValue(GainAuto_Continuous);
+    */
     
     // Number of buffers does not seem to be specified in .pfs file
     // I'm pretty sure the max is 10, so I don't think any other values are valid.
