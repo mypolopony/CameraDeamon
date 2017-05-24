@@ -25,6 +25,16 @@
 
 // Utilities
 #include "json.hpp"
+#include "zmq.hpp"
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/basic/array.hpp>
+#include <bsoncxx/builder/basic/kvp.hpp>
+#include <bsoncxx/json.hpp>
+#include <bsoncxx/types.hpp>
+
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+
 
 
 class AgriDataCamera : public Pylon::CBaslerUsbInstantCamera {
@@ -33,6 +43,7 @@ public:
 
     void Initialize();
     void Run();
+    void SaveImage(std::string, Pylon::CPylonImage);
     int Stop();
     void Snap();
     nlohmann::json GetStatus();
@@ -79,7 +90,18 @@ private:
     uint8_t max_filesize = 3;
     std::string output_prefix;
     std::string output_dir;
-
+    
+    // MongoDB
+    mongocxx::client conn;
+    mongocxx::database db;
+    mongocxx::collection frames;
+    
+    
+    
+    // ZMQ
+    zmq::context_t ctx_;
+    zmq::socket_t imu_;
+    
     // Methods
     void writeHeaders();
     void HandleFrame(Pylon::CGrabResultPtr ptrGrabResult);
