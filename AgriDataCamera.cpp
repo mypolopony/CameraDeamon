@@ -258,7 +258,28 @@ void AgriDataCamera::Run() {
             try {
                 // Image grabbed successfully?
                 if (ptrGrabResult->GrabSucceeded()) {
-                    HandleFrame(ptrGrabResult);
+                    // Create Frame Packet
+                    FramePacket fp;
+                    
+                    // Basler timestamp
+                    ostringstream camera_time;
+                    camera_time << ptrGrabResult->GetTimeStamp();
+                    fp.camera_time = camera_time.str();
+                    
+                    // Computer time
+                    fp.time_now = AGDUtils::grabTime("%H:%M:%S");
+                    
+                    // IMU data
+                    s_send (imu_, " ");
+                    fp.imu_data = s_recv (imu_);
+                    
+                    // Camera Status
+                    
+                    // Image data
+                    fp.image.AttachGrabResultBuffer( ptrGrabResult);
+                    
+                    thread t(&AgriDataCamera::HandleFrame, this, fp);
+                    t.detach();
                 }
             } catch (const GenericException &e) {
                 logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
@@ -290,28 +311,23 @@ void AgriDataCamera::writeHeaders() {
  *
  * Receive latest frame
  */
-void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
+void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
     
     // Basler time
-    ostringstream camera_time;
-    camera_time << ptrGrabResult->GetTimeStamp();
-    doc.append(bsoncxx::builder::basic::kvp("camera_time", camera_time.str()));
+    doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
     
     // Computer time and output directory
-    string timenow = AGDUtils::grabTime("%H:%M:%S");
-    doc.append(bsoncxx::builder::basic::kvp("timestamp", timenow));
-    vector<string> hms = AGDUtils::split(timenow,':');
+    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
+    vector<string> hms = AGDUtils::split(fp.time_now,':');
     output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
     // Get IMU data
-    s_send (imu_, " ");
-    string imu_data = s_recv (imu_);
-    json frame_obj = json::parse(imu_data);
+    json frame_obj = json::parse(fp.imu_data);
     for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
        try {
            doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (double) it.value()));
@@ -321,17 +337,14 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
     }
     
     // Add Camera data
-    doc.append(bsoncxx:builder::basic::kvp("camera_parameters",bsoncxx::types::b_document{getStatus()}))
+    //doc.append(bsoncxx:builder::basic::kvp("camera_parameters",bsoncxx::types::b_document{getStatus()}))
     
     // Save to DB
-    frames.insert_one(doc.view());
+    //frames.insert_one(doc.view());
     
     // Save image
-    string filename = output_dir + camera_time.str() + ".tiff";
-    CPylonImage image;
-    image.AttachGrabResultBuffer( ptrGrabResult);
-    thread t(&AgriDataCamera::SaveImage, this, filename, image);
-    t.detach();
+    string filename = output_dir + fp.camera_time  + ".tiff";
+    CImagePersistence::Save(ImageFileFormat_Tiff, filename.c_str(), fp.image);
     
     /*
     // Write to streaming image
@@ -400,10 +413,6 @@ void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
         filesize_timer--;
     }
     */
-}
-
-void AgriDataCamera::SaveImage(string filename, CPylonImage img) {
-    CImagePersistence::Save(ImageFileFormat_Tiff, filename.c_str(), img);
 }
 
 /**

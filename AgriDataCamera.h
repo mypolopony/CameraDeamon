@@ -43,7 +43,6 @@ public:
 
     void Initialize();
     void Run();
-    void SaveImage(std::string, Pylon::CPylonImage);
     int Stop();
     void Snap();
     nlohmann::json GetStatus();
@@ -55,6 +54,13 @@ public:
     bool isRecording;
 
 private:
+    struct FramePacket {
+        std::string camera_time;
+        std::string time_now;
+        std::string imu_data;
+        Pylon::CPylonImage image;
+    };
+
     // Dimensions
     int64_t width;
     int64_t height;
@@ -96,15 +102,14 @@ private:
     mongocxx::database db;
     mongocxx::collection frames;
     
-    
-    
+     
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t imu_;
     
     // Methods
     void writeHeaders();
-    void HandleFrame(Pylon::CGrabResultPtr ptrGrabResult);
+    void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat img, std::vector<int> compression_params);
 
 };
