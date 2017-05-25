@@ -58,7 +58,8 @@ private:
         std::string camera_time;
         std::string time_now;
         std::string imu_data;
-        Pylon::CPylonImage image;
+        nlohmann::json status;
+        Pylon::CGrabResultPtr img_ptr;
     };
 
     // Dimensions

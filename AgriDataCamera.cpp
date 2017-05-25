@@ -274,12 +274,12 @@ void AgriDataCamera::Run() {
                     fp.imu_data = s_recv (imu_);
                     
                     // Camera Status
+                    fp.status = GetStatus();
                     
-                    // Image data
-                    fp.image.AttachGrabResultBuffer( ptrGrabResult);
+                    // Image
+                    fp.img_ptr = ptrGrabResult;
                     
-                    thread t(&AgriDataCamera::HandleFrame, this, fp);
-                    t.detach();
+                    HandleFrame(fp);
                 }
             } catch (const GenericException &e) {
                 logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
@@ -312,6 +312,7 @@ void AgriDataCamera::writeHeaders() {
  * Receive latest frame
  */
 void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+    /*
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
@@ -320,11 +321,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // Basler time
     doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
     
-    // Computer time and output directory
-    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
-    vector<string> hms = AGDUtils::split(fp.time_now,':');
-    output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
-    bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    
     
     // Get IMU data
     json frame_obj = json::parse(fp.imu_data);
@@ -342,9 +339,17 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // Save to DB
     //frames.insert_one(doc.view());
     
+     * */
+    
+    // Computer time and output directory
+    // doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
+    vector<string> hms = AGDUtils::split(fp.time_now,':');
+    output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
+    bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    
     // Save image
     string filename = output_dir + fp.camera_time  + ".tiff";
-    CImagePersistence::Save(ImageFileFormat_Tiff, filename.c_str(), fp.image);
+    CImagePersistence::Save(ImageFileFormat_Tiff, filename.c_str(), fp.img_ptr);
     
     /*
     // Write to streaming image
