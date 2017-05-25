@@ -346,7 +346,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     vector<string> hms = AGDUtils::split(fp.time_now,':');
     output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    
+
     // Save image
     string filename = output_dir + fp.camera_time  + ".tiff";
     CImagePersistence::Save(ImageFileFormat_Tiff, filename.c_str(), fp.img_ptr);

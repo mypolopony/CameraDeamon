@@ -355,7 +355,9 @@ int main() {
                     // White Balance
                 else if (received["action"] == "whitebalance") {
                     for (size_t i = 0; i < devices.size(); ++i) {
-                        cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                        if (received["camera"].get<std::string>().compare(cameras[i]->DeviceSerialNumber.GetValue()) == 0) {
+                            cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                        }
                     }
                     reply["status"] = "1";
                     reply["message"] = "White Balance Set";
