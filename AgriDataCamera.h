@@ -92,6 +92,7 @@ private:
     // Timers
     uint8_t latest_timer;
     uint8_t filesize_timer;
+    uint8_t mongodb_timer;  
 
     // Output Parameters
     uint8_t max_filesize = 3;
@@ -102,8 +103,14 @@ private:
     mongocxx::client conn;
     mongocxx::database db;
     mongocxx::collection frames;
+    std::vector<bsoncxx::v_noabi::document::value> documents;
     
-     
+    // Timestamp (should go in status block)
+    std::string last_timestamp;
+    
+    // String IMU Status (should go in status block)
+    std::string imu_status;
+    
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t imu_;
@@ -112,7 +119,8 @@ private:
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat img, std::vector<int> compression_params);
-
+    std::string imu_wrapper(AgriDataCamera::FramePacket);
+    
 };
 
 #endif /* AGRIDATACAMERA_H */
