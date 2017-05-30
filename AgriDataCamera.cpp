@@ -309,6 +309,7 @@ void AgriDataCamera::Run() {
                     fp.camera_time = camera_time.str();
                     
                     // Computer time
+                    cout << 0 << endl;
                     fp.time_now = AGDUtils::grabTime("%H_%M_%S");
                     last_timestamp = fp.time_now;
                     
@@ -319,17 +320,18 @@ void AgriDataCamera::Run() {
                     } catch(runtime_error& e) {
                         fp.imu_data = "Error";
                     }
-                     */
+                     
                     s_send(imu_, " ");
                     last_imu_data = s_recv(imu_);
                     fp.imu_data = last_imu_data;
-                    
+                     * */
+                    cout << "STATUS" << endl;
                     // Camera Status
                     fp.status = GetStatus();
-                    
+                    cout << "IMAGE" << endl;
                     // Image
                     fp.img_ptr = ptrGrabResult;
-                    
+                    cout << "22" << endl;
                     HandleFrame(fp);
                 }
             } catch (const GenericException &e) {
@@ -363,12 +365,13 @@ void AgriDataCamera::writeHeaders() {
  * Receive latest frame
  */
 void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+    cout << 2;
     fc.Convert(image, fp.img_ptr);
-    cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,(uint8_t *) image.GetBuffer());
+    cv_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,(uint8_t *) image.GetBuffer());
 
     // Write the original stream into file
     videowriter << cv_img;
-    
+    cout << 1;
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
@@ -376,11 +379,12 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     
     // Basler time and frame
     doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
-    doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr));
+    doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr->GetImageNumber()));
     
     
  
     // Parse IMU data
+    /*
     try {
         json frame_obj = json::parse(fp.imu_data);
         for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
@@ -393,6 +397,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } catch (...) {
         cerr << "Sorry, no more IMU information is available!";
     }
+     * */
     
     // Add Camera data
     //doc.append(bsoncxx:builder::basic::kvp("camera_parameters",bsoncxx::types::b_document{getStatus()}))
@@ -573,6 +578,8 @@ int AgriDataCamera::Stop() {
  */
 json AgriDataCamera::GetStatus() {
     json status;
+    
+    /*
     json imu_status;
     imu_status["IMU_VELOCITY_NORTH"] = -99.9;
     imu_status["IMU_VELOCITY_EAST"] = -99.9;
@@ -602,6 +609,7 @@ json AgriDataCamera::GetStatus() {
     } catch (...) {
         cerr << "Second IMU Fail";
     }
+     * */
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
