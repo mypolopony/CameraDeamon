@@ -150,7 +150,7 @@ void AgriDataCamera::Initialize() {
     // } catch (...) {
     //     cerr << "MaxNumBuffer already set" << endl;
     // }
-   
+       
     // Get Dimensions
     width = Width.GetValue();
     height = Height.GetValue();
@@ -403,13 +403,14 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Save image
     stringstream filename;
-    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".jpg";
-    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
-    fc.Convert(image, fp.img_ptr);
-    last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
+    CImagePersistenceOptions options;
+    CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
+    //fc.Convert(image, fp.img_ptr);
+    //last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
     //Mat small_last_img;
     //resize(last_img, small_last_img, Size(), 0.5, 0.5);
-    imwrite(filename.str(), last_img);
+    //imwrite(filename.str(), last_img);
 
     // Send documents to database
     if (mongodb_timer == 0) {
