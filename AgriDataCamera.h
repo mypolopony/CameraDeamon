@@ -108,8 +108,8 @@ private:
     // Timestamp (should go in status block)
     std::string last_timestamp;
     
-    // String IMU Status (should go in status block)
-    std::string imu_status;
+    // IMU_Data (to store while recording)
+    std::string last_imu_data;
     
     // ZMQ
     zmq::context_t ctx_;

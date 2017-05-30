@@ -188,9 +188,15 @@ void AgriDataCamera::Initialize() {
     db = conn["agdb"];
     frames = db["frame"];
 
+    // Initial status
     isRecording = false;
     isPaused = false;
-
+    
+    // Timers
+    mongodb_timer = T_MONGODB;
+    filesize_timer = T_FILESIZE;
+    latest_timer = T_LATEST;
+            
     // Streaming image compression
     compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
     compression_params.push_back(3);
@@ -316,7 +322,8 @@ void AgriDataCamera::Run() {
                     }
                      */
                     s_send(imu_, " ");
-                    imu_status = s_recv(imu_);
+                    last_imu_data = s_recv(imu_);
+                    fp.imu_data = last_imu_data;
                     
                     // Camera Status
                     fp.status = GetStatus();
@@ -502,16 +509,33 @@ int AgriDataCamera::Stop() {
  */
 json AgriDataCamera::GetStatus() {
     json status;
-    json imu_data = json::parse(imu_status);
-    status["Velocity_North"] = imu_data["Velocity_North"].get<std::string>();
-    status["Velocity_East"] = imu_data["Velocity_East"].get<std::string>();
+    json imu_status;
+    
+    // If we'rot recording, make a new IMU request
+    // If we are recording, this can get in the way of the frame grabber's communication with the imu
+    if (!isRecording) {
+        s_send(imu_, " ");
+        imu_status = json::parse(s_recv(imu_));
+    } else {
+        imu_status = json::parse(last_imu_data);
+        if (imu_status.is_null()) {
+            imu_status["IMU_VELOCITY_NORTH"] = -99.9;
+            imu_status["IMU_VELOCITY_EAST"] = -99.9;
+        }
+    }
+    
+    status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<double>();
+    status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
 
     // Something funny here, occasionally the ptrGrabResult is not available
     // even though the camera is grabbing?
-    status["Timestamp"] = last_timestamp;
+    if (isRecording)
+        status["Timestamp"] = last_timestamp;
+    else
+        status["Timestamp"] = "Not Recording";
     status["Exposure Time"] = ExposureTime.GetValue();
     status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
     status["Current Gain"] = Gain.GetValue();

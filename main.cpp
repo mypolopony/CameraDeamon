@@ -360,7 +360,7 @@ int main() {
                         }
                     }
                     reply["status"] = "1";
-                    reply["message"] = "White Balance Set";
+                    reply["message"] = "White Balance Set on Camera " + received["camera"].get<std::string>();
                 }
             } catch (const GenericException &e) {
                 syslog(LOG_ERR, "An exception occurred.");
