@@ -137,8 +137,6 @@ void AgriDataCamera::Initialize() {
     // Continuous Auto Gain
     // GainAutoEnable.SetValue(true);
     GainAuto.SetValue(GainAuto_Continuous);
-    AutoGainUpperLimit.SetValue(6);
-    AutoGainLowerLimit.SetValue(0);
     */
     
     // Number of buffers does not seem to be specified in .pfs file
@@ -483,9 +481,11 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
             "streaming_t.png",
             thumb, compression_params);
     // Full
+    /*
     imwrite("/home/agridata/EmbeddedServer/images/" + snumber + '_' +
         "streaming.png",
         img, compression_params);
+    */
     
 }
 
@@ -532,7 +532,7 @@ json AgriDataCamera::GetStatus() {
         }
     }
     
-    status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<double>();
+    status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<doubles();
     status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
