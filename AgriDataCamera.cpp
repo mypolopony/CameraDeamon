@@ -150,7 +150,7 @@ void AgriDataCamera::Initialize() {
     // } catch (...) {
     //     cerr << "MaxNumBuffer already set" << endl;
     // }
-   
+
     // Get Dimensions
     width = Width.GetValue();
     height = Height.GetValue();
@@ -503,24 +503,32 @@ int AgriDataCamera::Stop() {
 }
 
 /**
- * GetInfo
+ * GetStatus
  *
- * Respond to the heartbeat the data about the camera
+ * Respond to the heartbeat with data about the camera
  */
 json AgriDataCamera::GetStatus() {
     json status;
     json imu_status;
+    
+    // Guilty until proven innocent
+    imu_status["IMU_VELOCITY_NORTH"] = -99.9;
+    imu_status["IMU_VELOCITY_EAST"] = -99.9;
     
     // If we'rot recording, make a new IMU request
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
     if (!isRecording) {
         s_send(imu_, " ");
         imu_status = json::parse(s_recv(imu_));
-    } else {
-        imu_status = json::parse(last_imu_data);
+    } else {    
         if (imu_status.is_null()) {
-            imu_status["IMU_VELOCITY_NORTH"] = -99.9;
-            imu_status["IMU_VELOCITY_EAST"] = -99.9;
+            cerr << "IMU is NULL";
+        } else {
+            try {
+                imu_status = json::parse(last_imu_data);
+            } catch (...) {
+                cerr << "IMU Parse Fail";
+            }
         }
     }
     

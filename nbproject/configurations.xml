@@ -11,7 +11,9 @@
           <in>c_standard_headers_indexer.c</in>
         </df>
       </df>
+      <in>AGDUtils.cpp</in>
       <in>AgriDataCamera.cpp</in>
+      <in>main.cpp</in>
     </df>
     <df root="." name="1">
     </df>
@@ -74,7 +76,7 @@
           <preBuildCommand>cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${IDE_CC} -DCMAKE_CXX_COMPILER=${IDE_CXX} -DCMAKE_C_FLAGS_DEBUG="-g3 -gdwarf-2" -DCMAKE_CXX_FLAGS_DEBUG="-g3 -gdwarf-2" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .</preBuildCommand>
         </preBuild>
       </makefileType>
-      <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
+      <item path="AGDUtils.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
           <incDir>
             <pElem>../pylon5/include</pElem>
@@ -104,6 +106,22 @@
       </item>
       <item path="lib/jtest.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="main.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="2">
+          <incDir>
+            <pElem>../pylon5/include</pElem>
+            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libmongoc-1.0</pElem>
+            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
+            <pElem>/usr/local/include/libbson-1.0</pElem>
+            <pElem>CameraDeamon</pElem>
+            <pElem>lib</pElem>
+            <pElem>/usr/include/lib</pElem>
+            <pElem>/usr/include/opencv2</pElem>
+            <pElem>CameraDeamon/library</pElem>
+          </incDir>
         </ccTool>
       </item>
       <item path="nbproject/private/c_standard_headers_indexer.c"
