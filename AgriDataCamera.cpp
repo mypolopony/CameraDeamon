@@ -369,8 +369,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
     
-    // Basler time
+    // Basler time and frame
     doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
+    doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr));
+    
+    
  
     // Parse IMU data
     json frame_obj = json::parse(fp.imu_data);
@@ -401,10 +404,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     
     // Send documents to database
     if (mongodb_timer == 0) {
+        cout << "Dumping documents";
         frames.insert_many(documents);
         mongodb_timer = T_MONGODB;
         documents.clear();
-        cout << "Dumping documents";
     } else {
         mongodb_timer--;
     }
@@ -495,8 +498,14 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
  * Upon receiving a stop message, set the isRecording flag
  */
 int AgriDataCamera::Stop() {
+    
     syslog(LOG_INFO, "Recording Stopped");
     isRecording = false;
+    
+    cout << "Dumping documents";
+    frames.insert_many(documents);
+    documents.clear();
+    
     syslog(LOG_INFO, "*** Done ***");
     frameout.close();
     return 0;
@@ -510,6 +519,8 @@ int AgriDataCamera::Stop() {
 json AgriDataCamera::GetStatus() {
     json status;
     json imu_status;
+    imu_status["IMU_VELOCITY_NORTH"] = -99.9;
+    imu_status["IMU_VELOCITY_EAST"] = -99.9;
     
     // If we'rot recording, make a new IMU request
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
@@ -517,10 +528,12 @@ json AgriDataCamera::GetStatus() {
         s_send(imu_, " ");
         imu_status = json::parse(s_recv(imu_));
     } else {
-        imu_status = json::parse(last_imu_data);
-        if (imu_status.is_null()) {
-            imu_status["IMU_VELOCITY_NORTH"] = -99.9;
-            imu_status["IMU_VELOCITY_EAST"] = -99.9;
+        if (!imu_status.is_null()) {
+            try {
+                imu_status = json::parse(last_imu_data);
+            } catch (...) {
+                cerr << "IMU Fail";
+            }
         }
     }
     
