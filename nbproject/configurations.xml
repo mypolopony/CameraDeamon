@@ -13,7 +13,6 @@
       </df>
       <in>AGDUtils.cpp</in>
       <in>AgriDataCamera.cpp</in>
-      <in>main.cpp</in>
     </df>
     <df root="." name="1">
     </df>
@@ -51,8 +50,10 @@
         <element flagsID="0"
                  commonFlags="-mtune=generic -march=x86-64 -g -fstack-protector-strong"/>
         <element flagsID="1"
+                 commonFlags="-mtune=generic -march=x86-64 -std=c++11 -fstack-protector-strong"/>
+        <element flagsID="2"
                  commonFlags="-mtune=generic -march=x86-64 -std=gnu++11 -fstack-protector-strong"/>
-        <element flagsID="2" commonFlags="-std=c++11"/>
+        <element flagsID="3" commonFlags="-std=c++11"/>
       </flagsDictionary>
       <codeAssistance>
       </codeAssistance>
@@ -77,23 +78,15 @@
         </preBuild>
       </makefileType>
       <item path="AGDUtils.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="2">
+        <ccTool flags="1">
           <incDir>
-            <pElem>../pylon5/include</pElem>
-            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libmongoc-1.0</pElem>
-            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libbson-1.0</pElem>
+            <pElem>.</pElem>
             <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
           </incDir>
         </ccTool>
       </item>
       <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="2">
+        <ccTool flags="3">
           <incDir>
             <pElem>../pylon5/include</pElem>
             <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
@@ -117,27 +110,11 @@
         </ccTool>
       </folder>
       <item path="lib/emulator.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
+        <ccTool flags="2">
         </ccTool>
       </item>
       <item path="lib/jtest.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="1">
-        </ccTool>
-      </item>
-      <item path="main.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
-          <incDir>
-            <pElem>../pylon5/include</pElem>
-            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libmongoc-1.0</pElem>
-            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libbson-1.0</pElem>
-            <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
-          </incDir>
         </ccTool>
       </item>
       <item path="nbproject/private/c_standard_headers_indexer.c"

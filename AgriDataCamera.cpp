@@ -376,13 +376,17 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     
  
     // Parse IMU data
-    json frame_obj = json::parse(fp.imu_data);
-    for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
-       try {
-           doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (double) it.value()));
-       } catch (...) {
-           doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (bool) it.value()));
-       }
+    try {
+        json frame_obj = json::parse(fp.imu_data);
+        for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
+           try {
+               doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (double) it.value()));
+           } catch (...) {
+               doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (bool) it.value()));
+           }
+        }
+    } catch (...) {
+        cerr << "Sorry, no more IMU information is available!";
     }
     
     // Add Camera data
@@ -399,9 +403,14 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Save image
     stringstream filename;
-    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
-    CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
-    
+    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".jpg";
+    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
+    fc.Convert(image, fp.img_ptr);
+    last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    //Mat small_last_img;
+    //resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    imwrite(filename.str(), last_img);
+
     // Send documents to database
     if (mongodb_timer == 0) {
         cout << "Dumping documents";
@@ -526,7 +535,11 @@ json AgriDataCamera::GetStatus() {
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
     if (!isRecording) {
         s_send(imu_, " ");
-        imu_status = json::parse(s_recv(imu_));
+        try {
+            imu_status = json::parse(s_recv(imu_));
+        } catch (...) {
+            cerr << "Bad IMU";
+        }
     } else {
         if (!imu_status.is_null()) {
             try {
