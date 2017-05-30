@@ -12,13 +12,15 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 namespace AGDUtils
 {
-	std::vector <std::string> split(const std::string &s, char delim);
-	std::string grabTime();
-        int64_t grabSeconds();
-	std::string pipe_to_string(const char *command);
+    bool mkdirp(const char* path, mode_t mode);
+    std::vector <std::string> split(const std::string &s, char delim);
+    std::string grabTime(std::string format);
+    int64_t grabSeconds();
+    std::string pipe_to_string(const char *command);
 }
 
 #endif /* AGDUTILS_H */

@@ -13,7 +13,7 @@ PixelFormat	BayerRG8
 TestImageSelector	Off
 GainAuto	Continuous
 GainSelector	All
-Gain	0.00000
+Gain	12.00000
 GainSelector	All
 BlackLevelSelector	All
 BlackLevel	0.00000
@@ -93,7 +93,11 @@ ChunkSelector	PayloadCRC16
 ChunkEnable	0
 ChunkSelector	Timestamp
 ChunkModeActive	0
+<<<<<<< HEAD
+AutoTargetBrightness	0.21569
+=======
 AutoTargetBrightness	0.50196
+>>>>>>> d4977422475a6f21e84563936b856885f9c67e99
 AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
 AutoGainUpperLimit	12.00000

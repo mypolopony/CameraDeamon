@@ -92,22 +92,6 @@
           </incDir>
         </ccTool>
       </item>
-      <item path="AgriDataCamera.cpp" ex="false" tool="1" flavor2="8">
-        <ccTool flags="2">
-          <incDir>
-            <pElem>../pylon5/include</pElem>
-            <pElem>/usr/local/include/mongocxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libmongoc-1.0</pElem>
-            <pElem>/usr/local/include/bsoncxx/v_noabi</pElem>
-            <pElem>/usr/local/include/libbson-1.0</pElem>
-            <pElem>CameraDeamon</pElem>
-            <pElem>lib</pElem>
-            <pElem>/usr/include/lib</pElem>
-            <pElem>/usr/include/opencv2</pElem>
-            <pElem>CameraDeamon/library</pElem>
-          </incDir>
-        </ccTool>
-      </item>
       <folder path="0/lib">
         <ccTool>
           <incDir>

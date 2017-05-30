@@ -7,7 +7,21 @@
 
 #include "AgriDataCamera.h"
 #include "AGDUtils.h"
+
+// Utilities
+#include "zmq.hpp"
+#include "zhelpers.hpp"
 #include "json.hpp"
+
+// MongoDB & BSON
+#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/basic/array.hpp>
+#include <bsoncxx/builder/basic/kvp.hpp>
+#include <bsoncxx/json.hpp>
+#include <bsoncxx/types.hpp>
+
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
@@ -22,10 +36,18 @@
 #include <fstream>
 #include <sstream>
 #include <thread>
+#include <ctime>
+#include <iostream>
+#include <chrono>
+#include <mutex>
+#include <condition_variable>
+
 
 // Other
 #include <syslog.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 // Include files to use openCV.
 #include "opencv2/core.hpp"
@@ -35,20 +57,24 @@
 // Namespaces
 using namespace Basler_UsbCameraParams;
 using namespace Pylon;
-using namespace GenApi;
 using namespace std;
 using namespace cv;
+using namespace GenApi;
 using json = nlohmann::json;
 
 // Timers
 const int T_FILESIZE = 200;
 const int T_LATEST = 300;
+const int T_MONGODB = 60*20;          // Every minute is ok?
 
 /**
  * Constructor
  */
-AgriDataCamera::AgriDataCamera() {
-}
+AgriDataCamera::AgriDataCamera() 
+    : ctx_(1), 
+      imu_(ctx_,ZMQ_REQ),
+      conn{mongocxx::uri{"mongodb://localhost:27017"}}
+    {}
 
 /**
  * Destructor
@@ -117,12 +143,12 @@ void AgriDataCamera::Initialize() {
     // I'm pretty sure the max is 10, so I don't think any other values are valid.
     // Also, this seems to raise trouble when the cameras has already been initialized,
     // i.e. on stop / reinitialization
-    try {
-        GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
-    } catch (...) {
-        cerr << "MaxNumBuffer already set" << endl;
-    }
-   
+    // try {
+    //    GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
+    // } catch (...) {
+    //     cerr << "MaxNumBuffer already set" << endl;
+    // }
+
     // Get Dimensions
     width = Width.GetValue();
     height = Height.GetValue();
@@ -147,18 +173,60 @@ void AgriDataCamera::Initialize() {
 
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
+    
+    // ZMQ and DB Connection
+    imu_.connect("tcp://127.0.0.1:4997");
+    
+    // Wait for sockets
+    zmq_sleep(1.5);
 
+    // Initialize MongoDB connection
+    // The use of auto here is unfortunate, but it is apparently recommended
+    // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
+    db = conn["agdb"];
+    frames = db["frame"];
+
+    // Initial status
     isRecording = false;
     isPaused = false;
-
+    
+    // Timers
+    mongodb_timer = T_MONGODB;
+    filesize_timer = T_FILESIZE;
+    latest_timer = T_LATEST;
+            
     // Streaming image compression
     compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
     compression_params.push_back(3);
-
-    // Output parameters
-    max_filesize = 3;
-    output_prefix = "/home/agridata/output/";
 }
+
+/**
+ * imu_wrapper
+ *
+ * Allows a timeout to be attached to the IMU call
+ */
+string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp) {
+    mutex m;
+    condition_variable cv;
+    string data;
+    
+    thread t([this, &m, &cv, &data]() {
+        s_send(imu_, " ");
+        data = s_recv(imu_);
+        cv.notify_one();
+    });
+    
+    t.detach();
+    
+    {
+        unique_lock<mutex> lock(m);
+        if (cv.wait_for(lock, chrono::milliseconds(20)) == cv_status::timeout)
+            throw runtime_error("IMU Timeout");
+    }
+
+    return data;
+}
+
 
 /**
  * Run
@@ -172,17 +240,15 @@ void AgriDataCamera::Run() {
     string logmessage;
     string time_now;
     string config;
+    
+    // Output parameters
+    save_prefix = "/home/agridata/output/" + scanid + "/" + DeviceSerialNumber.GetValue() + "/";
+    bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
    
     // Filestatus for periodically checking filesize
-    struct stat filestatus;
-    output_dir = output_prefix + scanid + '/';
-    int status = mkdir(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    
-    time_now = AGDUtils::grabTime();
+    // struct stat filestatus;
 
-    // Set current filename
-    save_prefix = output_dir + DeviceSerialNumber() + '_' + time_now;
-
+    /*
     // Open the video file
     videofile = save_prefix + ".avi";
     videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
@@ -196,6 +262,7 @@ void AgriDataCamera::Run() {
         logmessage = "Failed to write the video file: " + videofile;
         syslog(LOG_ERR, logmessage.c_str());
     }
+    
 
     framefile =  save_prefix + ".txt";
     frameout.open(framefile);
@@ -207,6 +274,7 @@ void AgriDataCamera::Run() {
         logmessage = "Failed to open log file: " + framefile;
         syslog(LOG_ERR, logmessage.c_str());
     }
+     */
 
     // Set recording to true and start grabbing
     isRecording = true;
@@ -216,9 +284,12 @@ void AgriDataCamera::Run() {
     
     // Save configuration
     INodeMap& nodeMap = GetNodeMap();
-    config = save_prefix + "-config.txt";
+    config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
-
+    
+    // Timing
+    struct timeval tim;
+    
     // initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {
@@ -227,7 +298,38 @@ void AgriDataCamera::Run() {
             try {
                 // Image grabbed successfully?
                 if (ptrGrabResult->GrabSucceeded()) {
-                    HandleFrame(ptrGrabResult);
+                    // Create Frame Packet
+                    FramePacket fp;
+                    
+                    // Basler timestamp
+                    // TODO: This would be attached to fp.img_ptr, by the way. . .
+                    ostringstream camera_time;
+                    camera_time << ptrGrabResult->GetTimeStamp();
+                    fp.camera_time = camera_time.str();
+                    
+                    // Computer time
+                    fp.time_now = AGDUtils::grabTime("%H:%M:%S");
+                    last_timestamp = fp.time_now;
+                    
+                    // IMU data
+                    /*
+                    try {
+                        fp.imu_data = imu_wrapper(fp);
+                    } catch(runtime_error& e) {
+                        fp.imu_data = "Error";
+                    }
+                     */
+                    s_send(imu_, " ");
+                    last_imu_data = s_recv(imu_);
+                    fp.imu_data = last_imu_data;
+                    
+                    // Camera Status
+                    fp.status = GetStatus();
+                    
+                    // Image
+                    fp.img_ptr = ptrGrabResult;
+                    
+                    HandleFrame(fp);
                 }
             } catch (const GenericException &e) {
                 logmessage = ptrGrabResult->GetErrorCode() + "\n" + ptrGrabResult->GetErrorDescription() + "\n" + e.GetDescription();
@@ -248,7 +350,7 @@ void AgriDataCamera::writeHeaders() {
     oss << "Timestamp,"
         << "Exposure Time,"
         << "Resulting Frame Rate,"
-        << "Current Bandwidth,"
+        << "Current Gain,"
         << "Device Temperature" << endl;
 
     frameout << oss.str();
@@ -259,102 +361,63 @@ void AgriDataCamera::writeHeaders() {
  *
  * Receive latest frame
  */
-void AgriDataCamera::HandleFrame(CGrabResultPtr ptrGrabResult) {
-    // convert to Mat (OpenCV) format for analysis
-    fc.Convert(image, ptrGrabResult);
-    cv_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3,
-            (uint8_t *) image.GetBuffer());
+void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+    // Docuemnt
+    auto doc = bsoncxx::builder::basic::document{};
+    doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
+    doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
+    
+    // Basler time
+    doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
+ 
+    // Parse IMU data
+    json frame_obj = json::parse(fp.imu_data);
+    for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
+       try {
+           doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (double) it.value()));
+       } catch (...) {
+           doc.append(bsoncxx::builder::basic::kvp((string) it.key(), (bool) it.value()));
+       }
+    }
+    
+    // Add Camera data
+    //doc.append(bsoncxx:builder::basic::kvp("camera_parameters",bsoncxx::types::b_document{getStatus()}))
+    
+    // Add to documents
+    documents.push_back(doc.extract());
+    
+    // Computer time and output directory
+    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
+    vector<string> hms = AGDUtils::split(fp.time_now,':');
+    output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
+    bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    // Write the original stream into file
-    videowriter << cv_img;
+    // Save image
+    stringstream filename;
+    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
+    CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
     
-    // For writing individual files
-    // ostringstream time;
-    // time << ptrGrabResult->GetTimeStamp();
+    // Send documents to database
+    if (mongodb_timer == 0) {
+        frames.insert_many(documents);
+        mongodb_timer = T_MONGODB;
+        documents.clear();
+        cout << "Dumping documents";
+    } else {
+        mongodb_timer--;
+    }
     
-    // Dump compressed JPG
-    // imwrite("/home/agridata/output/images/" + time.str() + ".jpg", cv_img);
-    
-    // Dumping raw TIFF
-    // CImagePersistence::Save(ImageFileFormat_Tiff,("/home/agridata/output/raw/" + time.str() + ".tiff").c_str(), ptrGrabResult);
-    
-
     // Write to streaming image
     if (latest_timer == 0) {
-        Mat last_img;
-        cv_img.copyTo(last_img);
-
+        fc.Convert(image, fp.img_ptr);
+        last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+        
         thread t(&AgriDataCamera::writeLatestImage, this, last_img, ref(compression_params));
         t.detach();
-        // writeLatestImage(last_img);
         latest_timer = T_LATEST;
     } else {
         latest_timer--;
     }
-
-    // Check for video rollover
-    if (filesize_timer == 0) {
-        string logmessage;
-        struct stat filestatus;
-
-        string videofile = save_prefix + ".avi";
-
-        // Floats are required here to prevent int overflow
-        stat(videofile.c_str(), &filestatus);
-        float size = (float) filestatus.st_size;
-
-        if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
-            string videofile;
-            string framefile;
-            string timenow;
-
-            // Close the files
-            frameout.close();
-            videowriter.release(); // This is done automatically but is included here for clarity
-
-            // New file prefix
-            timenow = AGDUtils::grabTime();
-            save_prefix = output_dir + DeviceSerialNumber() + '_' + timenow;
-
-            // Open the video writer
-            videofile = save_prefix + ".avi";
-            videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
-            if (videowriter.isOpened()) {
-                logmessage = "Opened video file: " + videofile;
-                syslog(LOG_INFO, logmessage.c_str());
-            } else {
-                logmessage = "Failed to write the video file: " + videofile;
-                syslog(LOG_ERR, logmessage.c_str());
-            }
-
-            // Open and write logfile headers
-            framefile = save_prefix + ".txt";
-            frameout.open(framefile.c_str());
-            if (frameout.is_open()) {
-                logmessage = "Opened log file: " + framefile;
-                syslog(LOG_INFO, logmessage.c_str());
-            } else {
-                logmessage = "Failed to open log file: " + framefile;
-                syslog(LOG_ERR, logmessage.c_str());
-            }
-            writeHeaders();
-        }
-
-        filesize_timer = T_FILESIZE;
-    } else {
-        filesize_timer--;
-    }
-
-    // Write to frame log
-    ostringstream oss;
-    oss << ptrGrabResult->GetTimeStamp() << ','
-            << ExposureTime.GetValue() << ',' 
-            << ResultingFrameRate.GetValue() << ','
-            << DeviceLinkCurrentThroughput.GetValue() << ','
-            << DeviceTemperature.GetValue() << endl;
-
-    frameout << oss.str();
-
 }
 
 /**
@@ -440,31 +503,55 @@ int AgriDataCamera::Stop() {
 }
 
 /**
- * GetInfo
+ * GetStatus
  *
- * Respond to the heartbeat the data about the camera
+ * Respond to the heartbeat with data about the camera
  */
 json AgriDataCamera::GetStatus() {
     json status;
+    json imu_status;
+    
+    // Guilty until proven innocent
+    imu_status["IMU_VELOCITY_NORTH"] = -99.9;
+    imu_status["IMU_VELOCITY_EAST"] = -99.9;
+    
+    // If we'rot recording, make a new IMU request
+    // If we are recording, this can get in the way of the frame grabber's communication with the imu
+    if (!isRecording) {
+        s_send(imu_, " ");
+        imu_status = json::parse(s_recv(imu_));
+    } else {    
+        if (imu_status.is_null()) {
+            cerr << "IMU is NULL";
+        } else {
+            try {
+                imu_status = json::parse(last_imu_data);
+            } catch (...) {
+                cerr << "IMU Parse Fail";
+            }
+        }
+    }
+    
+    status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<doubles();
+    status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
 
     // Something funny here, occasionally the ptrGrabResult is not available
     // even though the camera is grabbing?
-    try {
-        status["Timestamp"] = ptrGrabResult->GetTimeStamp();
-    } catch (...) {
-        status["Timestamp"] = "Not Grabbing";
-    }
+    if (isRecording)
+        status["Timestamp"] = last_timestamp;
+    else
+        status["Timestamp"] = "Not Recording";
     status["Exposure Time"] = ExposureTime.GetValue();
     status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
-    status["Current Bandwidth"] = DeviceLinkCurrentThroughput.GetValue();
+    status["Current Gain"] = Gain.GetValue();
     status["Temperature"] = DeviceTemperature.GetValue();
     try {
-        status["ScanID"] = scanid;
+        status["scanid"] = scanid;
     } catch (...) {
-        status["ScanID"] = "";
+        status["scanid"] = "";
     }
     
     return status;

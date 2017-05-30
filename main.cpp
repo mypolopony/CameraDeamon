@@ -59,8 +59,8 @@
 // Namespaces for convenience
 using namespace Basler_UsbCameraParams;
 using namespace Pylon;
-using namespace GenApi;
 using namespace cv;
+using namespace GenApi;
 using namespace std;
 using json = nlohmann::json;
 
@@ -246,31 +246,33 @@ int main() {
                         syslog(LOG_INFO, logmessage.c_str());
 
                         // Generate UUID for scan
-                        vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
-                        logmessage = "Starting scan " + fulluuid[0];
+                        //vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
+                        string scanid = AGDUtils::grabTime("%Y-%m-%d_%H-%M");
+                        logmessage = "Starting scan " + scanid;
                         syslog(LOG_INFO, logmessage.c_str());
 
                         // Generate MongoDB doc
                         auto doc = bsoncxx::builder::basic::document{};
-                        //auto doc_cameras = bsoncxx::builder::basic::array{};
                         
-                        doc.append(bsoncxx::builder::basic::kvp("scanid", fulluuid[0]));
+                        //auto doc_cameras = bsoncxx::builder::basic::array{};
+                        //doc_cameras.append(cameras[i]->DeviceSerialNumber());
+                        //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
+                        
+                        doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
                         doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64{AGDUtils::grabSeconds()}));
 
+                        // Create document *before* running the cameras
+                        scans.insert_one(doc.view());
+                        
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            cameras[i]->scanid = fulluuid[0];
-                            //doc_cameras.append(cameras[i]->DeviceSerialNumber());
-
+                            cameras[i]->scanid = scanid;
                             thread t(&AgriDataCamera::Run, cameras[i]);
                             t.detach();
                         }
-                            
-                        //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
-                        scans.insert_one(doc.view());
                         
                         isRecording = true;
                         reply["message"] = "Cameras started";
-                        reply["uuid"] = fulluuid[0];
+                        reply["scanid"] = scanid;
                         reply["status"] = "1";
                     }
                 }
@@ -302,7 +304,7 @@ int main() {
                     } else {
                         // Get scanind from the first camera and close out the db entry
                         json status = cameras[0]->GetStatus();
-                        string id = status["ScanID"];
+                        string id = status["scanid"];
                         
                         // Using the stream here since it's so popular
                         scans.update_one(bsoncxx::builder::stream::document{} << "scanid" << id << bsoncxx::builder::stream::finalize,
@@ -353,10 +355,12 @@ int main() {
                     // White Balance
                 else if (received["action"] == "whitebalance") {
                     for (size_t i = 0; i < devices.size(); ++i) {
-                        cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                        if (received["camera"].get<std::string>().compare(cameras[i]->DeviceSerialNumber.GetValue()) == 0) {
+                            cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                        }
                     }
                     reply["status"] = "1";
-                    reply["message"] = "White Balance Set";
+                    reply["message"] = "White Balance Set on Camera " + received["camera"].get<std::string>();
                 }
             } catch (const GenericException &e) {
                 syslog(LOG_ERR, "An exception occurred.");
