@@ -420,7 +420,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Save image
-<<<<<<< HEAD
     stringstream filename;
     filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".jpg";
     
