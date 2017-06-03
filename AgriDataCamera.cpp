@@ -49,7 +49,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
-// Include files to use openCV.
+// Include files to use openCV
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
@@ -175,6 +175,7 @@ void AgriDataCamera::Initialize() {
 
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
+    //persistenceOptions.SetQuality(70);
     
     // ZMQ and DB Connection
     imu_.connect("tcp://127.0.0.1:4997");
@@ -326,7 +327,12 @@ void AgriDataCamera::Run() {
                     fp.imu_data = last_imu_data;
                     
                     // Camera Status
-                    fp.status = GetStatus();
+                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
+                    fp.balance_red = BalanceRatio.GetValue();
+                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
+                    fp.balance_green = BalanceRatio.GetValue();                    
+                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
+                    fp.balance_blue = BalanceRatio.GetValue();
                     
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -371,7 +377,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     
     // Basler time and frame
     doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
-    doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr));
+    doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr->GetImageNumber()));
     
     
  
@@ -390,7 +396,9 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     }
     
     // Add Camera data
-    //doc.append(bsoncxx:builder::basic::kvp("camera_parameters",bsoncxx::types::b_document{getStatus()}))
+    doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
+    doc.append(bsoncxx::builder::basic::kvp("balance_green", fp.balance_green));
+    doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
     
     // Add to documents
     documents.push_back(doc.extract());
@@ -403,14 +411,52 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Save image
     stringstream filename;
-    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
-    CImagePersistenceOptions options;
-    CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
-    //fc.Convert(image, fp.img_ptr);
-    //last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
-    //Mat small_last_img;
-    //resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".jpg";
+    
+    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
+    double dif;
+    struct timeval tp;
+    long int start, end;
+    
+    //gettimeofday(&tp, NULL);
+    //start = tp.tv_usec;
+    fc.Convert(image, fp.img_ptr);
+    //gettimeofday(&tp, NULL);
+    //end = tp.tv_usec;
+    //cout << "Convert: " << end-start << endl;
+    
+
+    //gettimeofday(&tp, NULL);
+    //start = tp.tv_usec;
+    last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    //gettimeofday(&tp, NULL);
+    //end = tp.tv_usec;
+    //cout << "ToOpenCVMatrix:" << end-start << endl;
+
+    //gettimeofday(&tp, NULL);
+    //start = tp.tv_usec;
     //imwrite(filename.str(), last_img);
+    //gettimeofday(&tp, NULL);
+    //end = tp.tv_usec;
+    //cout << "Write: " << end-start << endl;
+    
+    //gettimeofday(&tp, NULL);
+    //start = tp.tv_usec;
+    Mat small_last_img;
+    resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    //gettimeofday(&tp, NULL);
+    //end = tp.tv_usec;
+    //cout << "Resize: " << end-start << endl;
+    
+    //gettimeofday(&tp, NULL);
+    //start = tp.tv_usec;
+    imwrite(filename.str(), small_last_img);
+    //gettimeofday(&tp, NULL);
+    //end = tp.tv_usec;
+    //cout << "WriteResize: " << end-start << endl;
+
+
+
 
     // Send documents to database
     if (mongodb_timer == 0) {
@@ -572,6 +618,8 @@ json AgriDataCamera::GetStatus() {
     } catch (...) {
         status["scanid"] = "";
     }
+    
+    
     
     return status;
 }
