@@ -251,9 +251,9 @@ void AgriDataCamera::Run() {
     // Filestatus for periodically checking filesize
     // struct stat filestatus;
 
-    /*
     // Open the video file
-    videofile = save_prefix + ".avi";
+    string timenow = AGDUtils::grabTime("%H_%M_%S");
+    videofile = save_prefix + timenow + ".avi";
     videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
             Size(width, height), true);
 
@@ -277,7 +277,6 @@ void AgriDataCamera::Run() {
         logmessage = "Failed to open log file: " + framefile;
         syslog(LOG_ERR, logmessage.c_str());
     }
-     */
 
     // Set recording to true and start grabbing
     isRecording = true;
@@ -311,7 +310,8 @@ void AgriDataCamera::Run() {
                     fp.camera_time = camera_time.str();
                     
                     // Computer time
-                    fp.time_now = AGDUtils::grabTime("%H:%M:%S");
+                    cout << 0 << endl;
+                    fp.time_now = AGDUtils::grabTime("%H_%M_%S");
                     last_timestamp = fp.time_now;
                     
                     // IMU data
@@ -321,10 +321,11 @@ void AgriDataCamera::Run() {
                     } catch(runtime_error& e) {
                         fp.imu_data = "Error";
                     }
-                     */
+                     
                     s_send(imu_, " ");
                     last_imu_data = s_recv(imu_);
                     fp.imu_data = last_imu_data;
+                     * */
                     
                     // Camera Status
                     BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
@@ -333,10 +334,10 @@ void AgriDataCamera::Run() {
                     fp.balance_green = BalanceRatio.GetValue();                    
                     BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
                     fp.balance_blue = BalanceRatio.GetValue();
-                    
+
                     // Image
                     fp.img_ptr = ptrGrabResult;
-                    
+                    cout << "22" << endl;
                     HandleFrame(fp);
                 }
             } catch (const GenericException &e) {
@@ -370,6 +371,13 @@ void AgriDataCamera::writeHeaders() {
  * Receive latest frame
  */
 void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+    cout << 2;
+    fc.Convert(image, fp.img_ptr);
+    cv_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,(uint8_t *) image.GetBuffer());
+
+    // Write the original stream into file
+    videowriter << cv_img;
+    cout << 1;
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
@@ -382,6 +390,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     
  
     // Parse IMU data
+    /*
     try {
         json frame_obj = json::parse(fp.imu_data);
         for (json::iterator it=frame_obj.begin(); it != frame_obj.end(); ++it) {
@@ -394,6 +403,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } catch (...) {
         cerr << "Sorry, no more IMU information is available!";
     }
+     * */
     
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
@@ -410,6 +420,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Save image
+<<<<<<< HEAD
     stringstream filename;
     filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".jpg";
     
@@ -457,6 +468,57 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
 
 
+=======
+    //stringstream filename;
+    //filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
+    //CImagePersistenceOptions options;
+    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
+    //fc.Convert(image, fp.img_ptr);
+    //last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    //Mat small_last_img;
+    //resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    //imwrite(filename.str(), last_img);
+    
+    if (filesize_timer == 0) {
+        struct stat filestatus;
+
+        // Floats are required here to prevent int overflow
+        stat(videofile.c_str(), &filestatus);
+        float size = (float) filestatus.st_size;
+        string logmessage;
+
+        if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
+            frameout.close();
+            videowriter.release(); // This is done automatically but is included here for clarity
+
+            string timenow = AGDUtils::grabTime("%H_%M_%S");
+            videofile = save_prefix + timenow + ".avi";
+            //string framefile = output_dir + DeviceSerialNumber() + '_' + timenow + ".txt";
+
+            // Open and write logfile headers
+            //frameout.open(framefile.c_str());
+            //if (frameout.is_open()) {
+            //    logmessage = "Opened log file: " + framefile;
+            //    syslog(LOG_INFO, logmessage.c_str());
+            //} else {
+            //    logmessage = "Failed to open log file: " + framefile;
+            //    syslog(LOG_ERR, logmessage.c_str());
+            //}
+            //writeHeaders();
+
+            videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
+            if (videowriter.isOpened()) {
+                logmessage = "Opened video file: " + videofile;
+                syslog(LOG_INFO, logmessage.c_str());
+            } else {
+                logmessage = "Failed to write the video file: " + videofile;
+                syslog(LOG_ERR, logmessage.c_str());
+            }
+        } else {
+            filesize_timer = 200;
+        }
+    }
+>>>>>>> 1f552b0bd396d8a27fd7bc85ad8d4757baa31e3f
 
     // Send documents to database
     if (mongodb_timer == 0) {
@@ -574,6 +636,8 @@ int AgriDataCamera::Stop() {
  */
 json AgriDataCamera::GetStatus() {
     json status;
+    
+    /*
     json imu_status;
     imu_status["IMU_VELOCITY_NORTH"] = -99.9;
     imu_status["IMU_VELOCITY_EAST"] = -99.9;
@@ -597,8 +661,13 @@ json AgriDataCamera::GetStatus() {
         }
     }
     
-    status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<double>();
-    status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
+    try {
+        status["Velocity_North"] = imu_status["IMU_VELOCITY_NORTH"].get<double>();
+        status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
+    } catch (...) {
+        cerr << "Second IMU Fail";
+    }
+     * */
     status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;

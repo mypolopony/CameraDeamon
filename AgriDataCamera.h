@@ -81,6 +81,7 @@ private:
     // Videowriter and filename
     cv::VideoWriter videowriter;
     std::string save_prefix;
+    std::string videofile;
 
     // Frame log stream
     std::ofstream frameout;
