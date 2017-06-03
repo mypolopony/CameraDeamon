@@ -326,7 +326,7 @@ void AgriDataCamera::Run() {
                     last_imu_data = s_recv(imu_);
                     fp.imu_data = last_imu_data;
                      * */
-                    
+
                     // Camera Status
                     BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
                     fp.balance_red = BalanceRatio.GetValue();
@@ -465,60 +465,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     //gettimeofday(&tp, NULL);
     //end = tp.tv_usec;
     //cout << "WriteResize: " << end-start << endl;
-
-
-
-=======
-    //stringstream filename;
-    //filename << output_dir << fp.camera_time << "-" << fp.img_ptr->GetImageNumber() << ".tiff";
-    //CImagePersistenceOptions options;
-    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
-    //fc.Convert(image, fp.img_ptr);
-    //last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
-    //Mat small_last_img;
-    //resize(last_img, small_last_img, Size(), 0.5, 0.5);
-    //imwrite(filename.str(), last_img);
-    
-    if (filesize_timer == 0) {
-        struct stat filestatus;
-
-        // Floats are required here to prevent int overflow
-        stat(videofile.c_str(), &filestatus);
-        float size = (float) filestatus.st_size;
-        string logmessage;
-
-        if (size > (float) max_filesize * (float) 1073741824) { // 1GB = 1073741824 bytes
-            frameout.close();
-            videowriter.release(); // This is done automatically but is included here for clarity
-
-            string timenow = AGDUtils::grabTime("%H_%M_%S");
-            videofile = save_prefix + timenow + ".avi";
-            //string framefile = output_dir + DeviceSerialNumber() + '_' + timenow + ".txt";
-
-            // Open and write logfile headers
-            //frameout.open(framefile.c_str());
-            //if (frameout.is_open()) {
-            //    logmessage = "Opened log file: " + framefile;
-            //    syslog(LOG_INFO, logmessage.c_str());
-            //} else {
-            //    logmessage = "Failed to open log file: " + framefile;
-            //    syslog(LOG_ERR, logmessage.c_str());
-            //}
-            //writeHeaders();
-
-            videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'P', 'E', 'G'), AcquisitionFrameRate(), Size(width, height), true);
-            if (videowriter.isOpened()) {
-                logmessage = "Opened video file: " + videofile;
-                syslog(LOG_INFO, logmessage.c_str());
-            } else {
-                logmessage = "Failed to write the video file: " + videofile;
-                syslog(LOG_ERR, logmessage.c_str());
-            }
-        } else {
-            filesize_timer = 200;
-        }
-    }
->>>>>>> 1f552b0bd396d8a27fd7bc85ad8d4757baa31e3f
 
     // Send documents to database
     if (mongodb_timer == 0) {
