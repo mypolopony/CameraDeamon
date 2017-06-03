@@ -55,10 +55,8 @@ public:
 
 private:
     struct FramePacket {
-        std::string camera_time;
-        std::string time_now;
-        std::string imu_data;
-        nlohmann::json status;
+        std::string camera_time, time_now, imu_data;
+        float balance_red, balance_green, balance_blue;
         Pylon::CGrabResultPtr img_ptr;
     };
 
@@ -78,10 +76,12 @@ private:
 
     // Image converter
     Pylon::CImageFormatConverter fc;
+    Pylon::CImagePersistenceOptions persistenceOptions;
 
     // Videowriter and filename
     cv::VideoWriter videowriter;
     std::string save_prefix;
+    std::string videofile;
 
     // Frame log stream
     std::ofstream frameout;
