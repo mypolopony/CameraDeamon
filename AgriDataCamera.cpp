@@ -310,7 +310,7 @@ void AgriDataCamera::Run() {
                     fp.camera_time = camera_time.str();
                     
                     // Computer time
-                    fp.time_now = AGDUtils::grabTime("%H_%M_%S");
+                    fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
                     
                     // IMU data
@@ -325,6 +325,7 @@ void AgriDataCamera::Run() {
                     s_send(imu_, " ");
                     last_imu_data = s_recv(imu_);
                     fp.imu_data = last_imu_data;
+                    
 
                     // Camera Status
                     BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
@@ -370,6 +371,7 @@ void AgriDataCamera::writeHeaders() {
  * Receive latest frame
  */
 void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+
     // fc.Convert(image, fp.img_ptr);
     // cv_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,(uint8_t *) image.GetBuffer());
 
@@ -380,7 +382,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-    
+
     // Basler time and frame
     doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
     doc.append(bsoncxx::builder::basic::kvp("frame_number", fp.img_ptr->GetImageNumber()));
@@ -406,20 +408,29 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
     
     // Add to documents
+    cout << "D1" << endl;
     documents.push_back(doc.extract());
-    
+    cout << "D2" << endl;
     // Computer time and output directory
     doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
+    cout << "D3" << endl;
     vector<string> hms = AGDUtils::split(fp.time_now,':');
-    output_dir = save_prefix + hms[0].c_str() + '/' + hms[1].c_str() + '/';
+    cout << fp.time_now << endl;
+    cout << save_prefix + hms[1].c_str() << endl;
+    output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
+    cout << "D5" << endl;
     stringstream tarfile;
+    cout << "D6" << endl;
     tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
+    cout << "D7" << endl;
     doc.append(bsoncxx::builder::basic::kvp("tarfile", tarfile.str()));
+    cout << "D8" << endl;
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
+    cout << "D9" << endl;
+    cout << "E" << endl;
     // Save image
     stringstream filename;
-    filename << output_dir << fp.img_ptr->GetImageNumber() << "-" << fp.camera_time << ".jpg";
+    filename << output_dir << fp.img_ptr->GetImageNumber() << ".jpg";
     
     //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
     double dif;
@@ -433,6 +444,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     //end = tp.tv_usec;
     //cout << "Convert: " << end-start << endl;
     
+    cout << "F" << endl;
 
     //gettimeofday(&tp, NULL);
     //start = tp.tv_usec;
@@ -463,6 +475,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     //end = tp.tv_usec;
     //cout << "WriteResize: " << end-start << endl;
 
+
     // Send documents to database
     if (mongodb_timer == 0) {
         cout << "Dumping documents";
@@ -472,6 +485,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } else {
         mongodb_timer--;
     }
+    
+    cout << "G" << endl;
     
     // Write to streaming image
     if (latest_timer == 0) {

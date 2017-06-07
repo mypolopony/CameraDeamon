@@ -272,7 +272,7 @@ int main() {
                         
                         isRecording = true;
                         reply["message"] = "Cameras started";
-                        reply["scanid"] = scanid;
+                            reply["scanid"] = scanid;
                         reply["status"] = "1";
                     }
                 }
