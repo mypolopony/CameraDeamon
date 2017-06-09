@@ -334,6 +334,7 @@ void AgriDataCamera::Run() {
                     fp.balance_green = BalanceRatio.GetValue();                    
                     BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
                     fp.balance_blue = BalanceRatio.GetValue();
+                    fp.exposure_time = ExposureTime.GetValue();
 
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -350,7 +351,7 @@ void AgriDataCamera::Run() {
 }
 
 /**
- * writeHeaders
+ * writeHeaders (DEPRECATED)
  *
  * All good logfiles have headers. These are them
  */
@@ -406,28 +407,18 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
     doc.append(bsoncxx::builder::basic::kvp("balance_green", fp.balance_green));
     doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
+    doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
     
     // Add to documents
-    cout << "D1" << endl;
     documents.push_back(doc.extract());
-    cout << "D2" << endl;
     // Computer time and output directory
     doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
-    cout << "D3" << endl;
     vector<string> hms = AGDUtils::split(fp.time_now,':');
-    cout << fp.time_now << endl;
-    cout << save_prefix + hms[1].c_str() << endl;
     output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
-    cout << "D5" << endl;
     stringstream tarfile;
-    cout << "D6" << endl;
     tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
-    cout << "D7" << endl;
     doc.append(bsoncxx::builder::basic::kvp("tarfile", tarfile.str()));
-    cout << "D8" << endl;
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    cout << "D9" << endl;
-    cout << "E" << endl;
     // Save image
     stringstream filename;
     filename << output_dir << fp.img_ptr->GetImageNumber() << ".jpg";
@@ -444,8 +435,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     //end = tp.tv_usec;
     //cout << "Convert: " << end-start << endl;
     
-    cout << "F" << endl;
-
     //gettimeofday(&tp, NULL);
     //start = tp.tv_usec;
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
@@ -485,8 +474,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } else {
         mongodb_timer--;
     }
-    
-    cout << "G" << endl;
     
     // Write to streaming image
     if (latest_timer == 0) {
