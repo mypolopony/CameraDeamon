@@ -419,7 +419,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Save image
     stringstream filename;
-    filename << output_dir << fp.img_ptr->GetImageNumber() << "-" << fp.camera_time << ".jpg";
+    filename << output_dir << fp.img_ptr->GetImageNumber() << ".jpg";
     
     //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
     double dif;
