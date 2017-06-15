@@ -56,7 +56,7 @@ public:
 private:
     struct FramePacket {
         std::string camera_time, time_now, imu_data;
-        float balance_red, balance_green, balance_blue;
+        float balance_red, balance_green, balance_blue, exposure_time;
         Pylon::CGrabResultPtr img_ptr;
     };
 
