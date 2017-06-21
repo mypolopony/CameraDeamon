@@ -417,7 +417,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
     stringstream tarfile;
     tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
-    doc.append(bsoncxx::builder::basic::kvp("tarfile", tarfile.str()));
+    doc.append(bsoncxx::builder::basic::kvp("filename", tarfile.str()));
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     // Save image
     stringstream filename;
