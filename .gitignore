@@ -1,3 +1,6 @@
+# Env
+env/
+
 # Profiling
 *callgrind*
 
@@ -8,6 +11,9 @@
 
 # Hidden
 .*
+
+# Frame rate graphs
+utils/*.html
 
 # Apple 
 *.DS_Store
@@ -45,3 +51,5 @@
 *.out
 *.app
 site/
+/cmake-build-debug/
+/build-clion/

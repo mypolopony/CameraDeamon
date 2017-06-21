@@ -11,9 +11,9 @@ ReverseX	0
 ReverseY	0
 PixelFormat	BayerRG8
 TestImageSelector	Off
-GainAuto	Off
+GainAuto	Continuous
 GainSelector	All
-Gain	0.00000
+Gain	12.00000
 GainSelector	All
 BlackLevelSelector	All
 BlackLevel	0.00000
@@ -22,7 +22,7 @@ Gamma	1.00000
 RemoveParameterLimitSelector	Gain
 RemoveParameterLimit	0
 RemoveParameterLimitSelector	Gain
-LightSourcePreset	Off
+LightSourcePreset	Daylight5000K
 BalanceWhiteAuto	Off
 BalanceRatioSelector	Red
 BalanceRatio	1.30640
@@ -72,7 +72,7 @@ TriggerActivation	RisingEdge
 TriggerSelector	FrameStart
 TriggerDelay	0
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRate	30.00030
+AcquisitionFrameRate	20.00000
 DeviceLinkSelector	0
 DeviceLinkThroughputLimit	360000000
 DeviceLinkSelector	0
@@ -93,12 +93,12 @@ ChunkSelector	PayloadCRC16
 ChunkEnable	0
 ChunkSelector	Timestamp
 ChunkModeActive	0
-AutoTargetBrightness	0.30980
+AutoTargetBrightness	0.50196
 AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
-AutoGainUpperLimit	6.00000
+AutoGainUpperLimit	12.00000
 AutoExposureTimeLowerLimit	61.0
-AutoExposureTimeUpperLimit	8000.0
+AutoExposureTimeUpperLimit	1200.0
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	1936
 AutoFunctionROISelector	ROI2

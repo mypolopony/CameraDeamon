@@ -1,8 +1,6 @@
 # CameraD(ae)mon
 
-Documentation: http://motioniq.github.io/CameraDeamon
-
-# To profile
+### To profile
 - get gproftools: https://github.com/gperftools/gperftools (requires compiling http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz from source, which in turn requires a special `-U_FORTIFY_SOURCE` to gcc flags, but only for one object in the compilation)
 
 - compile program with `-lprofiler` from /usr/lib (`-g` is also necessary)

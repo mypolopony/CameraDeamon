@@ -14,8 +14,14 @@
         <in>emulator.cpp</in>
         <in>json.hpp</in>
         <in>jtest.cpp</in>
+        <in>mongodb.cpp</in>
         <in>zhelpers.hpp</in>
         <in>zmq.hpp</in>
+      </df>
+      <df name="nbproject">
+        <df name="private">
+          <in>c_standard_headers_indexer.c</in>
+        </df>
       </df>
       <df name="profiles">
         <df name="0">
@@ -34,7 +40,30 @@
       <in>AgriDataCamera.cpp</in>
       <in>AgriDataCamera.h</in>
       <in>main.cpp</in>
-      <in>test.cpp</in>
+    </df>
+    <df root="." name="1">
+      <df name="CameraDeamon">
+        <df name="Debug">
+        </df>
+      </df>
+      <df name="config">
+      </df>
+      <df name="docs">
+      </df>
+      <df name="lib">
+      </df>
+      <df name="profiles">
+        <df name="0">
+        </df>
+        <df name="1">
+          <df name="out.txt">
+          </df>
+        </df>
+        <df name="2">
+        </df>
+      </df>
+      <df name="utils">
+      </df>
     </df>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>

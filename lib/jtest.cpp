@@ -44,6 +44,6 @@ int main() {
 
 	std::string s = j.dump();
 
-	auto j3 = json::parse(s);
+	json j3 = json::parse(s);
 	std::cout << j3["list"][0];
 }

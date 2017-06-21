@@ -3,7 +3,7 @@
 # Device = Basler::UsbCameraParams -- Basler USB3Vision camera interface -- Device version = 1.0.0 -- Product GUID = 5a809e15-f447-480f-a21f-0fb7256b8400 -- Product version GUID = 7DAC307B-CC2A-4080-8BB5-B1DB9D31AFD0
 ExposureAuto	Continuous
 BalanceWhiteAuto	Off
-GainAuto	Off
+GainAuto	Continuous
 Width	1280
 Height	1024
 OffsetX	0
@@ -26,7 +26,7 @@ RemoveParameterLimit	0
 RemoveParameterLimitSelector	ExposureTime
 RemoveParameterLimit	0
 RemoveParameterLimitSelector	Gain
-LightSourcePreset	Daylight5000K
+LightSourcePreset	Off
 BalanceRatioSelector	Red
 BalanceRatio	1.30640
 BalanceRatioSelector	Green
@@ -102,7 +102,7 @@ TriggerActivation	RisingEdge
 TriggerSelector	FrameStart
 TriggerDelay	0
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRate	30.00030
+AcquisitionFrameRate	20.00000
 DeviceLinkSelector	0
 DeviceLinkThroughputLimitMode	On
 DeviceLinkSelector	0
@@ -125,12 +125,12 @@ ChunkSelector	PayloadCRC16
 ChunkEnable	0
 ChunkSelector	Timestamp
 ChunkModeActive	0
-AutoTargetBrightness	0.21569
+AutoTargetBrightness	0.50196
 AutoFunctionProfile	MinimizeExposureTime
 AutoGainLowerLimit	0.00000
-AutoGainUpperLimit	5.98861
+AutoGainUpperLimit	12.00921
 AutoExposureTimeLowerLimit	61.0
-AutoExposureTimeUpperLimit	8000.0
+AutoExposureTimeUpperLimt	1200.0
 AutoFunctionROISelector	ROI1
 AutoFunctionROIWidth	1280
 AutoFunctionROISelector	ROI2
