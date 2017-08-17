@@ -409,16 +409,20 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
     
-    // Add to documents
-    documents.push_back(doc.extract());
-    // Computer time and output directory
+    // Computer time
     doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
     vector<string> hms = AGDUtils::split(fp.time_now,':');
     output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
+    bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    // Filename to log
     stringstream tarfile;
     tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
     doc.append(bsoncxx::builder::basic::kvp("filename", tarfile.str()));
-    bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    
+    // Add to documents
+    documents.push_back(doc.extract());
+    
     // Save image
     stringstream filename;
     filename << output_dir << fp.img_ptr->GetImageNumber() << ".jpg";
