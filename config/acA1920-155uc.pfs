@@ -25,7 +25,7 @@ RemoveParameterLimitSelector	Gain
 LightSourcePreset	Daylight5000K
 BalanceWhiteAuto	Off
 BalanceRatioSelector	Red
-BalanceRatio	1.0
+BalanceRatio	2.0
 BalanceRatioSelector	Green
 BalanceRatio	1.00000
 BalanceRatioSelector	Blue
