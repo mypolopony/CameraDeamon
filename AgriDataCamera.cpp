@@ -417,7 +417,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Filename to log
     stringstream tarfile;
-    tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
+    tarfile << scanid + "_" + DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
     doc.append(bsoncxx::builder::basic::kvp("filename", tarfile.str()));
     
     // Add to documents
