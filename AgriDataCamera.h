@@ -12,9 +12,9 @@
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
-#include <pylon/usb/BaslerUsbInstantCamera.h>
-#include <pylon/usb/BaslerUsbInstantCameraArray.h>
-#include <pylon/usb/_BaslerUsbCameraParams.h>
+#include <pylon/gige/BaslerGigEInstantCamera.h>
+#include <pylon/gige/BaslerGigEInstantCameraArray.h>
+#include <pylon/gige/_BaslerGigECameraParams.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -37,7 +37,7 @@
 
 
 
-class AgriDataCamera : public Pylon::CBaslerUsbInstantCamera {
+class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera {
 public:
     AgriDataCamera();
 

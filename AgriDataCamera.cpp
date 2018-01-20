@@ -25,9 +25,9 @@
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
-#include <pylon/usb/BaslerUsbInstantCamera.h>
-#include <pylon/usb/BaslerUsbInstantCameraArray.h>
-#include <pylon/usb/_BaslerUsbCameraParams.h>
+#include <pylon/gige/BaslerGigEInstantCamera.h>
+#include <pylon/gige/BaslerGigEInstantCameraArray.h>
+#include <pylon/gige/_BaslerGigECameraParams.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -55,7 +55,7 @@
 #include "opencv2/imgproc.hpp"
 
 // Namespaces
-using namespace Basler_UsbCameraParams;
+using namespace Basler_GigECameraParams;
 using namespace Pylon;
 using namespace std;
 using namespace cv;
@@ -165,7 +165,7 @@ void AgriDataCamera::Initialize() {
     cout << "Firmware version : "
             << CStringPtr(GetNodeMap().GetNode("DeviceFirmwareVersion"))->GetValue() << endl;
     cout << "Serial Number : "
-            << CStringPtr(GetNodeMap().GetNode("DeviceSerialNumber"))->GetValue() << endl;
+            << CStringPtr(GetNodeMap().GetNode("DeviceID"))->GetValue() << endl;
     cout << "Frame Size  : "
             << width << 'x' << height << endl << endl;
 
@@ -244,7 +244,7 @@ void AgriDataCamera::Run() {
     string config;
     
     // Output parameters
-    save_prefix = "/home/agridata/output/" + scanid + "/" + DeviceSerialNumber.GetValue() + "/";
+    save_prefix = "/home/agridata/output/" + scanid + "/" + GetDeviceInfo().GetMacAddress() + "/";
     bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
    
     /*
@@ -328,13 +328,13 @@ void AgriDataCamera::Run() {
                     
 
                     // Camera Status
-                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
-                    fp.balance_red = BalanceRatio.GetValue();
-                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
-                    fp.balance_green = BalanceRatio.GetValue();                    
-                    BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
-                    fp.balance_blue = BalanceRatio.GetValue();
-                    fp.exposure_time = ExposureTime.GetValue();
+                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
+                    //fp.balance_red = BalanceRatio.GetValue();
+                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
+                    //fp.balance_green = BalanceRatio.GetValue();                    
+                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
+                    //fp.balance_blue = BalanceRatio.GetValue();
+                    fp.exposure_time = ExposureTimeAbs();
 
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -381,7 +381,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
-    doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceSerialNumber()));
+    doc.append(bsoncxx::builder::basic::kvp("serialnumber", (string) DeviceID()));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
 
     // Basler time and frame
@@ -416,7 +416,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     vector<string> hms = AGDUtils::split(fp.time_now,':');
     output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
     stringstream tarfile;
-    tarfile << DeviceSerialNumber.GetValue() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
+    tarfile << DeviceID() + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".tar.gz";
     doc.append(bsoncxx::builder::basic::kvp("filename", tarfile.str()));
     bool success = AGDUtils::mkdirp(output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     // Save image
@@ -540,7 +540,7 @@ void AgriDataCamera::Snap() {
  */
 void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
     string snumber;
-    snumber = DeviceSerialNumber.GetValue();
+    snumber = DeviceID();;
     Mat thumb;
     resize(img, thumb, Size(), 0.2, 0.2);
     
@@ -611,7 +611,7 @@ json AgriDataCamera::GetStatus() {
         cerr << "Second IMU Fail";
     }
 
-    status["Serial Number"] = (string) DeviceSerialNumber.GetValue();
+    status["Serial Number"] = (string) DeviceID();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
 
@@ -621,10 +621,11 @@ json AgriDataCamera::GetStatus() {
         status["Timestamp"] = last_timestamp;
     else
         status["Timestamp"] = "Not Recording";
-    status["Exposure Time"] = ExposureTime.GetValue();
-    status["Resulting Frame Rate"] = ResultingFrameRate.GetValue();
-    status["Current Gain"] = Gain.GetValue();
-    status["Temperature"] = DeviceTemperature.GetValue();
+    status["Exposure Time"] = ExposureTimeAbs();
+    //GevCCP.SetValue(GevCCP_Control);
+    //status["Resulting Frame Rate"] = ResultingFrameRateAbs();
+    //status["Current Gain"] = GainAbs();
+    //status["Temperature"] = TemperatureAbs();
     try {
         status["scanid"] = scanid;
     } catch (...) {

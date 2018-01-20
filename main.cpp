@@ -4,9 +4,9 @@
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
-#include <pylon/usb/BaslerUsbInstantCamera.h>
-#include <pylon/usb/BaslerUsbInstantCameraArray.h>
-#include <pylon/usb/_BaslerUsbCameraParams.h>
+#include <pylon/gige/BaslerGigEInstantCamera.h>
+#include <pylon/gige/BaslerGigEInstantCameraArray.h>
+#include <pylon/gige/_BaslerGigECameraParams.h>
 #include "AgriDataCamera.h"
 
 // Include files to use openCV.
@@ -57,7 +57,7 @@
 #endif
 
 // Namespaces for convenience
-using namespace Basler_UsbCameraParams;
+using namespace Basler_GigECameraParams;
 using namespace Pylon;
 using namespace cv;
 using namespace GenApi;
@@ -281,7 +281,7 @@ int main() {
                 else if (received["action"] == "pause") {
                     if (isRecording) {
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            sn = cameras[i]->DeviceSerialNumber();
+                            sn = cameras[i]->GetDeviceInfo().GetMacAddress();
                             if (!cameras[i]->isPaused) {
                                 cameras[i]->isPaused = true;
                                 reply["message"][sn] = "Camera paused";
@@ -355,7 +355,7 @@ int main() {
                     // White Balance
                 else if (received["action"] == "whitebalance") {
                     for (size_t i = 0; i < devices.size(); ++i) {
-                        if (received["camera"].get<std::string>().compare(cameras[i]->DeviceSerialNumber.GetValue()) == 0) {
+                        if (received["camera"].get<std::string>().compare("ji") == 0) {
                             cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
                         }
                     }
