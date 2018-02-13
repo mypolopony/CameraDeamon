@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   AgriDataCamera.h
  * Author: agridata
  *
@@ -37,7 +37,8 @@
 
 
 
-class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera {
+class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
+{
 public:
     AgriDataCamera();
 
@@ -52,6 +53,7 @@ public:
     std::string scanid;
     bool isPaused;
     bool isRecording;
+    std::string serialnumber;
 
 private:
     struct FramePacket {
@@ -90,38 +92,44 @@ private:
     std::vector<int> compression_params;
 
     // Timers
-    uint8_t latest_timer;
-    uint8_t filesize_timer;
-    uint8_t mongodb_timer;  
+    const int T_LATEST = 20;            // Every second
+    const int T_MONGODB = 60*20;        // Every minute
+    const int T_LUMINANCE = 10;         // Every half second
+    uint8_t tick;                       // Running counter
 
     // Output Parameters
     uint8_t max_filesize = 3;
     std::string output_prefix;
     std::string output_dir;
-    
+
+    // HDF5
+    //cv::Ptr<cv::hdf::HDF5> h5io;
+    //int framecounter;
+
     // MongoDB
+    std::string MONGODB_HOST = "mongodb://localhost:27017";
     mongocxx::client conn;
     mongocxx::database db;
     mongocxx::collection frames;
     std::vector<bsoncxx::v_noabi::document::value> documents;
-    
+
     // Timestamp (should go in status block)
     std::string last_timestamp;
-    
+
     // IMU_Data (to store while recording)
     std::string last_imu_data;
-    
+
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t imu_;
-    
+
     // Methods
+    void Luminance(bsoncxx::oid, cv::Mat);
+    cv::Mat Rotate(cv::Mat, double angle);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
-    void writeLatestImage(cv::Mat img, std::vector<int> compression_params);
+    void writeLatestImage(cv::Mat, std::vector<int>);
     std::string imu_wrapper(AgriDataCamera::FramePacket);
-    
 };
 
 #endif /* AGRIDATACAMERA_H */
-

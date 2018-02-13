@@ -362,6 +362,16 @@ int main() {
                     reply["status"] = "1";
                     reply["message"] = "White Balance Set on Camera " + received["camera"].get<std::string>();
                 }
+                // Luminance
+                else if (received["action"] == "luminance") {
+                    for (size_t i = 0; i < devices.size(); ++i) {
+                        if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
+                            cameras[i]->AutoTargetValue.SetValue(received["value"].get<int>());
+                        }
+                    }
+                    reply["status"] = "1";
+                    reply["message"] = "Target Gray Value changed for " + received["camera"].get<std::string>() + " (" + to_string(received["value"].get<int>()) + ")";
+                }
             } catch (const GenericException &e) {
                 syslog(LOG_ERR, "An exception occurred.");
                 syslog(LOG_ERR, e.GetDescription());
@@ -370,7 +380,7 @@ int main() {
                 reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
             }
 
-            cout << "Sending Response";
+            cout << "Sending Response\n";
             zmq::message_t messageS(reply.dump().size());
             memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
             publisher.send(messageS);
