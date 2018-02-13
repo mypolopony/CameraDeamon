@@ -32,6 +32,10 @@
 // GenApi
 #include <GenApi/GenApi.h>
 
+// HDF5
+#include "hdf5.h"
+#include "hdf5_hl.h"
+
 // Standard
 #include <fstream>
 #include <sstream>
@@ -203,15 +207,16 @@ void AgriDataCamera::Initialize()
     // Identifier
     serialnumber = (string) DeviceID();
 
-    /*
     // HDF5 output
-    h5io = cv::hdf::open( "mytest.h5" );
-    // optimise dataset by chunks
+    hdf_output = H5Fcreate( "compiled.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+
+    // Optimise dataset by chunks
     int chunks[1200] = { 960, 600 };
-    // create Unlimited x 100 CV_64FC2 space
+
+    // Create Unlimited x 100 CV_64FC2 space
     h5io->dscreate( 1200, 100, CV_8UC3, "hilbert", cv::hdf::HDF5::H5_NONE, chunks );
+
     framecounter = 0;
-    */
 }
 
 /**
@@ -490,7 +495,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
 
     gettimeofday(&tp, NULL);
     start= tp.tv_usec;
-    imwrite(filename.str(), small_last_img);
+    // imwrite(filename.str(), small_last_img);
+    H5IMmake_image_24bit( hdf_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), fp.img_ptr->GetWidth(), fp.img_ptr->GetHeight(), "INTERLACE_PIXEL", (unsigned char*) image.GetBuffer() );
     gettimeofday(&tp, NULL);
     end = tp.tv_usec;
     cout << "Write: " << end-start << endl;
@@ -498,7 +504,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
 
     // Write to streaming image
     if ( tick % T_LATEST == 0) {
-        fc.Convert(image, fp.img_ptr);
         last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,
                        (uint8_t *) image.GetBuffer());
 

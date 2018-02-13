@@ -23,6 +23,10 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 
+// HDF5
+#include "hdf5.h"
+#include "hdf5_hl.h"
+
 // Utilities
 #include "json.hpp"
 #include "zmq.hpp"
@@ -31,7 +35,6 @@
 #include <bsoncxx/builder/basic/kvp.hpp>
 #include <bsoncxx/json.hpp>
 #include <bsoncxx/types.hpp>
-
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 
@@ -103,8 +106,7 @@ private:
     std::string output_dir;
 
     // HDF5
-    //cv::Ptr<cv::hdf::HDF5> h5io;
-    //int framecounter;
+    hdf5::hid_t hdf_output;
 
     // MongoDB
     std::string MONGODB_HOST = "mongodb://localhost:27017";
