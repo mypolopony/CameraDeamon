@@ -390,6 +390,8 @@ int main() {
             //}
         }
     }
+    
+    cout << "This is reachable!" << endl;
 
     // This code is actually not reachable; a SIGINT will close the daemon gracefully,
     // but the other way to end the service is to turn the computer off, which will
