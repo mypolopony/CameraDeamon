@@ -1,5 +1,6 @@
 #Build
 src/build
+*build*
 
 # Env
 env/
