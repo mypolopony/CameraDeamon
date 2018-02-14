@@ -32,10 +32,6 @@
 // GenApi
 #include <GenApi/GenApi.h>
 
-// HDF5
-#include "hdf5.h"
-#include "hdf5_hl.h"
-
 // Standard
 #include <fstream>
 #include <sstream>
@@ -171,13 +167,13 @@ void AgriDataCamera::Initialize()
          << CStringPtr(GetNodeMap().GetNode("DeviceID"))->GetValue() << endl;
     cout << "Frame Size  : " << width << 'x' << height << endl << endl;
 
-    // create Mat image template
+    // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
     last_img = Mat(width, height, CV_8UC3);
+    resize(last_img, small_last_img, Size(), 0.5, 0.5);
 
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
-    //persistenceOptions.SetQuality(70);
 
     // ZMQ and DB Connection
     imu_.connect("tcp://127.0.0.1:4997");
@@ -206,17 +202,9 @@ void AgriDataCamera::Initialize()
 
     // Identifier
     serialnumber = (string) DeviceID();
-
-    // HDF5 output
-    hdf_output = H5Fcreate( "compiled.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-
-    // Optimise dataset by chunks
-    int chunks[1200] = { 960, 600 };
-
-    // Create Unlimited x 100 CV_64FC2 space
-    h5io->dscreate( 1200, 100, CV_8UC3, "hilbert", cv::hdf::HDF5::H5_NONE, chunks );
-
-    framecounter = 0;
+    
+    // HDF5
+    current_hdf5_file = "";
 }
 
 /**
@@ -322,37 +310,22 @@ void AgriDataCamera::Run()
                     // Create Frame Packet
                     FramePacket fp;
 
-                    // Basler timestamp
-                    // TODO: This would be attached to fp.img_ptr, by the way. . .
-                    ostringstream camera_time;
-                    camera_time << ptrGrabResult->GetTimeStamp();
-                    fp.camera_time = camera_time.str();
-
                     // Computer time
                     fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
 
                     // IMU data
+                    /*
                     try {
                         fp.imu_data = imu_wrapper(fp);
                     } catch(runtime_error& e) {
                         fp.imu_data = "{}";
-                        cout << "IMU Error\n";
+                        cout << "IMU Error: " << e.what() << endl;
                     }
-
-                    /*
-                    s_send(imu_, " ");
-                    last_imu_data = s_recv(imu_);
-                    fp.imu_data = last_imu_data;
-                    */
-
-                    // Camera Status
-                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Red);
-                    //fp.balance_red = BalanceRatio.GetValue();
-                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Green);
-                    //fp.balance_green = BalanceRatio.GetValue();
-                    //BalanceRatioSelector.SetValue(BalanceRatioSelector_Blue);
-                    //fp.balance_blue = BalanceRatio.GetValue();
+                     * */
+                     fp.imu_data = "{}";
+                    
+                    // Exposure time
                     fp.exposure_time = ExposureTimeRaw();
 
                     // Image
@@ -375,20 +348,6 @@ void AgriDataCamera::Run()
 }
 
 /**
- * writeHeaders (DEPRECATED)
- *
- * All good logfiles have headers. These are them
- */
-void AgriDataCamera::writeHeaders()
-{
-    ostringstream oss;
-    oss << "Timestamp," << "Exposure Time," << "Resulting Frame Rate,"
-        << "Current Gain," << "Device Temperature" << endl;
-
-    frameout << oss.str();
-}
-
-/**
  * HandleFrame
  *
  * Receive latest frame
@@ -400,32 +359,21 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     long int start, end;
     tick++;
 
-    // fc.Convert(image, fp.img_ptr);
-    // cv_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,(uint8_t *) image.GetBuffer());
-
-    // Write the original stream into file
-    //videowriter << cv_img;
-
     // Docuemnt
-    gettimeofday(&tp, NULL);
-    start = tp.tv_usec;
     auto doc = bsoncxx::builder::basic::document { };
     doc.append(
         bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
 
     // Basler time and frame
-    doc.append(bsoncxx::builder::basic::kvp("camera_time", fp.camera_time));
+    ostringstream camera_time;
+    camera_time << fp.img_ptr->GetTimeStamp();
+    doc.append(bsoncxx::builder::basic::kvp("camera_time", (string) camera_time.str() ));
     doc.append(
         bsoncxx::builder::basic::kvp("frame_number",
                                      fp.img_ptr->GetImageNumber()));
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "Document generation: " << end-start << endl;
 
     // Parse IMU data
-    gettimeofday(&tp, NULL);
-    start = tp.tv_usec;
     try {
         json frame_obj = json::parse(fp.imu_data);
         for (json::iterator it = frame_obj.begin(); it != frame_obj.end();
@@ -443,9 +391,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     } catch (...) {
         cerr << "Sorry, no IMU information is available!\n";
     }
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "Obtain & Parse IMU: " << end-start << endl;
 
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
@@ -455,52 +400,37 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(fp.time_now, ':');
-    output_dir = save_prefix + hms[0].c_str() + "/" + hms[1].c_str() + "/";
-    bool success = AGDUtils::mkdirp(output_dir.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    string hdf5file = save_prefix + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+    
+    // Should we open a new file?
+    if (hdf5file.compare(current_hdf5_file) != 0) {
+        // Close the previous file (if it is a thing)
+        if (current_hdf5_file.compare("") != 0) {
+            H5Fclose( hdf5_output );
+        }
+        hdf5_output = H5Fcreate( hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+        current_hdf5_file = hdf5file;
+    }
 
-    //stringstream tarfile;
-    //tarfile
-    //		<< DeviceID() + "_" + hms[0].c_str() + "_" + hms[1].c_str()
-    //				+ ".tar.gz";
-    // doc.append(bsoncxx::builder::basic::kvp("filename", tarfile.str()));
+    doc.append(bsoncxx::builder::basic::kvp("filename", current_hdf5_file));
 
-    // Save image
-    stringstream filename;
-    filename << output_dir << fp.img_ptr->GetImageNumber() << ".jpg";
-
-    //CImagePersistence::Save(ImageFileFormat_Tiff, filename.str().c_str(), fp.img_ptr);
-
-    gettimeofday(&tp, NULL);
-    start = tp.tv_usec;
+    // Convert
     fc.Convert(image, fp.img_ptr);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "Convert: " << end-start << endl;
-
-    gettimeofday(&tp, NULL);
-    start= tp.tv_usec;
-    last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,
-                   (uint8_t *) image.GetBuffer());
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "ToOpenCVMatrix: " << end-start << endl;
-
-    gettimeofday(&tp, NULL);
-    start= tp.tv_usec;
-    Mat small_last_img;
+    
+    // To OpenCV
+    last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    
+    // Resize
     resize(last_img, small_last_img, Size(), 0.5, 0.5);
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "Resize: " << end-start << endl;
+    
+    // Color Conversion
+    cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
+    
+    // Rotate
+    small_last_img = AgriDataCamera::Rotate( small_last_img, -90 );  
 
-    gettimeofday(&tp, NULL);
-    start= tp.tv_usec;
-    // imwrite(filename.str(), small_last_img);
-    H5IMmake_image_24bit( hdf_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), fp.img_ptr->GetWidth(), fp.img_ptr->GetHeight(), "INTERLACE_PIXEL", (unsigned char*) image.GetBuffer() );
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
-    cout << "Write: " << end-start << endl;
-    cout << endl;
+    // Write
+    H5IMmake_image_24bit( hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, "INTERLACE_PIXEL", small_last_img.data);
 
     // Write to streaming image
     if ( tick % T_LATEST == 0) {
@@ -527,15 +457,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
 
     // Send documents to database
     if ( tick % T_MONGODB  == 0 ) {
-        gettimeofday(&tp, NULL);
-        start= tp.tv_usec;
-        cout << "Dumping " << documents.size() <<  " documents";
         frames.insert_many(documents);
         documents.clear();
-
-        gettimeofday(&tp, NULL);
-        end = tp.tv_usec;
-        cout << "Document insertion: " << end-start << endl;
     }
 }
 
@@ -544,7 +467,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
  * 
  * Rotate the input image by an angle (the proper way!)
  */
-
 Mat AgriDataCamera::Rotate(Mat input, double angle) {
     // Get rotation matrix for rotating the image around its center
     cv::Point2f center(input.cols/2.0, input.rows/2.0);
@@ -598,15 +520,12 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
     float avgLum = Totalintensity/(grayMat.rows * grayMat.cols);
 
     // Update database entry
-    cout << "Modifying id: " << id.to_string() << endl;
     _frames.update_one(bsoncxx::builder::stream::document {} << "_id" << id << bsoncxx::builder::stream::finalize,
                        bsoncxx::builder::stream::document {} << "$set" << bsoncxx::builder::stream::open_document <<
                        "luminance" << avgLum << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
 
     gettimeofday(&tp, NULL);
     end = tp.tv_usec;
-    cout << "Luminance: " << end-start << endl;
-    cout << "Luminance Data: " << avgLum << endl;
 }
 
 
@@ -690,8 +609,11 @@ int AgriDataCamera::Stop()
 
     syslog(LOG_INFO, "Recording Stopped");
     isRecording = false;
+    
+    cout << "Closing active HDF5 file" << endl;
+    H5Fclose( hdf5_output );
 
-    cout << "Dumping documents";
+    cout << "Dumping documents" << endl;
     frames.insert_many(documents);
     documents.clear();
 

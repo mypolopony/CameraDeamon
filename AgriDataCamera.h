@@ -72,6 +72,7 @@ private:
     // Mat image templates
     cv::Mat cv_img;
     cv::Mat last_img;
+    cv::Mat small_last_img;
 
     // This smart pointer will receive the grab result data
     Pylon::CGrabResultPtr ptrGrabResult;
@@ -106,7 +107,8 @@ private:
     std::string output_dir;
 
     // HDF5
-    hdf5::hid_t hdf_output;
+    hid_t hdf5_output;
+    std::string current_hdf5_file;
 
     // MongoDB
     std::string MONGODB_HOST = "mongodb://localhost:27017";
