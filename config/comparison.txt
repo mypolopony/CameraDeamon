@@ -1,0 +1,786 @@
+GigE Only
+---------
+Column: AcquisitionFrameCount
+                      key value
+52  AcquisitionFrameCount     1
+Column: AcquisitionFrameRateAbs
+                        key value
+78  AcquisitionFrameRateAbs     5
+Column: AutoExposureTimeAbsLowerLimit
+                               key value
+148  AutoExposureTimeAbsLowerLimit    76
+Column: AutoExposureTimeAbsUpperLimit
+                               key  value
+149  AutoExposureTimeAbsUpperLimit  80000
+Column: AutoFunctionAOIHeight
+                       key value
+157  AutoFunctionAOIHeight  1216
+159  AutoFunctionAOIHeight  1200
+Column: AutoFunctionAOIOffsetX
+                        key value
+162  AutoFunctionAOIOffsetX     0
+164  AutoFunctionAOIOffsetX     8
+Column: AutoFunctionAOIOffsetY
+                        key value
+167  AutoFunctionAOIOffsetY     0
+169  AutoFunctionAOIOffsetY     8
+Column: AutoFunctionAOISelector
+                         key value
+151  AutoFunctionAOISelector  AOI1
+153  AutoFunctionAOISelector  AOI2
+155  AutoFunctionAOISelector  AOI1
+156  AutoFunctionAOISelector  AOI1
+158  AutoFunctionAOISelector  AOI2
+160  AutoFunctionAOISelector  AOI1
+161  AutoFunctionAOISelector  AOI1
+163  AutoFunctionAOISelector  AOI2
+165  AutoFunctionAOISelector  AOI1
+166  AutoFunctionAOISelector  AOI1
+168  AutoFunctionAOISelector  AOI2
+170  AutoFunctionAOISelector  AOI1
+Column: AutoFunctionAOIWidth
+                      key value
+152  AutoFunctionAOIWidth  1936
+154  AutoFunctionAOIWidth  1920
+Column: AutoGainRawLowerLimit
+                       key value
+146  AutoGainRawLowerLimit     0
+Column: AutoGainRawUpperLimit
+                       key value
+147  AutoGainRawUpperLimit   239
+Column: AutoTargetValue
+                 key value
+143  AutoTargetValue    80
+Column: BalanceRatioRaw
+                key value
+12  BalanceRatioRaw   131
+14  BalanceRatioRaw    64
+16  BalanceRatioRaw   150
+Column: BalanceWhiteAdjustmentDampingRaw
+                                  key value
+145  BalanceWhiteAdjustmentDampingRaw  1000
+Column: BlackLevelRaw
+             key value
+2  BlackLevelRaw     0
+Column: ColorAdjustmentEnable
+                      key value
+19  ColorAdjustmentEnable     1
+Column: ColorAdjustmentHueRaw
+                      key value
+21  ColorAdjustmentHueRaw    -3
+23  ColorAdjustmentHueRaw     2
+25  ColorAdjustmentHueRaw     3
+27  ColorAdjustmentHueRaw     8
+29  ColorAdjustmentHueRaw    -2
+31  ColorAdjustmentHueRaw    18
+Column: ColorAdjustmentSaturationRaw
+                             key value
+34  ColorAdjustmentSaturationRaw   130
+36  ColorAdjustmentSaturationRaw   122
+38  ColorAdjustmentSaturationRaw   144
+40  ColorAdjustmentSaturationRaw   130
+42  ColorAdjustmentSaturationRaw   128
+44  ColorAdjustmentSaturationRaw   124
+Column: ColorAdjustmentSelector
+                        key    value
+20  ColorAdjustmentSelector      Red
+22  ColorAdjustmentSelector   Yellow
+24  ColorAdjustmentSelector    Green
+26  ColorAdjustmentSelector     Cyan
+28  ColorAdjustmentSelector     Blue
+30  ColorAdjustmentSelector  Magenta
+32  ColorAdjustmentSelector      Red
+33  ColorAdjustmentSelector      Red
+35  ColorAdjustmentSelector   Yellow
+37  ColorAdjustmentSelector    Green
+39  ColorAdjustmentSelector     Cyan
+41  ColorAdjustmentSelector     Blue
+43  ColorAdjustmentSelector  Magenta
+45  ColorAdjustmentSelector      Red
+Column: ColorTransformationMatrixFactorRaw
+                                   key  value
+18  ColorTransformationMatrixFactorRaw  65536
+Column: ExposureTimeRaw
+                key value
+75  ExposureTimeRaw  1200
+Column: GammaEnable
+           key value
+4  GammaEnable     1
+Column: GammaSelector
+             key value
+5  GammaSelector  sRGB
+Column: GevSCBWR
+          key value
+138  GevSCBWR    10
+Column: GevSCBWRA
+           key value
+141  GevSCBWRA    10
+Column: GevSCFTD
+          key value
+135  GevSCFTD     0
+Column: GevSCPD
+         key value
+132  GevSCPD     0
+Column: GevSCPSPacketSize
+                   key value
+129  GevSCPSPacketSize  9000
+Column: GevStreamChannelSelector
+                          key           value
+128  GevStreamChannelSelector  StreamChannel0
+130  GevStreamChannelSelector  StreamChannel0
+131  GevStreamChannelSelector  StreamChannel0
+133  GevStreamChannelSelector  StreamChannel0
+134  GevStreamChannelSelector  StreamChannel0
+136  GevStreamChannelSelector  StreamChannel0
+137  GevStreamChannelSelector  StreamChannel0
+139  GevStreamChannelSelector  StreamChannel0
+140  GevStreamChannelSelector  StreamChannel0
+142  GevStreamChannelSelector  StreamChannel0
+Column: GrayValueAdjustmentDampingRaw
+                               key value
+144  GrayValueAdjustmentDampingRaw   700
+Column: LineDebouncerTimeRaw
+                      key  value
+104  LineDebouncerTimeRaw  10000
+106  LineDebouncerTimeRaw      0
+Column: LineFormat
+           key        value
+87  LineFormat  OptoCoupled
+89  LineFormat  OptoCoupled
+91  LineFormat          TTL
+Column: MinOutPulseWidthRaw
+                     key value
+109  MinOutPulseWidthRaw     0
+Column: ParameterSelector
+                   key            value
+182  ParameterSelector             Gain
+184  ParameterSelector  AutoTargetValue
+186  ParameterSelector             Gain
+Column: RemoveLimits
+              key value
+183  RemoveLimits     0
+185  RemoveLimits     0
+Column: ShutterMode
+            key   value
+76  ShutterMode  Global
+Column: TriggerDelayAbs
+                key value
+69  TriggerDelayAbs     0
+71  TriggerDelayAbs     0
+USB Only
+--------
+Column: AcquisitionBurstFrameCount
+                           key value
+53  AcquisitionBurstFrameCount     1
+Column: AcquisitionFrameRate
+                     key     value
+71  AcquisitionFrameRate  20.00000
+Column: AutoExposureTimeLowerLimit
+                           key value
+96  AutoExposureTimeLowerLimit  61.0
+Column: AutoExposureTimeUpperLimit
+                           key   value
+97  AutoExposureTimeUpperLimit  1200.0
+Column: AutoFunctionROIHeight
+                       key value
+104  AutoFunctionROIHeight  1216
+106  AutoFunctionROIHeight  1200
+Column: AutoFunctionROIOffsetX
+                        key value
+109  AutoFunctionROIOffsetX     0
+111  AutoFunctionROIOffsetX     8
+Column: AutoFunctionROIOffsetY
+                        key value
+114  AutoFunctionROIOffsetY     0
+116  AutoFunctionROIOffsetY     8
+Column: AutoFunctionROISelector
+                         key value
+98   AutoFunctionROISelector  ROI1
+100  AutoFunctionROISelector  ROI2
+102  AutoFunctionROISelector  ROI1
+103  AutoFunctionROISelector  ROI1
+105  AutoFunctionROISelector  ROI2
+107  AutoFunctionROISelector  ROI1
+108  AutoFunctionROISelector  ROI1
+110  AutoFunctionROISelector  ROI2
+112  AutoFunctionROISelector  ROI1
+113  AutoFunctionROISelector  ROI1
+115  AutoFunctionROISelector  ROI2
+117  AutoFunctionROISelector  ROI1
+118  AutoFunctionROISelector  ROI1
+120  AutoFunctionROISelector  ROI2
+122  AutoFunctionROISelector  ROI1
+123  AutoFunctionROISelector  ROI1
+125  AutoFunctionROISelector  ROI2
+127  AutoFunctionROISelector  ROI1
+Column: AutoFunctionROIUseBrightness
+                              key value
+119  AutoFunctionROIUseBrightness     1
+121  AutoFunctionROIUseBrightness     0
+Column: AutoFunctionROIUseWhiteBalance
+                                key value
+124  AutoFunctionROIUseWhiteBalance     1
+126  AutoFunctionROIUseWhiteBalance     1
+Column: AutoFunctionROIWidth
+                      key value
+99   AutoFunctionROIWidth  1936
+101  AutoFunctionROIWidth  1920
+Column: AutoGainLowerLimit
+                   key    value
+94  AutoGainLowerLimit  0.00000
+Column: AutoGainUpperLimit
+                   key     value
+95  AutoGainUpperLimit  12.00000
+Column: AutoTargetBrightness
+                     key    value
+92  AutoTargetBrightness  0.50196
+Column: BalanceRatio
+             key    value
+24  BalanceRatio  1.30640
+26  BalanceRatio  1.00000
+28  BalanceRatio  3.83765
+Column: BlackLevel
+           key    value
+15  BlackLevel  0.00000
+Column: ChunkEnable
+            key value
+79  ChunkEnable     0
+81  ChunkEnable     0
+83  ChunkEnable     0
+85  ChunkEnable     0
+87  ChunkEnable     0
+89  ChunkEnable     0
+Column: ChunkSelector
+              key          value
+78  ChunkSelector           Gain
+80  ChunkSelector   ExposureTime
+82  ChunkSelector      Timestamp
+84  ChunkSelector  LineStatusAll
+86  ChunkSelector   CounterValue
+88  ChunkSelector   PayloadCRC16
+90  ChunkSelector      Timestamp
+Column: ColorTransformationSelector
+                            key     value
+30  ColorTransformationSelector  RGBtoRGB
+49  ColorTransformationSelector  RGBtoRGB
+Column: ColorTransformationValue
+                         key    value
+32  ColorTransformationValue  1.00000
+34  ColorTransformationValue  0.00000
+36  ColorTransformationValue  0.00000
+38  ColorTransformationValue  0.00000
+40  ColorTransformationValue  1.00000
+42  ColorTransformationValue  0.00000
+44  ColorTransformationValue  0.00000
+46  ColorTransformationValue  0.00000
+48  ColorTransformationValue  1.00000
+Column: ColorTransformationValueSelector
+                                 key   value
+31  ColorTransformationValueSelector  Gain00
+33  ColorTransformationValueSelector  Gain01
+35  ColorTransformationValueSelector  Gain02
+37  ColorTransformationValueSelector  Gain10
+39  ColorTransformationValueSelector  Gain11
+41  ColorTransformationValueSelector  Gain12
+43  ColorTransformationValueSelector  Gain20
+45  ColorTransformationValueSelector  Gain21
+47  ColorTransformationValueSelector  Gain22
+50  ColorTransformationValueSelector  Gain00
+Column: DeviceLinkSelector
+                   key value
+72  DeviceLinkSelector     0
+74  DeviceLinkSelector     0
+75  DeviceLinkSelector     0
+77  DeviceLinkSelector     0
+Column: DeviceLinkThroughputLimit
+                          key      value
+73  DeviceLinkThroughputLimit  360000000
+Column: DeviceLinkThroughputLimitMode
+                              key value
+76  DeviceLinkThroughputLimitMode    On
+Column: Gain
+     key     value
+12  Gain  12.00000
+Column: GainSelector
+             key value
+11  GainSelector   All
+13  GainSelector   All
+Column: Gamma
+      key    value
+17  Gamma  1.00000
+Column: LightSourcePreset
+                  key          value
+21  LightSourcePreset  Daylight5000K
+Column: LineDebouncerTime
+                   key    value
+156  LineDebouncerTime  0.00000
+158  LineDebouncerTime  0.00000
+160  LineDebouncerTime  0.00000
+Column: LineMinimumOutputPulseWidth
+                             key  value
+163  LineMinimumOutputPulseWidth  0.000
+Column: RemoveParameterLimit
+                     key value
+19  RemoveParameterLimit     0
+Column: RemoveParameterLimitSelector
+                             key value
+18  RemoveParameterLimitSelector  Gain
+20  RemoveParameterLimitSelector  Gain
+Column: TimerDelay
+            key value
+170  TimerDelay   0.0
+Column: TimerDuration
+               key value
+167  TimerDuration  10.0
+Column: TimerSelector
+               key   value
+166  TimerSelector  Timer1
+168  TimerSelector  Timer1
+169  TimerSelector  Timer1
+171  TimerSelector  Timer1
+172  TimerSelector  Timer1
+174  TimerSelector  Timer1
+Column: TimerTriggerSource
+                    key          value
+173  TimerTriggerSource  ExposureStart
+Column: TriggerDelay
+             key value
+69  TriggerDelay     0
+Both
+----
+Column: AcquisitionFrameRateEnable
+GigE:
+                           key value
+77  AcquisitionFrameRateEnable     1
+USB:
+                           key value
+70  AcquisitionFrameRateEnable     1
+ = = = = = = = = 
+Column: AutoFunctionProfile
+GigE:
+                     key            value
+150  AutoFunctionProfile  ExposureMinimum
+USB:
+                    key                 value
+93  AutoFunctionProfile  MinimizeExposureTime
+ = = = = = = = = 
+Column: BalanceRatioSelector
+GigE:
+                     key  value
+11  BalanceRatioSelector    Red
+13  BalanceRatioSelector  Green
+15  BalanceRatioSelector   Blue
+17  BalanceRatioSelector    Red
+USB:
+                     key  value
+23  BalanceRatioSelector    Red
+25  BalanceRatioSelector  Green
+27  BalanceRatioSelector   Blue
+29  BalanceRatioSelector    Red
+ = = = = = = = = 
+Column: BalanceWhiteAuto
+GigE:
+                 key value
+10  BalanceWhiteAuto   Off
+USB:
+                 key value
+22  BalanceWhiteAuto   Off
+ = = = = = = = = 
+Column: BlackLevelSelector
+GigE:
+                  key value
+1  BlackLevelSelector   All
+3  BlackLevelSelector   All
+USB:
+                   key value
+14  BlackLevelSelector   All
+16  BlackLevelSelector   All
+ = = = = = = = = 
+Column: CenterX
+GigE:
+        key value
+50  CenterX     0
+USB:
+       key value
+4  CenterX     0
+ = = = = = = = = 
+Column: CenterY
+GigE:
+        key value
+51  CenterY     0
+USB:
+       key value
+5  CenterY     0
+ = = = = = = = = 
+Column: ChunkModeActive
+GigE:
+                 key value
+187  ChunkModeActive     0
+USB:
+                key value
+91  ChunkModeActive     0
+ = = = = = = = = 
+Column: CounterEventSource
+GigE:
+                    key         value
+113  CounterEventSource  FrameTrigger
+115  CounterEventSource    FrameStart
+USB:
+                    key       value
+176  CounterEventSource  FrameStart
+ = = = = = = = = 
+Column: CounterResetSource
+GigE:
+                    key value
+118  CounterResetSource   Off
+120  CounterResetSource   Off
+USB:
+                    key value
+179  CounterResetSource   Off
+ = = = = = = = = 
+Column: CounterSelector
+GigE:
+                 key     value
+112  CounterSelector  Counter1
+114  CounterSelector  Counter2
+116  CounterSelector  Counter1
+117  CounterSelector  Counter1
+119  CounterSelector  Counter2
+121  CounterSelector  Counter1
+USB:
+                 key     value
+175  CounterSelector  Counter1
+177  CounterSelector  Counter1
+178  CounterSelector  Counter1
+180  CounterSelector  Counter1
+ = = = = = = = = 
+Column: EventNotification
+GigE:
+                   key value
+189  EventNotification   Off
+191  EventNotification   Off
+193  EventNotification   Off
+195  EventNotification   Off
+197  EventNotification   Off
+199  EventNotification   Off
+USB:
+                   key value
+182  EventNotification   Off
+184  EventNotification   Off
+186  EventNotification   Off
+188  EventNotification   Off
+190  EventNotification   Off
+ = = = = = = = = 
+Column: EventSelector
+GigE:
+               key                        value
+188  EventSelector                  ExposureEnd
+190  EventSelector        FrameStartOvertrigger
+192  EventSelector  AcquisitionStartOvertrigger
+194  EventSelector                   FrameStart
+196  EventSelector             AcquisitionStart
+198  EventSelector                 EventOverrun
+200  EventSelector                  ExposureEnd
+USB:
+               key                       value
+181  EventSelector                 ExposureEnd
+183  EventSelector                  FrameStart
+185  EventSelector             FrameBurstStart
+187  EventSelector       FrameStartOvertrigger
+189  EventSelector  FrameBurstStartOvertrigger
+191  EventSelector                 ExposureEnd
+ = = = = = = = = 
+Column: ExposureAuto
+GigE:
+             key value
+74  ExposureAuto   Off
+USB:
+             key       value
+51  ExposureAuto  Continuous
+ = = = = = = = = 
+Column: ExposureMode
+GigE:
+             key  value
+73  ExposureMode  Timed
+USB:
+             key  value
+52  ExposureMode  Timed
+ = = = = = = = = 
+Column: GainAuto
+GigE:
+        key       value
+0  GainAuto  Continuous
+USB:
+         key       value
+10  GainAuto  Continuous
+ = = = = = = = = 
+Column: Height
+GigE:
+       key value
+47  Height  1200
+USB:
+      key value
+1  Height  1200
+ = = = = = = = = 
+Column: LUTEnable
+GigE:
+           key value
+123  LUTEnable     0
+USB:
+           key value
+129  LUTEnable     0
+ = = = = = = = = 
+Column: LUTSelector
+GigE:
+             key      value
+122  LUTSelector  Luminance
+124  LUTSelector  Luminance
+125  LUTSelector  Luminance
+127  LUTSelector  Luminance
+USB:
+             key      value
+128  LUTSelector  Luminance
+130  LUTSelector  Luminance
+131  LUTSelector  Luminance
+133  LUTSelector  Luminance
+ = = = = = = = = 
+Column: LUTValueAll
+GigE:
+             key                                              value
+126  LUTValueAll  0x00000000000000000000000000000000000000000000...
+USB:
+             key                                              value
+132  LUTValueAll  0x00000000000000000000000000000000000000000000...
+ = = = = = = = = 
+Column: LineInverter
+GigE:
+              key value
+97   LineInverter     0
+99   LineInverter     0
+101  LineInverter     0
+USB:
+              key value
+147  LineInverter     0
+149  LineInverter     0
+151  LineInverter     0
+153  LineInverter     0
+ = = = = = = = = 
+Column: LineMode
+GigE:
+         key   value
+80  LineMode   Input
+82  LineMode  Output
+84  LineMode   Input
+USB:
+          key   value
+135  LineMode   Input
+137  LineMode  Output
+139  LineMode   Input
+141  LineMode   Input
+ = = = = = = = = 
+Column: LineSelector
+GigE:
+              key  value
+79   LineSelector  Line1
+81   LineSelector  Line2
+83   LineSelector  Line3
+85   LineSelector  Line1
+86   LineSelector  Line1
+88   LineSelector  Line2
+90   LineSelector  Line3
+92   LineSelector  Line1
+93   LineSelector  Line2
+95   LineSelector  Line1
+96   LineSelector  Line1
+98   LineSelector  Line2
+100  LineSelector  Line3
+102  LineSelector  Line1
+103  LineSelector  Line1
+105  LineSelector  Line3
+107  LineSelector  Line1
+108  LineSelector  Line2
+110  LineSelector  Line1
+USB:
+              key  value
+134  LineSelector  Line1
+136  LineSelector  Line2
+138  LineSelector  Line3
+140  LineSelector  Line4
+142  LineSelector  Line1
+143  LineSelector  Line2
+145  LineSelector  Line1
+146  LineSelector  Line1
+148  LineSelector  Line2
+150  LineSelector  Line3
+152  LineSelector  Line4
+154  LineSelector  Line1
+155  LineSelector  Line1
+157  LineSelector  Line3
+159  LineSelector  Line4
+161  LineSelector  Line1
+162  LineSelector  Line2
+164  LineSelector  Line1
+ = = = = = = = = 
+Column: LineSource
+GigE:
+           key        value
+94  LineSource  UserOutput1
+USB:
+            key        value
+144  LineSource  UserOutput1
+ = = = = = = = = 
+Column: OffsetX
+GigE:
+        key value
+48  OffsetX     8
+USB:
+       key value
+2  OffsetX     0
+ = = = = = = = = 
+Column: OffsetY
+GigE:
+        key value
+49  OffsetY     8
+USB:
+       key value
+3  OffsetY     0
+ = = = = = = = = 
+Column: PixelFormat
+GigE:
+           key               value
+6  PixelFormat  YUV422_YUYV_Packed
+USB:
+           key     value
+8  PixelFormat  BayerRG8
+ = = = = = = = = 
+Column: ReverseX
+GigE:
+        key value
+7  ReverseX     0
+USB:
+        key value
+6  ReverseX     0
+ = = = = = = = = 
+Column: ReverseY
+GigE:
+        key value
+8  ReverseY     0
+USB:
+        key value
+7  ReverseY     0
+ = = = = = = = = 
+Column: TestImageSelector
+GigE:
+                 key value
+9  TestImageSelector   Off
+USB:
+                 key value
+9  TestImageSelector   Off
+ = = = = = = = = 
+Column: TriggerActivation
+GigE:
+                  key       value
+64  TriggerActivation  RisingEdge
+66  TriggerActivation  RisingEdge
+USB:
+                  key       value
+65  TriggerActivation  RisingEdge
+67  TriggerActivation  RisingEdge
+ = = = = = = = = 
+Column: TriggerMode
+GigE:
+            key value
+54  TriggerMode   Off
+56  TriggerMode   Off
+USB:
+            key value
+55  TriggerMode   Off
+57  TriggerMode   Off
+ = = = = = = = = 
+Column: TriggerSelector
+GigE:
+                key             value
+53  TriggerSelector  AcquisitionStart
+55  TriggerSelector        FrameStart
+57  TriggerSelector        FrameStart
+58  TriggerSelector  AcquisitionStart
+60  TriggerSelector        FrameStart
+62  TriggerSelector        FrameStart
+63  TriggerSelector  AcquisitionStart
+65  TriggerSelector        FrameStart
+67  TriggerSelector        FrameStart
+68  TriggerSelector  AcquisitionStart
+70  TriggerSelector        FrameStart
+72  TriggerSelector        FrameStart
+USB:
+                key            value
+54  TriggerSelector  FrameBurstStart
+56  TriggerSelector       FrameStart
+58  TriggerSelector       FrameStart
+59  TriggerSelector  FrameBurstStart
+61  TriggerSelector       FrameStart
+63  TriggerSelector       FrameStart
+64  TriggerSelector  FrameBurstStart
+66  TriggerSelector       FrameStart
+68  TriggerSelector       FrameStart
+ = = = = = = = = 
+Column: TriggerSource
+GigE:
+              key  value
+59  TriggerSource  Line1
+61  TriggerSource  Line1
+USB:
+              key  value
+60  TriggerSource  Line1
+62  TriggerSource  Line1
+ = = = = = = = = 
+Column: UserDefinedValue
+GigE:
+                  key value
+172  UserDefinedValue     0
+174  UserDefinedValue     0
+176  UserDefinedValue     0
+178  UserDefinedValue     0
+180  UserDefinedValue     0
+USB:
+                  key value
+193  UserDefinedValue     0
+195  UserDefinedValue     0
+197  UserDefinedValue     0
+199  UserDefinedValue     0
+201  UserDefinedValue     0
+ = = = = = = = = 
+Column: UserDefinedValueSelector
+GigE:
+                          key   value
+171  UserDefinedValueSelector  Value1
+173  UserDefinedValueSelector  Value2
+175  UserDefinedValueSelector  Value3
+177  UserDefinedValueSelector  Value4
+179  UserDefinedValueSelector  Value5
+181  UserDefinedValueSelector  Value1
+USB:
+                          key   value
+192  UserDefinedValueSelector  Value1
+194  UserDefinedValueSelector  Value2
+196  UserDefinedValueSelector  Value3
+198  UserDefinedValueSelector  Value4
+200  UserDefinedValueSelector  Value5
+202  UserDefinedValueSelector  Value1
+ = = = = = = = = 
+Column: UserOutputValueAll
+GigE:
+                    key value
+111  UserOutputValueAll     0
+USB:
+                    key value
+165  UserOutputValueAll     0
+ = = = = = = = = 
+Column: Width
+GigE:
+      key value
+46  Width  1920
+USB:
+     key value
+0  Width  1920
+ = = = = = = = = 
