@@ -65,6 +65,7 @@ private:
         Pylon::CGrabResultPtr img_ptr;
     };
 
+
     // Dimensions
     int64_t width;
     int64_t height;
@@ -94,6 +95,9 @@ private:
 
     // PNG compression
     std::vector<int> compression_params;
+    
+    // Camera rotation
+    int rotation;
 
     // Timers
     const int T_LATEST = 20;            // Every second
@@ -129,7 +133,7 @@ private:
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);
-    cv::Mat Rotate(cv::Mat, double angle);
+    cv::Mat Rotate(cv::Mat);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);

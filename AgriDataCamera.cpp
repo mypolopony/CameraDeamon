@@ -203,6 +203,28 @@ void AgriDataCamera::Initialize()
     // Identifier
     serialnumber = (string) DeviceID();
     
+    // Obtain box info to determine camera rotation
+    mongocxx::collection box = db["box"];
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document {} << bsoncxx::builder::stream::finalize);
+    if(maybe_result) {
+        
+    }
+    try {
+        string resultstring = bsoncxx::to_json(*maybe_result);
+        auto thisbox = json::parse(resultstring);
+        if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
+            rotation = -90;
+        } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
+            rotation = 90;
+        } else {
+            rotation = 0;
+        }
+    } catch (const std::invalid_argument& ia) {
+        cerr << "Unable to determine camera orientation. . ." << endl;
+        cerr << "Setting rotation to 0" << endl;
+        rotation = 0;
+    }
+    
     // HDF5
     current_hdf5_file = "";
 }
@@ -427,7 +449,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
     
     // Rotate
-    small_last_img = AgriDataCamera::Rotate( small_last_img, -90 );  
+    small_last_img = AgriDataCamera::Rotate( small_last_img );  
 
     // Write
     H5IMmake_image_24bit( hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, "INTERLACE_PIXEL", small_last_img.data);
@@ -467,13 +489,13 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
  * 
  * Rotate the input image by an angle (the proper way!)
  */
-Mat AgriDataCamera::Rotate(Mat input, double angle) {
+Mat AgriDataCamera::Rotate(Mat input) {
     // Get rotation matrix for rotating the image around its center
     cv::Point2f center(input.cols/2.0, input.rows/2.0);
-    cv::Mat rot = cv::getRotationMatrix2D(center, angle, 1.0);
+    cv::Mat rot = cv::getRotationMatrix2D(center, rotation, 1.0);
     
     // Determine bounding rectangle
-    cv::Rect bbox = cv::RotatedRect(center, input.size(), angle).boundingRect();
+    cv::Rect bbox = cv::RotatedRect(center, input.size(), rotation).boundingRect();
     
     // Adjust transformation matrix
     rot.at<double>(0,2) += bbox.width/2.0 - center.x;
@@ -494,17 +516,12 @@ Mat AgriDataCamera::Rotate(Mat input, double angle) {
  */
 void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
 {
-    struct timeval tp;
-    long int start, end;
-    gettimeofday(&tp, NULL);
-    start= tp.tv_usec;
-
     // As per http://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/thread-safety/
     // "don't even bother sharing clients. Just give each thread its own"
     mongocxx::client _conn { mongocxx::uri { MONGODB_HOST } };
     mongocxx::database _db = _conn["agdb"];
     mongocxx::collection _frames = _db["frame"];
-
+    
     cv::Mat grayMat;
     cv::cvtColor(input, grayMat, CV_BGR2GRAY);
 
@@ -523,9 +540,6 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
     _frames.update_one(bsoncxx::builder::stream::document {} << "_id" << id << bsoncxx::builder::stream::finalize,
                        bsoncxx::builder::stream::document {} << "$set" << bsoncxx::builder::stream::open_document <<
                        "luminance" << avgLum << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
-
-    gettimeofday(&tp, NULL);
-    end = tp.tv_usec;
 }
 
 
@@ -565,7 +579,6 @@ void AgriDataCamera::Snap()
         snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
                        CV_8UC3, (uint8_t *) image.GetBuffer());
 
-        Mat last_img;
         snap_img.copyTo(last_img);
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
                  ref(compression_params));
@@ -583,7 +596,7 @@ void AgriDataCamera::Snap()
 void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params)
 {
     string snumber;
-    snumber = DeviceID();
+    snumber = (string) DeviceID();
 
     Mat thumb;
     resize(img, thumb, Size(), 0.2, 0.2);
@@ -629,13 +642,14 @@ int AgriDataCamera::Stop()
  */
 json AgriDataCamera::GetStatus()
 {
-    json status;
-    json imu_status;
+    json status, imu_status;
+    string docstring;
     imu_status["IMU_VELOCITY_NORTH"] = -99.9;
     imu_status["IMU_VELOCITY_EAST"] = -99.9;
 
     // If we are not recording, make a new IMU request
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
+    /*
     if (!isRecording) {
         s_send(imu_, " ");
         try {
@@ -660,25 +674,61 @@ json AgriDataCamera::GetStatus()
     } catch (...) {
         cout << "Second IMU Fail";
     }
-
+    */
+    
     status["Serial Number"] = (string) DeviceID();
     status["Model Name"] = (string) GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
 
     // Something funny here, occasionally the ptrGrabResult is not available
     // even though the camera is grabbing?
-    if (isRecording)
+    if (isRecording) {
         status["Timestamp"] = last_timestamp;
-    else
+        status["scanid"] = scanid;
+    } else {
         status["Timestamp"] = "Not Recording";
+        status["scanid"] = "Not Recording";
+    }
+    
     status["Exposure Time"] = ExposureTimeAbs();
     status["Resulting Frame Rate"] = ResultingFrameRateAbs();
     status["Current Gain"] = GainRaw();
     status["Temperature"] = TemperatureAbs();
-    try {
-        status["scanid"] = scanid;
-    } catch (...) {
-        status["scanid"] = "";
+
+    // Create BSON from JSON and send to database (if not recording)
+    // The stream builder is preferred so we use that (as opposed to the "basic"
+    // builder used in the main thread)
+    if (!isRecording) {
+        // Grab an image for luminance calculation
+        // This will set last_image
+        AgriDataCamera::Snap();
+
+        // It would be nice to iterate automatically
+        // but how to cast json &val?
+        /*
+        for (auto it = status.begin(); it != status.end(); ++it) {
+            const string &key = it.key();
+            json &val = it.value();
+            doc << key << val;
+        }
+        */
+        
+        bsoncxx::document::value doc = bsoncxx::builder::stream::document{} << "Serial Number" << (string) status["Serial Number"].get<string>()
+            << "Model Name" << (string) status["Model Name"].get<string>()
+            << "Recording" << (bool) status["Recording"].get<bool>()
+            << "Timestamp" << (string) status["Timestamp"].get<string>()
+            << "scanid" << (string) status["scanid"].get<string>()
+            << "Exposure Time" << (int) status["Exposure Time"].get<int>()
+            << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
+            << "Current Gain" << (int) status["Current Gain"].get<int>()
+            << "Temperature" << (int) status["Temperature"].get<int>()
+            << bsoncxx::builder::stream::finalize;
+        
+        auto ret = frames.insert_one(doc.view());
+        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
+        thread t(&AgriDataCamera::Luminance, this, oid, last_img);
+        t.detach();
     }
+    
     return status;
 }

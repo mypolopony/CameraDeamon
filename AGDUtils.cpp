@@ -1,9 +1,9 @@
 /* 
- * File:   AGDUtils.cpp
- * Author: agridata
- * 
- * Created on March 13, 2017, 1:33 PM
- */
+* File:   AGDUtils.cpp
+* Author: agridata
+* 
+* Created on March 13, 2017, 1:33 PM
+*/
 
 #include <sstream>
 #include <stdio.h>
@@ -13,14 +13,101 @@
 #include "AGDUtils.h"
 #include <sys/stat.h>
 #include <errno.h>
+#include <iostream>
+
+
+// Include files to use openCV
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include "hdf5.h"
+#include "hdf5_hl.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 class popen;
 using namespace std;
+using namespace cv;
 
 #define DEFAULT_MODE      S_IRWXU | S_IRGRP |  S_IXGRP | S_IROTH | S_IXOTH
 
-namespace AGDUtils {
+/**
+ * Constructor
+ */
+ImageReader::ImageReader() {
+    idx = 0;
+    width = 513;
+	height = 641;
+    totalsize = 3 * (size_t)width * (size_t)height * (size_t)sizeof(uint8_t);
     
+}
+
+/**
+ * Destructor
+ */
+ImageReader::~ImageReader()
+{
+}
+
+void ImageReader::read(string filename) {
+    // Open file
+    fid = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+
+    // Open group
+    grp = H5Gopen(fid, "/", H5P_DEFAULT);
+
+    // Group name
+    H5Iget_name(grp, group_name, MAX_NAME);
+
+    // Enumerate objects
+    H5Gget_num_objs(grp, &numObjects);
+    
+    // Gather list of names
+    for (int i=0; i<numObjects; i++) {
+        char memb_name[MAX_NAME];
+        H5Gget_objname_by_idx(grp, i, memb_name, MAX_NAME);
+        elements.push_back((string) memb_name);
+    }
+
+    return;
+}
+
+/**
+ * ImageReader::next
+ *
+ * This methods serves to access the opened file as if it were an iterator; 
+ * The implementation is very simple and relies only on idx
+ */
+Mat ImageReader::next() {
+    if (idx < numObjects) {
+        uint8_t buf[totalsize];
+        
+        hid_t imgid = H5Oopen ( grp, elements[idx].c_str(), H5P_DEFAULT );
+        H5IMread_image(grp, elements[idx].c_str(), buf);
+        
+        // Create the CV Image
+        Mat img = Mat(height, width, CV_8UC3, (uchar *) buf);	
+        cvtColor(img, img, CV_BGR2RGB);
+        
+        // Increment
+        idx++;
+        
+        return img;
+    } else {
+        throw("EOF");
+    }
+}
+
+namespace AGDUtils {
     /**
      * mkdirp
      *
@@ -50,8 +137,8 @@ namespace AGDUtils {
       }
       return true;
     }
-    
-    
+
+
     /**
      * split
      *
@@ -83,7 +170,7 @@ namespace AGDUtils {
         strftime (buffer,80,format.c_str(),timeinfo);
         return string(buffer);
     }
-    
+
     /** grabSeconds
      * 
      * grabTime is a way to get a string from the shell, but this is the more canonical

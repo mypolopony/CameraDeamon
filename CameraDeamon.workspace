@@ -5,14 +5,19 @@
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="CameraDeamon" ConfigName="Debug"/>
-      <Project Name="CameraDeamon" ConfigName="Debug"/>
-      <Project Name="CameraDeamon" ConfigName="Debug"/>
+      <Project Name="hdf5example" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="CameraDeamon" ConfigName="Release"/>
       <Project Name="CameraDeamon" ConfigName="Release"/>
       <Project Name="CameraDeamon" ConfigName="Release"/>
+      <Project Name="hdf5example" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="rwa" Selected="yes">
+      <Environment/>
+      <Project Name="CameraDeamon" ConfigName="Debug"/>
+      <Project Name="hdf5example" ConfigName="Debug"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>
