@@ -1,3 +1,6 @@
+# Collateral
+*.jpg
+
 #Build
 src/build
 *build*
@@ -15,6 +18,9 @@ env/
 *.workspace
 *.project
 .codelite/
+
+# Netbeans
+nbproject/
 
 # Hidden
 .*
