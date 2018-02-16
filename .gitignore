@@ -59,4 +59,5 @@ utils/*.html
 *.app
 site/
 /cmake-build-debug/
+CameraDeamon/Debug/CameraDeamon
 /build-clion/
