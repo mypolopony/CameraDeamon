@@ -29,18 +29,31 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="../main.cpp" ExcludeProjConfig=""/>
+    <File Name="../main.cpp" ExcludeProjConfig="Debug"/>
     <File Name="../mkdocs.yml"/>
     <File Name="../AgriDataCamera.cpp"/>
     <File Name="../AgriDataCamera.h"/>
     <File Name="../AGDUtils.cpp"/>
     <File Name="../AGDUtils.h"/>
     <File Name="../ImageReader.h"/>
-    <File Name="../test.cpp"/>
+    <File Name="../test.cpp" ExcludeProjConfig="Debug"/>
+    <File Name="../cudasift.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>
     <File Name="../zmq.hpp"/>
+    <File Name="../lib/easylogging++.cc"/>
+    <File Name="../lib/easylogging++.h"/>
+    <File Name="../lib/cudaImage.cu"/>
+    <File Name="../lib/cudaImage.h"/>
+    <File Name="../lib/cudaSift.h"/>
+    <File Name="../lib/cudaSiftD.cu"/>
+    <File Name="../lib/cudaSiftD.h"/>
+    <File Name="../lib/cudaSiftH.cu"/>
+    <File Name="../lib/cudaSiftH.h"/>
+    <File Name="../lib/cudautils.h"/>
+    <File Name="../lib/geomFuncs.cpp"/>
+    <File Name="../lib/matching.cu"/>
   </VirtualDirectory>
   <VirtualDirectory Name="docs">
     <File Name="../docs/index.md"/>
@@ -69,21 +82,33 @@
         <IncludePath Value="/opt/pylon5/include"/>
         <IncludePath Value="/usr/include/opencv2"/>
         <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library"/>
+        <IncludePath Value="/home/agridata/CameraDeamon/lib"/>
         <IncludePath Value="/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/include"/>
         <IncludePath Value="/usr/include"/>
+        <IncludePath Value="/data/opencv_contrib/modules/xfeatures2d/include"/>
+        <IncludePath Value="/usr/local/cuda/include"/>
+        <IncludePath Value="/usr/local/cuda/lib64"/>
+        <IncludePath Value="/data/AgriDataGPU/CudaSift"/>
       </Compiler>
-      <Linker Options="-pg;`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`;`pkg-config --libs libmongocxx`; /home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/lib/libhdf5.so;/usr/lib/aarch64-linux-gnu/libz.so;/usr/lib/aarch64-linux-gnu/libdl.so;/usr/lib/aarch64-linux-gnu/libm.so" Required="yes">
+      <Linker Options="-pg;`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`;`pkg-config --libs libmongocxx`;/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/lib/libhdf5.so;/usr/lib/aarch64-linux-gnu/libz.so;/usr/lib/aarch64-linux-gnu/libdl.so;/usr/lib/aarch64-linux-gnu/libm.so" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
+        <LibraryPath Value="/usr/local/lib64"/>
+        <LibraryPath Value="/usr/local/cuda/lib64"/>
         <Library Value="pylonbase"/>
         <Library Value="pylonutility"/>
         <Library Value="GenApi_gcc_v3_0_Basler_pylon_v5_0"/>
         <Library Value="GCBase_gcc_v3_0_Basler_pylon_v5_0"/>
+        <Library Value="boost_system"/>
+        <Library Value="boost_filesystem"/>
         <Library Value="boost_python"/>
         <Library Value="zmq"/>
         <Library Value="pthread"/>
         <Library Value="profiler"/>
         <Library Value="hdf5"/>
         <Library Value="hdf5_hl"/>
+        <Library Value="redox"/>
+        <Library Value="ev"/>
+        <Library Value="hiredis"/>
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
