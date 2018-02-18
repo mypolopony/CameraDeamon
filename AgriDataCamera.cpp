@@ -42,7 +42,7 @@
 #include <mutex>
 #include <condition_variable>
 
-// Other
+// System
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -52,6 +52,9 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
+
+// Redis
+#include <redox.hpp>
 
 // Namespaces
 using namespace Basler_GigECameraParams;
@@ -429,6 +432,12 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
             H5Fclose( hdf5_output );
+            
+            // Add to queue
+            redox::Redox rdx;
+            if (rdx.connect() == 1) {
+                rdx.command<string>({"LPUSH", "detection", current_hdf5_file});
+            }
         }
         hdf5_output = H5Fcreate( hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
         current_hdf5_file = hdf5file;

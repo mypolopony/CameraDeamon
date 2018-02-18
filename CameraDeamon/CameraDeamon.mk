@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=
-Date                   :=15/02/18
+Date                   :=18/02/18
 CodeLitePath           :="/home/nvidia/.codelite"
 LinkerName             :=/usr/bin/aarch64-linux-gnu-g++
 SharedObjectLinkerName :=/usr/bin/aarch64-linux-gnu-g++ -shared -fPIC
@@ -35,13 +35,13 @@ PreprocessOnlySwitch   :=-E
 ObjectsFileList        :="CameraDeamon.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
-LinkOptions            :=  -pg `pkg-config opencv --cflags --libs` `/opt/pylon5/bin/pylon-config --libs-rpath` `pkg-config --libs libmongocxx`  /home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/lib/libhdf5.so /usr/lib/aarch64-linux-gnu/libz.so /usr/lib/aarch64-linux-gnu/libdl.so /usr/lib/aarch64-linux-gnu/libm.so
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include $(IncludeSwitch)/usr/include/opencv2 $(IncludeSwitch)/home/agridata/CameraDeamon/CameraDeamon/library $(IncludeSwitch)/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/include $(IncludeSwitch)/usr/include 
+LinkOptions            :=  -pg `pkg-config opencv --cflags --libs` `/opt/pylon5/bin/pylon-config --libs-rpath` `pkg-config --libs libmongocxx` /home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/lib/libhdf5.so /usr/lib/aarch64-linux-gnu/libz.so /usr/lib/aarch64-linux-gnu/libdl.so /usr/lib/aarch64-linux-gnu/libm.so
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include $(IncludeSwitch)/usr/include/opencv2 $(IncludeSwitch)/home/agridata/CameraDeamon/CameraDeamon/library $(IncludeSwitch)/home/agridata/CameraDeamon/lib $(IncludeSwitch)/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/include $(IncludeSwitch)/usr/include $(IncludeSwitch)/data/opencv_contrib/modules/xfeatures2d/include $(IncludeSwitch)/usr/local/cuda/include $(IncludeSwitch)/usr/local/cuda/lib64 $(IncludeSwitch)/data/AgriDataGPU/CudaSift 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)profiler $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl 
-ArLibs                 :=  "pylonbase" "pylonutility" "GenApi_gcc_v3_0_Basler_pylon_v5_0" "GCBase_gcc_v3_0_Basler_pylon_v5_0" "boost_python" "zmq" "pthread" "profiler" "hdf5" "hdf5_hl" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 
+Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_system $(LibrarySwitch)boost_filesystem $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)profiler $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl $(LibrarySwitch)redox $(LibrarySwitch)ev $(LibrarySwitch)hiredis 
+ArLibs                 :=  "pylonbase" "pylonutility" "GenApi_gcc_v3_0_Basler_pylon_v5_0" "GCBase_gcc_v3_0_Basler_pylon_v5_0" "boost_system" "boost_filesystem" "boost_python" "zmq" "pthread" "profiler" "hdf5" "hdf5_hl" "redox" "ev" "hiredis" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 $(LibraryPathSwitch)/usr/local/lib64 $(LibraryPathSwitch)/usr/local/cuda/lib64 
 
 ##
 ## Common variables
@@ -60,7 +60,7 @@ AS       := /usr/bin/aarch64-linux-gnu-as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_test.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) $(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(ObjectSuffix) $(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) $(IntermediateDirectory)/lib_geomFuncs.cpp$(ObjectSuffix) 
 
 
 
@@ -91,14 +91,6 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix): ../main.cpp $(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix): ../main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix) -MM "../main.cpp"
-
-$(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix): ../main.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix) "../main.cpp"
-
 $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix): ../AgriDataCamera.cpp $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/AgriDataCamera.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix): ../AgriDataCamera.cpp
@@ -115,13 +107,29 @@ $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix): ../AGDUtils.c
 $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix): ../AGDUtils.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix) "../AGDUtils.cpp"
 
-$(IntermediateDirectory)/CameraDeamon_test.cpp$(ObjectSuffix): ../test.cpp $(IntermediateDirectory)/CameraDeamon_test.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/test.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_test.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/CameraDeamon_test.cpp$(DependSuffix): ../test.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_test.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_test.cpp$(DependSuffix) -MM "../test.cpp"
+$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(ObjectSuffix): ../cudasift.cpp $(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/cudasift.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(DependSuffix): ../cudasift.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(DependSuffix) -MM "../cudasift.cpp"
 
-$(IntermediateDirectory)/CameraDeamon_test.cpp$(PreprocessSuffix): ../test.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_test.cpp$(PreprocessSuffix) "../test.cpp"
+$(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(PreprocessSuffix): ../cudasift.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_cudasift.cpp$(PreprocessSuffix) "../cudasift.cpp"
+
+$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix): ../lib/easylogging++.cc $(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/easylogging++.cc" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix): ../lib/easylogging++.cc
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix) -MM "../lib/easylogging++.cc"
+
+$(IntermediateDirectory)/lib_easylogging++.cc$(PreprocessSuffix): ../lib/easylogging++.cc
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_easylogging++.cc$(PreprocessSuffix) "../lib/easylogging++.cc"
+
+$(IntermediateDirectory)/lib_geomFuncs.cpp$(ObjectSuffix): ../lib/geomFuncs.cpp $(IntermediateDirectory)/lib_geomFuncs.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/geomFuncs.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_geomFuncs.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/lib_geomFuncs.cpp$(DependSuffix): ../lib/geomFuncs.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_geomFuncs.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_geomFuncs.cpp$(DependSuffix) -MM "../lib/geomFuncs.cpp"
+
+$(IntermediateDirectory)/lib_geomFuncs.cpp$(PreprocessSuffix): ../lib/geomFuncs.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_geomFuncs.cpp$(PreprocessSuffix) "../lib/geomFuncs.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
