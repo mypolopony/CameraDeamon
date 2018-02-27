@@ -1,0 +1,75 @@
+2018-02-26 16:43:56,218 INFO [default] *------------------------------*
+2018-02-26 16:43:56,219 INFO [default] *****  OpenCV Parameters  ******
+2018-02-26 16:43:56,220 INFO [default] *------------------------------*
+2018-02-26 16:43:56,220 INFO [default] *
+2018-02-26 16:43:56,220 INFO [default] * OpenCV version : 3.4.0
+2018-02-26 16:43:56,221 INFO [default] * Major version : 3
+2018-02-26 16:43:56,221 INFO [default] * Minor version : 4
+2018-02-26 16:43:56,221 INFO [default] * Subminor version : 0
+2018-02-26 16:43:56,222 INFO [default] *
+2018-02-26 16:43:56,222 INFO [default] *------------------------------*
+2018-02-26 16:43:56,222 INFO [default] *****  ZeroMQ Parameters  ******
+2018-02-26 16:43:56,223 INFO [default] *------------------------------*
+2018-02-26 16:43:56,223 INFO [default] *
+2018-02-26 16:43:56,223 INFO [default] * Current version: 4.1.4
+2018-02-26 16:43:56,240 INFO [default] *
+2018-02-26 16:43:56,240 INFO [default] *------------------------------------*
+2018-02-26 16:43:56,240 INFO [default] ***** Camera Deamon Parameters  ******
+2018-02-26 16:43:56,240 INFO [default] *------------------------------------*
+2018-02-26 16:43:56,240 INFO [default] *
+2018-02-26 16:43:56,240 INFO [default] * CameraDeamon version: 2fc26d52ea5d5b91160b4f1e0d6c07228d1c3c
+2018-02-26 16:43:56,240 INFO [default] *
+2018-02-26 16:43:56,240 INFO [default] *--------------------------------------*
+2018-02-26 16:43:56,240 INFO [default] ****** Ready to start acquisition ******
+2018-02-26 16:43:56,240 INFO [default] *--------------------------------------*
+2018-02-26 16:43:56,240 INFO [default] 
+2018-02-26 16:44:28,351 INFO [default] *------------------------------*
+2018-02-26 16:44:28,352 INFO [default] *****  OpenCV Parameters  ******
+2018-02-26 16:44:28,352 INFO [default] *------------------------------*
+2018-02-26 16:44:28,352 INFO [default] *
+2018-02-26 16:44:28,353 INFO [default] * OpenCV version : 3.4.0
+2018-02-26 16:44:28,353 INFO [default] * Major version : 3
+2018-02-26 16:44:28,353 INFO [default] * Minor version : 4
+2018-02-26 16:44:28,354 INFO [default] * Subminor version : 0
+2018-02-26 16:44:28,354 INFO [default] *
+2018-02-26 16:44:28,354 INFO [default] *------------------------------*
+2018-02-26 16:44:28,355 INFO [default] *****  ZeroMQ Parameters  ******
+2018-02-26 16:44:28,355 INFO [default] *------------------------------*
+2018-02-26 16:44:28,355 INFO [default] *
+2018-02-26 16:44:28,356 INFO [default] * Current version: 4.1.4
+2018-02-26 16:44:28,372 INFO [default] *
+2018-02-26 16:44:28,373 INFO [default] *------------------------------------*
+2018-02-26 16:44:28,373 INFO [default] ***** Camera Deamon Parameters  ******
+2018-02-26 16:44:28,373 INFO [default] *------------------------------------*
+2018-02-26 16:44:28,373 INFO [default] *
+2018-02-26 16:44:28,373 INFO [default] * CameraDeamon version: 2fc26d52ea5d5b91160b4f1e0d6c07228d1c3c
+2018-02-26 16:44:28,373 INFO [default] *
+2018-02-26 16:44:28,373 INFO [default] *--------------------------------------*
+2018-02-26 16:44:28,373 INFO [default] ****** Ready to start acquisition ******
+2018-02-26 16:44:28,373 INFO [default] *--------------------------------------*
+2018-02-26 16:44:28,373 INFO [default] 
+2018-02-26 16:45:15,133 INFO [default] *------------------------------*
+2018-02-26 16:45:15,134 INFO [default] *****  OpenCV Parameters  ******
+2018-02-26 16:45:15,140 INFO [default] *------------------------------*
+2018-02-26 16:45:15,140 INFO [default] *
+2018-02-26 16:45:15,140 INFO [default] * OpenCV version : 3.4.0
+2018-02-26 16:45:15,141 INFO [default] * Major version : 3
+2018-02-26 16:45:15,141 INFO [default] * Minor version : 4
+2018-02-26 16:45:15,141 INFO [default] * Subminor version : 0
+2018-02-26 16:45:15,142 INFO [default] *
+2018-02-26 16:45:15,142 INFO [default] *------------------------------*
+2018-02-26 16:45:15,142 INFO [default] *****  ZeroMQ Parameters  ******
+2018-02-26 16:45:15,143 INFO [default] *------------------------------*
+2018-02-26 16:45:15,143 INFO [default] *
+2018-02-26 16:45:15,143 INFO [default] * Current version: 4.1.4
+2018-02-26 16:45:15,168 INFO [default] *
+2018-02-26 16:45:15,168 INFO [default] *------------------------------------*
+2018-02-26 16:45:15,168 INFO [default] ***** Camera Deamon Parameters  ******
+2018-02-26 16:45:15,168 INFO [default] *------------------------------------*
+2018-02-26 16:45:15,168 INFO [default] *
+2018-02-26 16:45:15,168 INFO [default] * CameraDeamon version: 2fc26d52ea5d5b91160b4f1e0d6c07228d1c3c
+2018-02-26 16:45:15,168 INFO [default] *
+2018-02-26 16:45:15,169 INFO [default] *--------------------------------------*
+2018-02-26 16:45:15,169 INFO [default] ****** Ready to start acquisition ******
+2018-02-26 16:45:15,169 INFO [default] *--------------------------------------*
+2018-02-26 16:45:15,169 INFO [default] 

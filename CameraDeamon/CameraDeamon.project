@@ -2,11 +2,20 @@
 <CodeLite_Project Name="CameraDeamon" InternalType="Console">
   <Plugins>
     <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
+      <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
     </Plugin>
     <Plugin Name="CMakePlugin">
       <![CDATA[[{
   "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }, {
+  "name": "Release",
   "enabled": false,
   "buildDirectory": "build",
   "sourceDirectory": "$(ProjectPath)",
@@ -30,30 +39,18 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="../main.cpp" ExcludeProjConfig="Debug"/>
-    <File Name="../mkdocs.yml"/>
     <File Name="../AgriDataCamera.cpp"/>
     <File Name="../AgriDataCamera.h"/>
     <File Name="../AGDUtils.cpp"/>
     <File Name="../AGDUtils.h"/>
-    <File Name="../ImageReader.h"/>
-    <File Name="../test.cpp" ExcludeProjConfig="Debug"/>
-    <File Name="../cudasift.cpp"/>
+    <File Name="../AgriDataUSBCamera.h" ExcludeProjConfig="Release"/>
+    <File Name="../AgriDataUSBCamera.cpp" ExcludeProjConfig="Release"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>
     <File Name="../zmq.hpp"/>
     <File Name="../lib/easylogging++.cc"/>
     <File Name="../lib/easylogging++.h"/>
-    <File Name="../lib/cudaImage.cu"/>
-    <File Name="../lib/cudaImage.h"/>
-    <File Name="../lib/cudaSift.h"/>
-    <File Name="../lib/cudaSiftD.cu"/>
-    <File Name="../lib/cudaSiftD.h"/>
-    <File Name="../lib/cudaSiftH.cu"/>
-    <File Name="../lib/cudaSiftH.h"/>
-    <File Name="../lib/cudautils.h"/>
-    <File Name="../lib/geomFuncs.cpp"/>
-    <File Name="../lib/matching.cu"/>
   </VirtualDirectory>
   <VirtualDirectory Name="docs">
     <File Name="../docs/index.md"/>
@@ -75,25 +72,23 @@
       </Linker>
       <ResourceCompiler Options=""/>
     </GlobalSettings>
-    <Configuration Name="Debug" CompilerType="Cross GCC ( aarch64-linux-gnu )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-pg;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;`/opt/pylon5/bin/pylon-config --cflags`;`pkg-config --cflags libmongocxx`" C_Options="-pg;-O0;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="../lib"/>
+    <Configuration Name="Release" CompilerType="Cross GCC ( aarch64-linux-gnu )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-pg;-O0;-w;-std=c++11;-Wall;-Wunknown-pragmas;-ggdb" C_Options="-pg;-O0;-O2;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="lib"/>
         <IncludePath Value="/usr/include/lib"/>
         <IncludePath Value="/opt/pylon5/include"/>
+        <IncludePath Value="/usr/local/include/bsoncxx/v_noabi"/>
+        <IncludePath Value="/usr/local/include/mongocxx/v_noabi"/>
+        <IncludePath Value="/home/nvidia/CameraDeamon/lib"/>
         <IncludePath Value="/usr/include/opencv2"/>
-        <IncludePath Value="/home/agridata/CameraDeamon/CameraDeamon/library"/>
-        <IncludePath Value="/home/agridata/CameraDeamon/lib"/>
-        <IncludePath Value="/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/include"/>
         <IncludePath Value="/usr/include"/>
         <IncludePath Value="/data/opencv_contrib/modules/xfeatures2d/include"/>
-        <IncludePath Value="/usr/local/cuda/include"/>
-        <IncludePath Value="/usr/local/cuda/lib64"/>
-        <IncludePath Value="/data/AgriDataGPU/CudaSift"/>
+        <IncludePath Value="/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/include"/>
       </Compiler>
-      <Linker Options="-pg;`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`;`pkg-config --libs libmongocxx`;/home/nvidia/Downloads/CMake-hdf5-1.10.1/hdf5-1.10.1/hdf5/lib/libhdf5.so;/usr/lib/aarch64-linux-gnu/libz.so;/usr/lib/aarch64-linux-gnu/libdl.so;/usr/lib/aarch64-linux-gnu/libm.so" Required="yes">
+      <Linker Options="-pg;-ggdb;`pkg-config opencv --cflags --libs`;`/opt/pylon5/bin/pylon-config --libs-rpath`;`pkg-config --libs libmongocxx`;/usr/lib/aarch64-linux-gnu/libz.so;/usr/lib/aarch64-linux-gnu/libdl.so;/usr/lib/aarch64-linux-gnu/libm.so" Required="yes">
         <LibraryPath Value="/opt/pylon5/lib64"/>
         <LibraryPath Value="/usr/local/lib64"/>
-        <LibraryPath Value="/usr/local/cuda/lib64"/>
+        <LibraryPath Value="/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/lib"/>
         <Library Value="pylonbase"/>
         <Library Value="pylonutility"/>
         <Library Value="GenApi_gcc_v3_0_Basler_pylon_v5_0"/>
@@ -111,50 +106,11 @@
         <Library Value="hiredis"/>
       </Linker>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
-        <![CDATA[]]>
-      </Environment>
-      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="../../../../usr/bin/gdb" IsExtended="yes">
-        <DebuggerSearchPaths/>
-        <PostConnectCommands/>
-        <StartupCommands/>
-      </Debugger>
-      <PreBuild/>
-      <PostBuild/>
-      <CustomBuild Enabled="no">
-        <RebuildCommand/>
-        <CleanCommand/>
-        <BuildCommand/>
-        <PreprocessFileCommand/>
-        <SingleFileCommand/>
-        <MakefileGenerationCommand/>
-        <ThirdPartyToolName>None</ThirdPartyToolName>
-        <WorkingDirectory/>
-      </CustomBuild>
-      <AdditionalRules>
-        <CustomPostBuild/>
-        <CustomPreBuild/>
-      </AdditionalRules>
-      <Completion EnableCpp11="no" EnableCpp14="no">
-        <ClangCmpFlagsC/>
-        <ClangCmpFlags/>
-        <ClangPP/>
-        <SearchPaths>/opt/pylon5/include/</SearchPaths>
-      </Completion>
-    </Configuration>
-    <Configuration Name="Release" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-O2;-Wall" C_Options="-O2;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="."/>
-        <Preprocessor Value="NDEBUG"/>
-      </Compiler>
-      <Linker Options="" Required="yes"/>
-      <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Release" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
-      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="../../../../usr/local/bin/gdb" IsExtended="no">
         <DebuggerSearchPaths/>
         <PostConnectCommands/>
         <StartupCommands/>
@@ -169,47 +125,6 @@
         <SingleFileCommand/>
         <MakefileGenerationCommand/>
         <ThirdPartyToolName>None</ThirdPartyToolName>
-        <WorkingDirectory/>
-      </CustomBuild>
-      <AdditionalRules>
-        <CustomPostBuild/>
-        <CustomPreBuild/>
-      </AdditionalRules>
-      <Completion EnableCpp11="no" EnableCpp14="no">
-        <ClangCmpFlagsC/>
-        <ClangCmpFlags/>
-        <ClangPP/>
-        <SearchPaths/>
-      </Completion>
-    </Configuration>
-    <Configuration Name="rwa" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g -Wall" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
-        <IncludePath Value="."/>
-      </Compiler>
-      <Linker Options="-O0" Required="yes">
-        <LibraryPath Value="."/>
-        <LibraryPath Value="Debug"/>
-      </Linker>
-      <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="./Debug" PauseExecWhenProcTerminates="no" IsGUIProgram="no" IsEnabled="yes"/>
-      <Environment EnvVarSetName="&lt;Use Workspace Settings&gt;" DbgSetName="&lt;Use Global Settings&gt;">
-        <![CDATA[]]>
-      </Environment>
-      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
-        <DebuggerSearchPaths/>
-        <PostConnectCommands/>
-        <StartupCommands/>
-      </Debugger>
-      <PreBuild/>
-      <PostBuild/>
-      <CustomBuild Enabled="no">
-        <RebuildCommand/>
-        <CleanCommand/>
-        <BuildCommand/>
-        <PreprocessFileCommand/>
-        <SingleFileCommand/>
-        <MakefileGenerationCommand/>
-        <ThirdPartyToolName/>
         <WorkingDirectory/>
       </CustomBuild>
       <AdditionalRules>

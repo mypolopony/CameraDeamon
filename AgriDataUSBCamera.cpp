@@ -5,7 +5,7 @@
  * Created on March 13, 2017, 1:33 PM
  */
 
-#include "AgriDataCamera.h"
+#include "AgriDataUSBCamera.h"
 #include "AGDUtils.h"
 
 // Utilities
@@ -25,9 +25,9 @@
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
-#include <pylon/gige/BaslerGigEInstantCamera.h>
-#include <pylon/gige/BaslerGigEInstantCameraArray.h>
-#include <pylon/gige/_BaslerGigECameraParams.h>
+#include <pylon/usb/BaslerUsbInstantCamera.h>
+#include <pylon/usb/BaslerUsbInstantCameraArray.h>
+#include <pylon/usb/_BaslerUsbCameraParams.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -57,7 +57,7 @@
 #include <redox.hpp>
 
 // Namespaces
-using namespace Basler_GigECameraParams;
+using namespace Basler_UsbCameraParams;
 using namespace Pylon;
 using namespace std;
 using namespace cv;
@@ -67,7 +67,7 @@ using json = nlohmann::json;
 /**
  * Constructor
  */
-AgriDataCamera::AgriDataCamera() :
+AgriDataUSBCamera::AgriDataUSBCamera() :
     ctx_(1), imu_(ctx_, ZMQ_REQ), conn { mongocxx::uri {
         MONGODB_HOST
     }
@@ -77,7 +77,7 @@ AgriDataCamera::AgriDataCamera() :
 /**
  * Destructor
  */
-AgriDataCamera::~AgriDataCamera()
+AgriDataUSBCamera::~AgriDataUSBCamera()
 {
 }
 
@@ -86,7 +86,7 @@ AgriDataCamera::~AgriDataCamera()
  *
  * Opens the camera and initializes it with some settings
  */
-void AgriDataCamera::Initialize()
+void AgriDataUSBCamera::Initialize()
 {
     PylonAutoInitTerm autoInitTerm;
 
@@ -234,7 +234,7 @@ void AgriDataCamera::Initialize()
  *
  * Allows a timeout to be attached to the IMU call
  */
-string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp)
+string AgriDataUSBCamera::imu_wrapper(AgriDataUSBCamera::FramePacket fp)
 {
     mutex m;
     condition_variable cv;
@@ -262,7 +262,7 @@ string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp)
  *
  * Main loop
  */
-void AgriDataCamera::Run()
+void AgriDataUSBCamera::Run()
 {
     // Strings and streams
     string videofile;
@@ -374,7 +374,7 @@ void AgriDataCamera::Run()
  *
  * Receive latest frame
  */
-void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
+void AgriDataUSBCamera::HandleFrame(AgriDataUSBCamera::FramePacket fp)
 {
     double dif;
     struct timeval tp;
@@ -455,7 +455,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
 
     // Rotate
-    small_last_img = AgriDataCamera::Rotate( small_last_img );
+    small_last_img = AgriDataUSBCamera::Rotate( small_last_img );
 
     // Write
     H5IMmake_image_24bit( hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, "INTERLACE_PIXEL", small_last_img.data);
@@ -467,7 +467,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
         last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,
                        (uint8_t *) image.GetBuffer());
 
-        thread t(&AgriDataCamera::writeLatestImage, this, last_img,
+        thread t(&AgriDataUSBCamera::writeLatestImage, this, last_img,
                  ref(compression_params));
         t.detach();
     }
@@ -478,7 +478,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
         // We send to database first, then we can edit it later
         auto ret = frames.insert_one(doc.view());
         bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
+        thread t(&AgriDataUSBCamera::Luminance, this, oid, small_last_img);
         t.detach();
     } else {
         // Add to documents
@@ -497,7 +497,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
  *
  * Rotate the input image by an angle (the proper way!)
  */
-Mat AgriDataCamera::Rotate(Mat input)
+Mat AgriDataUSBCamera::Rotate(Mat input)
 {
     // Get rotation matrix for rotating the image around its center
     cv::Point2f center(input.cols/2.0, input.rows/2.0);
@@ -523,7 +523,7 @@ Mat AgriDataCamera::Rotate(Mat input)
  * Return luminance for an OpenCV Mat (frame)
  *
  */
-void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
+void AgriDataUSBCamera::Luminance(bsoncxx::oid id, cv::Mat input)
 {
     // As per http://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/thread-safety/
     // "don't even bother sharing clients. Just give each thread its own"
@@ -562,7 +562,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
  *
  */
 
-void AgriDataCamera::Snap()
+void AgriDataUSBCamera::Snap()
 {
     // this !isRecording criterion is enforced because I don't know what the camera's
     // behavior is to ask for one frame while another (continuous) grabbing process is
@@ -589,7 +589,7 @@ void AgriDataCamera::Snap()
                        CV_8UC3, (uint8_t *) image.GetBuffer());
 
         snap_img.copyTo(last_img);
-        thread t(&AgriDataCamera::writeLatestImage, this, last_img,
+        thread t(&AgriDataUSBCamera::writeLatestImage, this, last_img,
                  ref(compression_params));
         t.detach();
     }
@@ -602,7 +602,7 @@ void AgriDataCamera::Snap()
  * This is intended to run in a separate thread so as not to block. Compression_params
  * is an OpenCV construct to define the level of compression.
  */
-void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params)
+void AgriDataUSBCamera::writeLatestImage(Mat img, vector<int> compression_params)
 {
     string snumber;
     snumber = (string) DeviceID();
@@ -626,7 +626,7 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params)
  *
  * Upon receiving a stop message, set the isRecording flag
  */
-int AgriDataCamera::Stop()
+int AgriDataUSBCamera::Stop()
 {
 
     syslog(LOG_INFO, "Recording Stopped");
@@ -649,7 +649,7 @@ int AgriDataCamera::Stop()
  *
  * Respond to the heartbeat the data about the camera
  */
-json AgriDataCamera::GetStatus()
+json AgriDataUSBCamera::GetStatus()
 {
     json status, imu_status;
     string docstring;
@@ -710,7 +710,7 @@ json AgriDataCamera::GetStatus()
     if (!isRecording) {
         // Grab an image for luminance calculation
         // This will set last_image
-        AgriDataCamera::Snap();
+        AgriDataUSBCamera::Snap();
 
         // It would be nice to iterate automatically
         // but how to cast json &val?
@@ -735,7 +735,7 @@ json AgriDataCamera::GetStatus()
 
         auto ret = frames.insert_one(doc.view());
         bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, last_img);
+        thread t(&AgriDataUSBCamera::Luminance, this, oid, last_img);
         t.detach();
     }
 

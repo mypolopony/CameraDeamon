@@ -1,12 +1,13 @@
 # {05D8C294-F295-4dfb-9D01-096BD04049F4}
 # GenApi persistence file (version 3.0.1)
-# Device = Basler::GigECamera -- Basler generic GigEVision camera interface -- Device version = 3.8.0 -- Product GUID = 1F3C6A72-7842-4edd-9130-E2E90A2058BA -- Product version GUID = DA22BF28-7AFF-4F25-A4B9-02C178ACF6CD
+# Device = Basler::GigECamera -- Basler generic GigEVision camera interface -- Device version = 3.8.0 -- Product GUID = 1F3C6A72-7842-4edd-9130-E2E90A2058BA -- Product version GUID = 7BB9CD60-EAC7-4F82-8DA1-0EDA9600CECA
 GainAuto	Continuous
 BlackLevelSelector	All
 BlackLevelRaw	0
 BlackLevelSelector	All
 GammaEnable	1
 GammaSelector	sRGB
+DigitalShift	0
 PixelFormat	BayerRG8
 ReverseX	0
 ReverseY	0
@@ -113,6 +114,21 @@ LineSelector	Line2
 MinOutPulseWidthRaw	0
 LineSelector	Line1
 UserOutputValueAll	0
+SyncUserOutputValueAll	0
+TimerDelayTimebaseAbs	1
+TimerDurationTimebaseAbs	1
+TimerSelector	Timer1
+TimerDelayAbs	0
+TimerSelector	Timer1
+TimerSelector	Timer1
+TimerDelayRaw	0
+TimerSelector	Timer1
+TimerSelector	Timer1
+TimerDurationAbs	4095
+TimerSelector	Timer1
+TimerSelector	Timer1
+TimerDurationRaw	4095
+TimerSelector	Timer1
 CounterSelector	Counter1
 CounterEventSource	FrameTrigger
 CounterSelector	Counter2
@@ -133,7 +149,7 @@ GevStreamChannelSelector	StreamChannel0
 GevSCPSPacketSize	9000
 GevStreamChannelSelector	StreamChannel0
 GevStreamChannelSelector	StreamChannel0
-GevSCPD	0
+GevSCPD	7125
 GevStreamChannelSelector	StreamChannel0
 GevStreamChannelSelector	StreamChannel0
 GevSCFTD	0
@@ -198,6 +214,16 @@ EventNotification	Off
 EventSelector	FrameStart
 EventNotification	Off
 EventSelector	AcquisitionStart
+EventNotification	Off
+EventSelector	CriticalTemperature
+EventNotification	Off
+EventSelector	OverTemperature
+EventNotification	Off
+EventSelector	ActionLate
+EventNotification	Off
+EventSelector	FrameStartWait
+EventNotification	Off
+EventSelector	AcquisitionStartWait
 EventNotification	Off
 EventSelector	EventOverrun
 EventNotification	Off

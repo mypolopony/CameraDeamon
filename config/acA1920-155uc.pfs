@@ -13,7 +13,7 @@ PixelFormat	BayerRG8
 TestImageSelector	Off
 GainAuto	Continuous
 GainSelector	All
-Gain	12.00000
+Gain	0.00000
 GainSelector	All
 BlackLevelSelector	All
 BlackLevel	0.00000

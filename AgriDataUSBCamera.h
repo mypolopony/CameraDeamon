@@ -1,21 +1,17 @@
 /*
- * File:   AgriDataCamera.h
+ * File:   AgriDataUSBCamera.h
  * Author: agridata
  *
  * Created on March 13, 2017, 1:33 PM
  */
 
-#ifndef AGRIDATACAMERA_H
-#define AGRIDATACAMERA_H
+#ifndef AgriDataUSBCamera_H
+#define AgriDataUSBCamera_H
 
 #include <fstream>
 
 // Include files to use the PYLON API.
 #include <pylon/PylonIncludes.h>
-#include <pylon/InstantCamera.h>
-#include <pylon/gige/BaslerGigEInstantCamera.h>
-#include <pylon/gige/BaslerGigEInstantCameraArray.h>
-#include <pylon/gige/_BaslerGigECameraParams.h>
 #include <pylon/usb/BaslerUsbInstantCamera.h>
 #include <pylon/usb/BaslerUsbInstantCameraArray.h>
 #include <pylon/usb/_BaslerUsbCameraParams.h>
@@ -44,10 +40,10 @@
 
 
 
-class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera, Pylon::CBaslerUsbInstantCamera
+class AgriDataUSBCamera : public Pylon::CBaslerUsbInstantCamera
 {
 public:
-    AgriDataCamera();
+    AgriDataUSBCamera();
 
     void Initialize();
     void Run();
@@ -55,7 +51,7 @@ public:
     void Snap();
     nlohmann::json GetStatus();
 
-    virtual ~AgriDataCamera();
+    virtual ~AgriDataUSBCamera();
 
     std::string scanid;
     bool isPaused;
@@ -139,9 +135,9 @@ private:
     void Luminance(bsoncxx::oid, cv::Mat);
     cv::Mat Rotate(cv::Mat);
     void writeHeaders();
-    void HandleFrame(AgriDataCamera::FramePacket);
+    void HandleFrame(AgriDataUSBCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);
-    std::string imu_wrapper(AgriDataCamera::FramePacket);
+    std::string imu_wrapper(AgriDataUSBCamera::FramePacket);
 };
 
-#endif /* AGRIDATACAMERA_H */
+#endif /* AgriDataUSBCamera_H */

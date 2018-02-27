@@ -1,10 +1,10 @@
-/* 
+/*
  * File:   AGDUtils.h
  * Author: agridata
  *
  * Created on March 13, 2017, 3:41 PM
  */
- 
+
 #ifndef AGDUTILS_H
 #define AGDUTILS_H
 
@@ -36,36 +36,36 @@ extern "C"
 
 namespace AGDUtils
 {
-    bool mkdirp(const char* path, mode_t mode);
-    std::vector <std::string> split(const std::string &s, char delim);
-    std::string grabTime(std::string format);
-    int64_t grabSeconds();
-    std::string pipe_to_string(const char *command);
+bool mkdirp(const char* path, mode_t mode);
+std::vector <std::string> split(const std::string &s, char delim);
+std::string grabTime(std::string format);
+int64_t grabSeconds();
+std::string pipe_to_string(const char *command);
 }
 
-class ImageReader {
-        
-    public:
-        // Constructor / Destructor
-        ImageReader();
-        virtual ~ImageReader();
-        
-        // Methods
-        void read(std::string filename);
-        cv::Mat next();
-        
-        // Attributes
-        std::vector<std::string> elements;
-        hsize_t numObjects;
-        
-            
-    private:
-        hid_t fid, grp;
-        hsize_t width, height;
-        size_t totalsize;
-        char group_name[MAX_NAME];
-        int idx;
+class ImageReader
+{
+
+public:
+    // Constructor / Destructor
+    ImageReader();
+    virtual ~ImageReader();
+
+    // Methods
+    void read(std::string filename);
+    cv::Mat next();
+
+    // Attributes
+    std::vector<std::string> elements;
+    hsize_t numObjects;
+
+
+private:
+    hid_t fid, grp;
+    hsize_t width, height;
+    size_t totalsize;
+    char group_name[MAX_NAME];
+    unsigned int idx;
 };
 
 #endif /* AGDUTILS_H */
-

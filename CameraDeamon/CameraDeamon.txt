@@ -1,1 +1,1 @@
-./Debug/CameraDeamon_AgriDataCamera.cpp.o ./Debug/CameraDeamon_AGDUtils.cpp.o ./Debug/CameraDeamon_cudasift.cpp.o ./Debug/lib_easylogging++.cc.o ./Debug/lib_geomFuncs.cpp.o
+./Release/CameraDeamon_main.cpp.o ./Release/CameraDeamon_AgriDataCamera.cpp.o ./Release/CameraDeamon_AGDUtils.cpp.o ./Release/CameraDeamon_AgriDataUSBCamera.cpp.o ./Release/lib_easylogging++.cc.o
