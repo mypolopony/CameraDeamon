@@ -8,7 +8,6 @@
 #include <pylon/gige/BaslerGigEInstantCameraArray.h>
 #include <pylon/gige/_BaslerGigECameraParams.h>
 #include "AgriDataCamera.h"
-#include "AgriDataUSBCamera.h"
 
 // Include files to use openCV.
 #include "opencv2/core.hpp"
@@ -50,7 +49,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
@@ -147,10 +145,7 @@ int main()
     // Register signals
     signal(SIGINT, sigint_function);
 
-    // Enable logging (to /var/log/agridata.log)
-    openlog("CameraDeamon", LOG_CONS | LOG_PID, LOG_LOCAL1);
-    string logmessage = "Camera Deamon has been started";
-    syslog(LOG_INFO, logmessage.c_str());
+    LOG(INFO) << "Camera Deamon has been started";
 
     // Subscribe on port 4999
     zmq::context_t context(1);
@@ -184,7 +179,7 @@ int main()
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) == 0) {
-        syslog(LOG_ERR, "No camera present!");
+        LOG(ERROR) << "No camera present!";
         throw RUNTIME_EXCEPTION("No camera present.");
     }
 
@@ -197,9 +192,7 @@ int main()
     }
 
     // Initialize variables
-    char **argv;
     int rec;
-
     string receivedstring;
     json received;
     json reply;
@@ -212,18 +205,15 @@ int main()
         try {
             // Check for and handle signals
             if (sigint_flag) {
-                syslog(LOG_INFO, "SIGINT Caught!");
-
-                syslog(LOG_INFO, "Destroying ZMQ sockets");
+                LOG(INFO) << "SIGINT Caught!";
+                LOG(INFO) << "Destroying ZMQ sockets";
                 client.close();
                 publisher.close();
 
-                syslog(LOG_INFO, "Stopping Cameras");
+                LOG(INFO) << "Arresting Cameras";
                 for (size_t i = 0; i < devices.size(); ++i) {
                     cameras[i]->Close();
                 }
-
-                closelog();
 
                 // Wait a second and a half (I forget why)
                 usleep(1500000);
@@ -257,14 +247,12 @@ int main()
                             reply["status"] = "1";
                             reply["message"] = "Already Recording";
                         } else {
-                            logmessage = "Row: " + received["row"].get<string>() + ", Direction: " + received["direction"].get<string>();
-                            syslog(LOG_INFO, logmessage.c_str());
+                            LOG(INFO) << "Row: " + received["row"].get<string>() + ", Direction: " + received["direction"].get<string>();
 
                             // Generate UUID for scan
                             //vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
                             string scanid = AGDUtils::grabTime("%Y-%m-%d_%H-%M");
-                            logmessage = "Starting scan " + scanid;
-                            syslog(LOG_INFO, logmessage.c_str());
+                            LOG(INFO) << "Starting scan " + scanid;
 
                             // Generate MongoDB doc
                             auto doc = bsoncxx::builder::basic::document {};
@@ -296,7 +284,7 @@ int main()
                     else if (received["action"] == "pause") {
                         if (isRecording) {
                             for (size_t i = 0; i < devices.size(); ++i) {
-                                sn = cameras[i]->GetDeviceInfo().GetMacAddress();
+                                sn = cameras[i]->GetDeviceInfo().GetSerialNumber();
                                 if (!cameras[i]->isPaused) {
                                     cameras[i]->isPaused = true;
                                     reply["message"][sn] = "Camera paused";
@@ -372,8 +360,9 @@ int main()
                     // White Balance
                     else if (received["action"] == "whitebalance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            if (received["camera"].get<std::string>().compare("ji") == 0) {
-                                cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
+                            // TODO: This is weird, why do we compare to "ji"?
+                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+                                GenApi::CIntegerPtr (cameras[i]->nodeMap.GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
                             }
                         }
                         reply["status"] = "1";
@@ -384,7 +373,7 @@ int main()
                     else if (received["action"] == "luminance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-                                cameras[i]->AutoTargetValue.SetValue(received["value"].get<int>());
+                                GenApi::CIntegerPtr (cameras[i]->nodeMap.GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
                             }
                         }
                         reply["status"] = "1";
@@ -392,8 +381,8 @@ int main()
                     }
 
                 } catch (const GenericException &e) {
-                    syslog(LOG_ERR, "An exception occurred.");
-                    syslog(LOG_ERR, e.GetDescription());
+                    LOG(ERROR) << "An exception occurred.";
+                    LOG(ERROR) << e.GetDescription();
 
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();

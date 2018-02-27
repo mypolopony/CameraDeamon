@@ -68,10 +68,11 @@ using json = nlohmann::json;
  * Constructor
  */
 AgriDataCamera::AgriDataCamera() :
-    ctx_(1), imu_(ctx_, ZMQ_REQ), conn { mongocxx::uri {
-        MONGODB_HOST
-    }
-} {
+    ctx_(1), 
+    imu_(ctx_, ZMQ_REQ), 
+    conn { mongocxx::uri { MONGODB_HOST }},
+    nodeMap(GetNodeMap())
+    {
 }
 
 /**
@@ -100,8 +101,6 @@ void AgriDataCamera::Initialize()
     if (!IsGrabbing()) {
         StartGrabbing();
     }
-
-    INodeMap& nodeMap = GetNodeMap();
 
     // Print the model name of the
     cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
@@ -150,24 +149,28 @@ void AgriDataCamera::Initialize()
     // } catch (...) {
     //     cerr << "MaxNumBuffer already set" << endl;
     // }
+    
     // Get Dimensions
-    width = Width.GetValue();
-    height = Height.GetValue();
+    width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
+    height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
 
+    // Identifier
+    serialnumber = CStringPtr(GetNodeMap().GetNode("DeviceID"))->GetValue();
+    
     // Print camera device information.
     cout << "Camera Device Information" << endl << "========================="
          << endl;
     cout << "Vendor : "
-         << CStringPtr(GetNodeMap().GetNode("DeviceVendorName"))->GetValue()
+         << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue()
          << endl;
     cout << "Model : "
-         << CStringPtr(GetNodeMap().GetNode("DeviceModelName"))->GetValue()
+         << CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue()
          << endl;
     cout << "Firmware version : "
-         << CStringPtr(GetNodeMap().GetNode("DeviceFirmwareVersion"))->GetValue()
+         << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue()
          << endl;
     cout << "Serial Number : "
-         << CStringPtr(GetNodeMap().GetNode("DeviceID"))->GetValue() << endl;
+         << serialnumber << endl;
     cout << "Frame Size  : " << width << 'x' << height << endl << endl;
 
     // Create Mat image templates
@@ -202,9 +205,6 @@ void AgriDataCamera::Initialize()
     compression_params.push_back(3);
     compression_params.push_back(3);
     compression_params.push_back(3);
-
-    // Identifier
-    serialnumber = (string) DeviceID();
 
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
@@ -272,40 +272,9 @@ void AgriDataCamera::Run()
 
     // Output parameters
     save_prefix = "/data/output/" + scanid + "/"
-                  + GetDeviceInfo().GetMacAddress() + "/";
+                  + serialnumber + "/";
     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
                                     S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
-    /*
-     // Filestatus for periodically checking filesize
-     struct stat filestatus;
-
-     // Open the video file
-     string timenow = AGDUtils::grabTime("%H_%M_%S");
-     videofile = save_prefix + timenow + ".avi";
-     videowriter = VideoWriter(videofile.c_str(), CV_FOURCC('M', 'J', 'P', 'G'), AcquisitionFrameRate.GetValue(),
-     Size(width, height), true);
-
-     // Make sure videowriter was opened successfully
-     if (videowriter.isOpened()) {
-     logmessage = "Opened video file: " + videofile;
-     syslog(LOG_INFO, logmessage.c_str());
-     } else {
-     logmessage = "Failed to write the video file: " + videofile;
-     syslog(LOG_ERR, logmessage.c_str());
-     }
-
-     framefile =  save_prefix + ".txt";
-     frameout.open(framefile);
-     if (frameout.is_open()) {
-     logmessage = "Opened log file: " + framefile;
-     syslog(LOG_INFO, logmessage.c_str());
-     writeHeaders();
-     } else {
-     logmessage = "Failed to open log file: " + framefile;
-     syslog(LOG_ERR, logmessage.c_str());
-     }
-     */
 
     // Set recording to true and start grabbing
     isRecording = true;
@@ -314,7 +283,6 @@ void AgriDataCamera::Run()
     }
 
     // Save configuration
-    INodeMap& nodeMap = GetNodeMap();
     config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
@@ -348,7 +316,7 @@ void AgriDataCamera::Run()
                     fp.imu_data = "{}";
 
                     // Exposure time
-                    fp.exposure_time = ExposureTimeRaw();
+                    fp.exposure_time = (int) CIntegerPtr(nodeMap.GetNode("ExsposureTime"))->GetValue();
 
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -604,15 +572,12 @@ void AgriDataCamera::Snap()
  */
 void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params)
 {
-    string snumber;
-    snumber = (string) DeviceID();
-
     Mat thumb;
     resize(img, thumb, Size(), 0.2, 0.2);
 
     // Thumbnail
     imwrite(
-        "/home/nvidia/EmbeddedServer/images/" + snumber + '_'
+        "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
         + "streaming_t.png", thumb, compression_params);
     // Full
     //imwrite(
@@ -685,8 +650,8 @@ json AgriDataCamera::GetStatus()
     }
     */
 
-    status["Serial Number"] = (string) DeviceID();
-    status["Model Name"] = (string) GetDeviceInfo().GetModelName();
+    status["Serial Number"] = serialnumber;
+    status["Model Name"] = GetDeviceInfo().GetModelName();
     status["Recording"] = isRecording;
 
     // Something funny here, occasionally the ptrGrabResult is not available
@@ -699,10 +664,10 @@ json AgriDataCamera::GetStatus()
         status["scanid"] = "Not Recording";
     }
 
-    status["Exposure Time"] = ExposureTimeAbs();
-    status["Resulting Frame Rate"] = ResultingFrameRateAbs();
-    status["Current Gain"] = GainRaw();
-    status["Temperature"] = TemperatureAbs();
+    status["Exposure Time"] = (int) CIntegerPtr(nodeMap.GetNode("ExposureTime"))->GetValue(); 
+    status["Resulting Frame Rate"] = (int) CIntegerPtr(nodeMap.GetNode("ResultingFrameRate"))->GetValue();
+    status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("Raw"))->GetValue();
+    status["Temperature"] = (int) CIntegerPtr(nodeMap.GetNode("DeviceTemperature"))->GetValue();
 
     // Create BSON from JSON and send to database (if not recording)
     // The stream builder is preferred so we use that (as opposed to the "basic"

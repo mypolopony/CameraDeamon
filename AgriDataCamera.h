@@ -44,7 +44,7 @@
 
 
 
-class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera, Pylon::CBaslerUsbInstantCamera
+class AgriDataCamera : public Pylon::CInstantCamera
 {
 public:
     AgriDataCamera();
@@ -61,6 +61,7 @@ public:
     bool isPaused;
     bool isRecording;
     std::string serialnumber;
+    GenApi::INodeMap &nodeMap;
 
 private:
     struct FramePacket {
@@ -68,7 +69,6 @@ private:
         float balance_red, balance_green, balance_blue, exposure_time;
         Pylon::CGrabResultPtr img_ptr;
     };
-
 
     // Dimensions
     int64_t width;
