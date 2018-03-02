@@ -259,6 +259,7 @@ void AgriDataCamera::Run()
     // Timing
     struct timeval tim;
 
+    json imu_status;
     // initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {
@@ -274,12 +275,10 @@ void AgriDataCamera::Run()
                     fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
 
-                    s_send(imu_, " ");
-                    try {
-                        imu_status = json::parse(s_recv(imu_));
-                    } catch (...) {
-                        LOG(WARNING) << "Bad IMU";
-                    }
+                    //  s_send(imu_, " ");
+                    imu_status = json::parse("{}");
+                    
+                    LOG(DEBUG) << imu_status;
 
                     // Exposure time
                     try {               // USB
