@@ -485,20 +485,7 @@ Mat AgriDataCamera::Rotate(Mat input)
     return dst;
 }
 
-/**
- * Luminance
- *
- * Return luminance for an OpenCV Mat (frame)
- *
- */
-void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
-{
-    // As per http://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/thread-safety/
-    // "don't even bother sharing clients. Just give each thread its own"
-    mongocxx::client _conn { mongocxx::uri { MONGODB_HOST } };
-    mongocxx::database _db = _conn["agdb"];
-    mongocxx::collection _frames = _db["frame"];
-
+float AgriDataCamera::_luminance(cv::Mat input) {
     cv::Mat grayMat;
     cv::cvtColor(input, grayMat, CV_BGR2GRAY);
 
@@ -511,12 +498,40 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
     }
 
     // Find avg lum of frame
-    float avgLum = Totalintensity/(grayMat.rows * grayMat.cols);
+    return Totalintensity/(grayMat.rows * grayMat.cols);
+}
+
+/**
+ * Luminance
+ *
+ * Add luminance to an existing db entry (i.e. during scanning) l
+ *
+ */
+void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
+{
+    // As per http://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/thread-safety/
+    // "don't even bother sharing clients. Just give each thread its own"
+    mongocxx::client _conn { mongocxx::uri { MONGODB_HOST } };
+    mongocxx::database _db = _conn["agdb"];
+    mongocxx::collection _frames = _db["frame"];
+
+    float avgLum = _luminance(input);
 
     // Update database entry
     _frames.update_one(bsoncxx::builder::stream::document {} << "_id" << id << bsoncxx::builder::stream::finalize,
                        bsoncxx::builder::stream::document {} << "$set" << bsoncxx::builder::stream::open_document <<
                        "luminance" << avgLum << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+}
+
+
+/**
+ * Luminance
+ *
+ * Instantly luminance for an OpenCV Mat (frame)
+ *
+ */
+float AgriDataCamera::Luminance(cv::Mat input) {
+    return _luminance(input)
 }
 
 
@@ -668,37 +683,28 @@ json AgriDataCamera::GetStatus()
     status["Resulting Frame Rate"] = (int) CIntegerPtr(nodeMap.GetNode("ResultingFrameRate"))->GetValue();
     status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("Raw"))->GetValue();
     status["Temperature"] = (int) CIntegerPtr(nodeMap.GetNode("DeviceTemperature"))->GetValue();
+    
+    bsoncxx::document::value doc = bsoncxx::builder::stream::document {} << "Serial Number" << (string) status["Serial Number"].get<string>()
+                                   << "Model Name" << (string) status["Model Name"].get<string>()
+                                   << "Recording" << (bool) status["Recording"].get<bool>()
+                                   << "Timestamp" << (string) status["Timestamp"].get<string>()
+                                   << "scanid" << (string) status["scanid"].get<string>()
+                                   << "Exposure Time" << (int) status["Exposure Time"].get<int>()
+                                   << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
+                                   << "Current Gain" << (int) status["Current Gain"].get<int>()
+                                   << "Temperature" << (int) status["Temperature"].get<int>()
+                                   << bsoncxx::builder::stream::finalize;
 
-    // Create BSON from JSON and send to database (if not recording)
-    // The stream builder is preferred so we use that (as opposed to the "basic"
-    // builder used in the main thread)
+    // Insert into the DB
+    auto ret = frames.insert_one(doc.view());
+
+    // Lazily add luminance (bit of delay here, but checking luminance is done via DB by clients that want it)
     if (!isRecording) {
-        // Grab an image for luminance calculation
-        // This will set last_image
+        // Grab an image for luminance calculation (this will set last_image
+        // . . . so the call to Luminance doesn't need it as an argument
         AgriDataCamera::Snap();
 
-        // It would be nice to iterate automatically
-        // but how to cast json &val?
-        /*
-        for (auto it = status.begin(); it != status.end(); ++it) {
-            const string &key = it.key();
-            json &val = it.value();
-            doc << key << val;
-        }
-        */
-
-        bsoncxx::document::value doc = bsoncxx::builder::stream::document {} << "Serial Number" << (string) status["Serial Number"].get<string>()
-                                       << "Model Name" << (string) status["Model Name"].get<string>()
-                                       << "Recording" << (bool) status["Recording"].get<bool>()
-                                       << "Timestamp" << (string) status["Timestamp"].get<string>()
-                                       << "scanid" << (string) status["scanid"].get<string>()
-                                       << "Exposure Time" << (int) status["Exposure Time"].get<int>()
-                                       << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
-                                       << "Current Gain" << (int) status["Current Gain"].get<int>()
-                                       << "Temperature" << (int) status["Temperature"].get<int>()
-                                       << bsoncxx::builder::stream::finalize;
-
-        auto ret = frames.insert_one(doc.view());
+        // Add the luminance value
         bsoncxx::oid oid = ret->inserted_id().get_oid().value;
         thread t(&AgriDataCamera::Luminance, this, oid, last_img);
         t.detach();

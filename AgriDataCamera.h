@@ -53,6 +53,7 @@ public:
     void Run();
     int Stop();
     void Snap();
+    float _luminance();
     nlohmann::json GetStatus();
 
     virtual ~AgriDataCamera();
@@ -137,6 +138,7 @@ private:
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);
+    float Luminance(cv::Mat);
     cv::Mat Rotate(cv::Mat);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
