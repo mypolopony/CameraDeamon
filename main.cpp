@@ -179,16 +179,20 @@ int main()
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) == 0) {
-        LOG(ERROR) << "No camera present!";
-        throw RUNTIME_EXCEPTION("No camera present.");
+        LOG(FATAL) << "No cameras present";
     }
 
     // Camera Initialization
     AgriDataCamera * cameras[devices.size()];
-    for (size_t i = 0; i < devices.size(); ++i) {
-        cameras[i] = new AgriDataCamera();
-        cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
-        cameras[i]->Initialize();
+    try {
+        for (size_t i = 0; i < devices.size(); ++i) {
+            cameras[i] = new AgriDataCamera();
+            cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
+            cameras[i]->Initialize();
+        } 
+    } catch (const GenericException &e) {
+        LOG(ERROR) << "Camera Initialization Failed";
+        LOG(ERROR) << "Exception caught: " << e.what();
     }
 
     // Initialize variables
@@ -362,7 +366,7 @@ int main()
                         for (size_t i = 0; i < devices.size(); ++i) {
                             // TODO: This is weird, why do we compare to "ji"?
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-                                GenApi::CIntegerPtr (cameras[i]->nodeMap.GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
+                                GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
                             }
                         }
                         reply["status"] = "1";
@@ -373,7 +377,7 @@ int main()
                     else if (received["action"] == "luminance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-                                GenApi::CIntegerPtr (cameras[i]->nodeMap.GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
+                                GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
                             }
                         }
                         reply["status"] = "1";

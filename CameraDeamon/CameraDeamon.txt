@@ -1,1 +1,1 @@
-./Release/CameraDeamon_main.cpp.o ./Release/CameraDeamon_AgriDataCamera.cpp.o ./Release/CameraDeamon_AGDUtils.cpp.o ./Release/CameraDeamon_AgriDataUSBCamera.cpp.o ./Release/lib_easylogging++.cc.o
+./Release/CameraDeamon_main.cpp.o ./Release/CameraDeamon_AgriDataCamera.cpp.o ./Release/CameraDeamon_AGDUtils.cpp.o ./Release/lib_easylogging++.cc.o
