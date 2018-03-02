@@ -259,7 +259,6 @@ void AgriDataCamera::Run()
     // Timing
     struct timeval tim;
 
-    json imu_status;
     // initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {
@@ -274,11 +273,6 @@ void AgriDataCamera::Run()
                     // Computer time
                     fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
-
-                    //  s_send(imu_, " ");
-                    imu_status = json::parse("{}");
-                    
-                    LOG(DEBUG) << imu_status;
 
                     // Exposure time
                     try {               // USB
@@ -331,6 +325,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
         bsoncxx::builder::basic::kvp("frame_number",
                                      fp.img_ptr->GetImageNumber()));
 
+    /*
     // Parse IMU data
     try {
         json frame_obj = json::parse(fp.imu_data);
@@ -349,6 +344,9 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     } catch (...) {
         cerr << "Sorry, no IMU information is available!\n";
     }
+    */
+
+    json frame_obj = json::parse("{}");
 
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
