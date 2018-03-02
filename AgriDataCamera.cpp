@@ -274,16 +274,12 @@ void AgriDataCamera::Run()
                     fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
 
-                    // IMU data
+                    s_send(imu_, " ");
                     try {
-                        fp.imu_data = imu_wrapper(fp);
-                    } catch(runtime_error& e) {
-                        fp.imu_data = "{}";
-                        LOG(WARNING) << "IMU Error: " << e.what();
-                    } catch (error_t& e) {
-						fp.imu_data = "{}";
-						LOG(WARNING) << "IMU Error: Previous Response Not Received";
-					}
+                        imu_status = json::parse(s_recv(imu_));
+                    } catch (...) {
+                        LOG(WARNING) << "Bad IMU";
+                    }
 
                     // Exposure time
                     try {               // USB
