@@ -515,17 +515,6 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
 
 
 /**
- * Luminance
- *
- * Instantly luminance for an OpenCV Mat (frame)
- *
- */
-float AgriDataCamera::Luminance(cv::Mat input) {
-    return _luminance(input)
-}
-
-
-/**
  * Snap
  *
  * Snap will take one photo, in isolation, and save it to the standard steaming
