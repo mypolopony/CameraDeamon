@@ -43,8 +43,6 @@
     <File Name="../AgriDataCamera.h"/>
     <File Name="../AGDUtils.cpp"/>
     <File Name="../AGDUtils.h"/>
-    <File Name="../AgriDataUSBCamera.h" ExcludeProjConfig="Release"/>
-    <File Name="../AgriDataUSBCamera.cpp" ExcludeProjConfig="Release"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="../zhelpers.hpp"/>

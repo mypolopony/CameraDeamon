@@ -42,6 +42,9 @@
 #include <mutex>
 #include <condition_variable>
 
+// Logging
+#include "easylogging++.h"
+
 // System
 #include <syslog.h>
 #include <sys/types.h>
@@ -70,8 +73,7 @@ using json = nlohmann::json;
 AgriDataCamera::AgriDataCamera() :
     ctx_(1), 
     imu_(ctx_, ZMQ_REQ), 
-    conn { mongocxx::uri { MONGODB_HOST }},
-    nodeMap(GetNodeMap())
+    conn { mongocxx::uri { MONGODB_HOST }}
     {
 }
 
@@ -90,6 +92,7 @@ AgriDataCamera::~AgriDataCamera()
 void AgriDataCamera::Initialize()
 {
     PylonAutoInitTerm autoInitTerm;
+    INodeMap &nodeMap = GetNodeMap();
 
     // Open camera object ahead of time
     // When stopping and restarting the camera, either one must Close() or otherwise
@@ -116,47 +119,18 @@ void AgriDataCamera::Initialize()
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
 
-    /*
-     int frames_per_second = 20;
-     int exposure_lower_limit = 52;
-     int exposure_upper_limit = 1200;
-
-     // Enable the acquisition frame rate parameter and set the frame rate.
-     AcquisitionFrameRateEnable.SetValue(true);
-     AcquisitionFrameRate.SetValue(frames_per_second);
-
-     // Exposure time limits
-     ExposureAuto.SetValue(ExposureAuto_Continuous);
-     AutoExposureTimeLowerLimit.SetValue(exposure_lower_limit);
-     AutoExposureTimeUpperLimit.SetValue(exposure_upper_limit);
-
-     // Minimize Exposure
-     AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeExposureTime);
-
-     // Continuous Auto Gain
-     // GainAutoEnable.SetValue(true);
-     GainAuto.SetValue(GainAuto_Continuous);
-     AutoGainUpperLimit.SetValue(6);
-     AutoGainLowerLimit.SetValue(0);
-     */
-
-    // Number of buffers does not seem to be specified in .pfs file
-    // I'm pretty sure the max is 10, so I don't think any other values are valid.
-    // Also, this seems to raise trouble when the cameras has already been initialized,
-    // i.e. on stop / reinitialization
-    // try {
-    //    GetStreamGrabberParams().MaxNumBuffer.SetValue(256);
-    // } catch (...) {
-    //     cerr << "MaxNumBuffer already set" << endl;
-    // }
-    
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
 
     // Identifier
-    serialnumber = CStringPtr(GetNodeMap().GetNode("DeviceID"))->GetValue();
-    
+    try {               // USB
+        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceSerialNumber"))->GetValue();
+    } catch(...) {      // GigE
+        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceID"))->GetValue();
+    }
+   //modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
+
     // Print camera device information.
     cout << "Camera Device Information" << endl << "========================="
          << endl;
@@ -164,7 +138,7 @@ void AgriDataCamera::Initialize()
          << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue()
          << endl;
     cout << "Model : "
-         << CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue()
+         << modelname
          << endl;
     cout << "Firmware version : "
          << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue()
@@ -219,9 +193,10 @@ void AgriDataCamera::Initialize()
         } else {
             rotation = 0;
         }
+        LOG(INFO) << "This camera will be rotated by " << rotation << " degrees";
     } catch (...) {
-        cerr << "Unable to determine camera orientation. . ." << endl;
-        cerr << "Setting rotation to 0" << endl;
+        LOG(WARNING) << "Unable to determine camera orientation";
+        LOG(WARNING) << "Rotation disabled";
         rotation = 0;
     }
 
@@ -249,9 +224,9 @@ string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp)
     t.detach();
 
     {
-        unique_lock < mutex > lock(m);
+        unique_lock<mutex> lock(m);
         if (cv.wait_for(lock, chrono::milliseconds(20)) == cv_status::timeout)
-            throw runtime_error("IMU Timeout");
+            throw runtime_error("Timeout");
     }
 
     return data;
@@ -264,12 +239,6 @@ string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp)
  */
 void AgriDataCamera::Run()
 {
-    // Strings and streams
-    string videofile;
-    string framefile;
-    string logmessage;
-    string config;
-
     // Output parameters
     save_prefix = "/data/output/" + scanid + "/"
                   + serialnumber + "/";
@@ -283,7 +252,8 @@ void AgriDataCamera::Run()
     }
 
     // Save configuration
-    config = save_prefix + "config.txt";
+    INodeMap &nodeMap = GetNodeMap();
+    string config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
     // Timing
@@ -305,18 +275,22 @@ void AgriDataCamera::Run()
                     last_timestamp = fp.time_now;
 
                     // IMU data
-                    /*
                     try {
                         fp.imu_data = imu_wrapper(fp);
                     } catch(runtime_error& e) {
                         fp.imu_data = "{}";
-                        cout << "IMU Error: " << e.what() << endl;
-                    }
-                     * */
-                    fp.imu_data = "{}";
+                        LOG(WARNING) << "IMU Error: " << e.what();
+                    } catch (error_t& e) {
+						fp.imu_data = "{}";
+						LOG(WARNING) << "IMU Error: Previous Response Not Received";
+					}
 
                     // Exposure time
-                    fp.exposure_time = (int) CIntegerPtr(nodeMap.GetNode("ExsposureTime"))->GetValue();
+                    try {               // USB
+                        fp.exposure_time = (float) CFloatPtr(nodeMap.GetNode("ExposureTime"))->GetValue(); 
+                    } catch (...) {     // GigE
+                        fp.exposure_time = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue(); 
+                    }
 
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -327,10 +301,9 @@ void AgriDataCamera::Run()
                          << ptrGrabResult->GetErrorDescription() << endl;
                 }
             } catch (const GenericException &e) {
-                logmessage = ptrGrabResult->GetErrorCode() + "\n"
+                LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
                              + ptrGrabResult->GetErrorDescription() + "\n"
                              + e.GetDescription();
-                syslog(LOG_ERR, logmessage.c_str());
                 isRecording = false;
             }
         }
@@ -383,25 +356,31 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     }
 
     // Add Camera data
-    doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
-    doc.append(bsoncxx::builder::basic::kvp("balance_green", fp.balance_green));
-    doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(fp.time_now, ':');
-    string hdf5file = save_prefix + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+	string hdf5file = save_prefix + scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
 
     // Should we open a new file?
     if (hdf5file.compare(current_hdf5_file) != 0) {
+        
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
-            H5Fclose( hdf5_output );
+            H5Fclose( hdf5_output);
 
             // Add to queue
             redox::Redox rdx;
             if (rdx.connect() == 1) {
-                rdx.command<string>( {"LPUSH", "detection", current_hdf5_file});
+                redox::Command<int>& c = rdx.commandSync<int>({"RPUSH", "detection", current_hdf5_file});
+                if(!c.ok()) {
+                    try {
+                        LOG(ERROR) << "Error while communicating with redis" << c.status() << endl;
+                    } catch (runtime_error& e) {
+                        LOG(ERROR) << "Exception in redox: " << e.what() << endl;
+                    }
+                }
+                c.free();
             }
         }
         hdf5_output = H5Fcreate( hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
@@ -409,11 +388,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     }
 
     doc.append(bsoncxx::builder::basic::kvp("filename", current_hdf5_file));
-
-    // Convert
+    
+    // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
-
-    // To OpenCV
+    
+    // To OpenCV Mat
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
 
     // Resize
@@ -424,25 +403,27 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
 
     // Rotate
     small_last_img = AgriDataCamera::Rotate( small_last_img );
-
+    
+    // Encode to JPG Buffer
+    vector<uint8_t> outbuffer;
+    
+    static const vector<int> ENCODE_PARAMS = {};
+    imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
+    Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
+    
     // Write
-    H5IMmake_image_24bit( hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, "INTERLACE_PIXEL", small_last_img.data);
-    //string stick = to_string(tick);
-    //imwrite(save_prefix + serialnumber + stick + ".jpg", small_last_img);
+    H5IMmake_image_8bit( hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, (uint8_t *) jpg_image.data);
 
     // Write to streaming image
     if ( tick % T_LATEST == 0) {
-        last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3,
-                       (uint8_t *) image.GetBuffer());
-
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
                  ref(compression_params));
         t.detach();
     }
 
+
     // Check Luminance (and add to documents)
     if ( tick % T_LUMINANCE == 0) {
-
         // We send to database first, then we can edit it later
         auto ret = frames.insert_one(doc.view());
         bsoncxx::oid oid = ret->inserted_id().get_oid().value;
@@ -454,9 +435,14 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     }
 
     // Send documents to database
-    if (( tick % T_MONGODB  == 0) && (documents.size() > 0)) {
-        frames.insert_many(documents);
-        documents.clear();
+    try {
+        if (( tick % T_MONGODB  == 0) && (documents.size() > 0)) {
+            LOG(DEBUG) << "Sending to Database";
+            frames.insert_many(documents);
+            documents.clear();
+        }
+    } catch (exception const &exc) {
+        LOG(DEBUG) << "Exception caught " << exc.what() << "\n";
     }
 }
 
@@ -514,9 +500,13 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input)
     float avgLum = Totalintensity/(grayMat.rows * grayMat.cols);
 
     // Update database entry
-    _frames.update_one(bsoncxx::builder::stream::document {} << "_id" << id << bsoncxx::builder::stream::finalize,
-                       bsoncxx::builder::stream::document {} << "$set" << bsoncxx::builder::stream::open_document <<
-                       "luminance" << avgLum << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+    try {
+        _frames.update_one(bsoncxx::builder::stream::document {} << "_id" << id << bsoncxx::builder::stream::finalize,
+                           bsoncxx::builder::stream::document {} << "$set" << bsoncxx::builder::stream::open_document <<
+                           "luminance" << avgLum << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+    } catch (exception const &exc) {
+        LOG(DEBUG) << "Exception caught " << exc.what() << "\n";
+    }
 }
 
 
@@ -594,17 +584,32 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params)
 int AgriDataCamera::Stop()
 {
 
-    syslog(LOG_INFO, "Recording Stopped");
+    LOG(INFO) << "Recording Stopped";
     isRecording = false;
 
-    cout << "Closing active HDF5 file" << endl;
-    H5Fclose( hdf5_output );
-
-    cout << "Dumping documents" << endl;
+    LOG(INFO) << "Dumping documents";
     frames.insert_many(documents);
     documents.clear();
+    
+    redox::Redox rdx;
+    if (rdx.connect() == 1) {
+        redox::Command<int>& c = rdx.commandSync<int>({"RPUSH", "detection", current_hdf5_file});
+        if(!c.ok()) {
+            try {
+                LOG(ERROR) << "Error while communicating with redis" << c.status();
+            } catch (runtime_error& e) {
+                LOG(ERROR) << "send_message: Exception in redox: " << e.what();
+            }
+        }
+        c.free();
+    } else {
+        LOG(ERROR) << "Cound not connect to Redis";
+    }
+    
+    LOG(INFO) << "Closing active HDF5 file";
+    H5Fclose( hdf5_output );
 
-    syslog(LOG_INFO, "*** Done ***");
+    LOG(INFO) << "*** Done ***";   
     frameout.close();
     return 0;
 }
@@ -618,6 +623,7 @@ json AgriDataCamera::GetStatus()
 {
     json status, imu_status;
     string docstring;
+    INodeMap &nodeMap = GetNodeMap();
     imu_status["IMU_VELOCITY_NORTH"] = -99.9;
     imu_status["IMU_VELOCITY_EAST"] = -99.9;
 
@@ -651,7 +657,7 @@ json AgriDataCamera::GetStatus()
     */
 
     status["Serial Number"] = serialnumber;
-    status["Model Name"] = GetDeviceInfo().GetModelName();
+    status["Model Name"] = modelname;
     status["Recording"] = isRecording;
 
     // Something funny here, occasionally the ptrGrabResult is not available
@@ -663,11 +669,19 @@ json AgriDataCamera::GetStatus()
         status["Timestamp"] = "Not Recording";
         status["scanid"] = "Not Recording";
     }
-
-    status["Exposure Time"] = (int) CIntegerPtr(nodeMap.GetNode("ExposureTime"))->GetValue(); 
-    status["Resulting Frame Rate"] = (int) CIntegerPtr(nodeMap.GetNode("ResultingFrameRate"))->GetValue();
-    status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("Raw"))->GetValue();
-    status["Temperature"] = (int) CIntegerPtr(nodeMap.GetNode("DeviceTemperature"))->GetValue();
+    
+    // Here is the main divergence between GigE and USB Cameras; the nodemap is not standard
+    try {           // USB
+        status["Current Gain"] = (float) CFloatPtr(nodeMap.GetNode("Gain"))->GetValue();
+        status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTime"))->GetValue(); 
+        status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRate"))->GetValue();
+        status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("DeviceTemperature"))->GetValue();
+    } catch (...) { // GigE
+        status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("GainRaw"))->GetValue();      // Gotcha!
+        status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue(); 
+        status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+        status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();    
+    }
 
     // Create BSON from JSON and send to database (if not recording)
     // The stream builder is preferred so we use that (as opposed to the "basic"

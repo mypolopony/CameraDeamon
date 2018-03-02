@@ -61,7 +61,7 @@ public:
     bool isPaused;
     bool isRecording;
     std::string serialnumber;
-    GenApi::INodeMap &nodeMap;
+    std::string modelname;
 
 private:
     struct FramePacket {
@@ -89,10 +89,8 @@ private:
     Pylon::CImageFormatConverter fc;
     Pylon::CImagePersistenceOptions persistenceOptions;
 
-    // Videowriter and filename
-    cv::VideoWriter videowriter;
+    // Output base
     std::string save_prefix;
-    std::string videofile;
 
     // Frame log stream
     std::ofstream frameout;
