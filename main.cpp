@@ -401,8 +401,8 @@ int main()
                 LOG(INFO) << "Response: " << reply.dump().c_str();
                 //}
             }
-        } catch (exception const &exc) {
-            LOG(FATAL) << "Exception caught " << exc.what() << "\n";
+        } catch (const GenericException &e) {
+            LOG(FATAL) << "Exception caught: " << e.GetDescription() << "\n";
         }
     }
 

@@ -205,34 +205,6 @@ void AgriDataCamera::Initialize()
 }
 
 /**
- * imu_wrapper
- *
- * Allows a timeout to be attached to the IMU call
- */
-string AgriDataCamera::imu_wrapper(AgriDataCamera::FramePacket fp)
-{
-    mutex m;
-    condition_variable cv;
-    string data;
-
-    thread t([this, &m, &cv, &data]() {
-        s_send(imu_, " ");
-        data = s_recv(imu_);
-        cv.notify_one();
-    });
-
-    t.detach();
-
-    {
-        unique_lock<mutex> lock(m);
-        if (cv.wait_for(lock, chrono::milliseconds(20)) == cv_status::timeout)
-            throw runtime_error("Timeout");
-    }
-
-    return data;
-}
-
-/**
  * Run
  *
  * Main loop
@@ -259,6 +231,7 @@ void AgriDataCamera::Run()
     // Timing
     struct timeval tim;
 
+    json imu_status;
     // initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {
@@ -274,6 +247,10 @@ void AgriDataCamera::Run()
                     fp.time_now = AGDUtils::grabTime("%H:%M:%S");
                     last_timestamp = fp.time_now;
 
+					// IMU data (IMU has internal timeout that will return {})
+                    s_send(imu_, " ");
+					fp.imu_data = s_recv(imu_);
+                    
                     // Exposure time
                     try {               // USB
                         fp.exposure_time = (float) CFloatPtr(nodeMap.GetNode("ExposureTime"))->GetValue(); 
@@ -284,6 +261,7 @@ void AgriDataCamera::Run()
                     // Image
                     fp.img_ptr = ptrGrabResult;
 
+					// Process the frame
                     HandleFrame(fp);
                 } else {
                     cout << "Error: " << ptrGrabResult->GetErrorCode() << " "
@@ -312,7 +290,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     tick++;
 
     // Docuemnt
-    auto doc = bsoncxx::builder::basic::document { };
+    auto doc = bsoncxx::builder::basic::document {};
     doc.append(
         bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
@@ -324,29 +302,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
     doc.append(
         bsoncxx::builder::basic::kvp("frame_number",
                                      fp.img_ptr->GetImageNumber()));
-
-    /*
-    // Parse IMU data
-    try {
-        json frame_obj = json::parse(fp.imu_data);
-        for (json::iterator it = frame_obj.begin(); it != frame_obj.end();
-             ++it) {
-            try {
-                doc.append(
-                    bsoncxx::builder::basic::kvp((string) it.key(),
-                                                 (double) it.value()));
-            } catch (...) {
-                doc.append(
-                    bsoncxx::builder::basic::kvp((string) it.key(),
-                                                 (bool) it.value()));
-            }
-        }
-    } catch (...) {
-        cerr << "Sorry, no IMU information is available!\n";
-    }
-    */
-
-    json frame_obj = json::parse("{}");
 
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
@@ -379,6 +334,26 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp)
         hdf5_output = H5Fcreate( hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
         current_hdf5_file = hdf5file;
     }
+
+	// Add IMU data
+	try {
+		json imu_status = json::parse(fp.imu_data);
+		for (json::iterator it = imu_status.begin(); it != imu_status.end();
+		     ++it) {
+		    try {
+		        doc.append(
+		            bsoncxx::builder::basic::kvp((string) it.key(),
+		                                         (double) it.value()));
+		    } catch (...) {
+		        doc.append(
+		            bsoncxx::builder::basic::kvp((string) it.key(),
+		                                         (bool) it.value()));
+		    }
+		}
+	} catch (const exception &e) {
+		LOG(WARNING) << "IMU is unreachable";
+	}
+
 
     doc.append(bsoncxx::builder::basic::kvp("filename", current_hdf5_file));
     
@@ -621,37 +596,30 @@ json AgriDataCamera::GetStatus()
     json status, imu_status;
     string docstring;
     INodeMap &nodeMap = GetNodeMap();
-    imu_status["IMU_VELOCITY_NORTH"] = -99.9;
-    imu_status["IMU_VELOCITY_EAST"] = -99.9;
+
+	// Document
+	auto doc = bsoncxx::builder::stream::document{};
 
     // If we are not recording, make a new IMU request
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
-    /*
     if (!isRecording) {
-        s_send(imu_, " ");
-        try {
-            imu_status = json::parse(s_recv(imu_));
-        } catch (...) {
-            cerr << "Bad IMU\n";
-        }
-    } else {
-        if (!imu_status.is_null()) {
-            try {
-                imu_status = json::parse(last_imu_data);
-            } catch (...) {
-                cerr << "IMU Fail\n";
-            }
-        }
-    }
-
-    try {
-        status["Velocity_North"] =
-            imu_status["IMU_VELOCITY_NORTH"].get<double>();
-        status["Velocity_East"] = imu_status["IMU_VELOCITY_EAST"].get<double>();
-    } catch (...) {
-        cout << "Second IMU Fail";
-    }
-    */
+		try {
+		    s_send(imu_, " ");
+		    json imu_status = json::parse(s_recv(imu_));
+			doc << "IMU_GYRO_X" << (float) imu_status["IMU_GYRO_X"].get<float>();
+			/*
+			for (json::iterator it = imu_status.begin(); it != imu_status.end(); ++it) {
+				try {
+					status[(string) it.key()] = (double) it.value();
+				} catch (...) {
+					status[(string) it.key()] = (bool) it.value();
+				}
+			}
+			*/
+		} catch (const exception &e) {
+			LOG(WARNING) << "IMU is unreachable";
+		}
+	}
 
     status["Serial Number"] = serialnumber;
     status["Model Name"] = modelname;
@@ -680,7 +648,7 @@ json AgriDataCamera::GetStatus()
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();    
     }
     
-    bsoncxx::document::value doc = bsoncxx::builder::stream::document {} << "Serial Number" << (string) status["Serial Number"].get<string>()
+    doc << "Serial Number" << (string) status["Serial Number"].get<string>()
                                    << "Model Name" << (string) status["Model Name"].get<string>()
                                    << "Recording" << (bool) status["Recording"].get<bool>()
                                    << "Timestamp" << (string) status["Timestamp"].get<string>()
@@ -689,7 +657,7 @@ json AgriDataCamera::GetStatus()
                                    << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
                                    << "Current Gain" << (int) status["Current Gain"].get<int>()
                                    << "Temperature" << (int) status["Temperature"].get<int>()
-                                   << bsoncxx::builder::stream::finalize;
+								   << bsoncxx::builder::stream::finalize;
 
     // Insert into the DB
     auto ret = frames.insert_one(doc.view());
