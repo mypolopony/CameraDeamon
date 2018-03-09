@@ -127,12 +127,13 @@ private:
     // Timestamp (should go in status block)
     std::string last_timestamp;
 
-    // IMU_Data (to store while recording)
-    std::string last_imu_data;
+    // IMU
+    std::string last_imu_data;  // Data to store while recording
+    zmq::socket_t * s_client_socket (zmq::context_t & context);
 
     // ZMQ
     zmq::context_t ctx_;
-    zmq::socket_t imu_;
+    zmq::socket_t *imu_;
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);

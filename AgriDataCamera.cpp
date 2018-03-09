@@ -40,6 +40,7 @@
 #include <iostream>
 #include <chrono>
 #include <mutex>
+#include <ratio>
 #include <condition_variable>
 
 // Logging
@@ -59,12 +60,16 @@
 // Redis
 #include <redox.hpp>
 
+// Definitions
+#define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
+
 // Namespaces
 using namespace Basler_GigECameraParams;
 using namespace Pylon;
 using namespace std;
 using namespace cv;
 using namespace GenApi;
+using namespace std::chrono;
 using json = nlohmann::json;
 
 /**
@@ -83,6 +88,26 @@ AgriDataCamera::AgriDataCamera() :
 AgriDataCamera::~AgriDataCamera()
 {
 }
+
+
+/**
+ * s_client_socket
+ *
+ * Helper function that returns a new configured socket
+ * connected to the IMU server
+ */
+
+static zmq::socket_t * s_client_socket (zmq::context_t & context) {
+    std::cout << "Connecting to IMU server..." << std::endl;
+    zmq::socket_t * client = new zmq::socket_t (context, ZMQ_REQ);
+    client->connect ("tcp://localhost:4997");
+
+    //  Configure socket to not wait at close time
+    int linger = 0;
+    client->setsockopt (ZMQ_LINGER, &linger, sizeof (linger));
+    return client;
+}
+
 
 /**
  * Initialize
@@ -155,11 +180,8 @@ void AgriDataCamera::Initialize()
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
 
-    // ZMQ and DB Connection
-    imu_.connect("tcp://127.0.0.1:4997");
-
-    // Wait for sockets
-    zmq_sleep(1.5);
+    // ZMQ Socket: Initialize
+    imu_ = s_client_socket (ctx_);
 
     // Initialize MongoDB connection
     // The use of auto here is unfortunate, but it is apparently recommended
@@ -202,6 +224,8 @@ void AgriDataCamera::Initialize()
 
     // HDF5
     current_hdf5_file = "";
+
+
 }
 
 /**
@@ -248,8 +272,19 @@ void AgriDataCamera::Run()
                     last_timestamp = fp.time_now;
 
 					// IMU data (IMU has internal timeout that will return {})
-                    s_send(imu_, " ");
-					fp.imu_data = s_recv(imu_);
+                    s_send(*imu_, " ");
+
+                    // Retrieve reply
+                    zmq::pollitem_t items[] = { { *imu_, 0, ZMQ_POLLIN, 0 } };
+                    zmq::poll (&items[0], 1, REQUEST_TIMEOUT);
+
+                    if (items[0].revents & ZMQ_POLLIN) {            // Response RECEIVED
+                        fp.imu_data = s_recv(*imu_);
+                    } else {                                        // Response NOT RECEIVED
+                        // Close this socket and open another one
+                        delete client;
+                        client = s_client_socket (context);
+                    }
                     
                     // Exposure time
                     try {               // USB
@@ -603,22 +638,34 @@ json AgriDataCamera::GetStatus()
     // If we are not recording, make a new IMU request
     // If we are recording, this can get in the way of the frame grabber's communication with the imu
     if (!isRecording) {
-		try {
-		    s_send(imu_, " ");
-		    json imu_status = json::parse(s_recv(imu_));
-			doc << "IMU_GYRO_X" << (float) imu_status["IMU_GYRO_X"].get<float>();
-			/*
-			for (json::iterator it = imu_status.begin(); it != imu_status.end(); ++it) {
-				try {
-					status[(string) it.key()] = (double) it.value();
-				} catch (...) {
-					status[(string) it.key()] = (bool) it.value();
-				}
-			}
-			*/
-		} catch (const exception &e) {
-			LOG(WARNING) << "IMU is unreachable";
-		}
+        s_send(*imu_, " ");
+
+        // Retrieve reply
+        zmq::pollitem_t items[] = { { *imu_, 0, ZMQ_POLLIN, 0 } };
+        zmq::poll (&items[0], 1, REQUEST_TIMEOUT);
+
+        if (items[0].revents & ZMQ_POLLIN) {            // Response RECEIVED
+            json imu_status = json::parse(s_recv(*imu_));
+
+            // Assign one field
+            doc << "IMU_GYRO_X" << (float) imu_status["IMU_GYRO_X"].get<float>();
+
+            // Assign all fields
+            /*
+            for (json::iterator it = imu_status.begin(); it != imu_status.end(); ++it) {
+                try {
+                    status[(string) it.key()] = (double) it.value();
+                } catch (...) {
+                    status[(string) it.key()] = (bool) it.value();
+                }
+            }
+            */
+
+        } else {                                        // Response NOT RECEIVED
+            // Close this socket and open another one
+            delete client;
+            client = s_client_socket (context);
+        }
 	}
 
     status["Serial Number"] = serialnumber;
