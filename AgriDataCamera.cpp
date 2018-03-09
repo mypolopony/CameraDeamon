@@ -282,7 +282,7 @@ void AgriDataCamera::Run()
                         fp.imu_data = s_recv(*imu_);
                     } else {                                        // Response NOT RECEIVED
                         // Close this socket and open another one
-                        delete client;
+                        delete imu_;
                         imu_ = s_client_socket (ctx_);
                     }
                     
@@ -663,8 +663,8 @@ json AgriDataCamera::GetStatus()
 
         } else {                                        // Response NOT RECEIVED
             // Close this socket and open another one
-            delete ctx_;
-            ctx_ = s_client_socket (ctx_);
+            delete imu_;
+            imu_ = s_client_socket (ctx_);
         }
 	}
 
