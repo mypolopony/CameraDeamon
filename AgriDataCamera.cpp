@@ -77,7 +77,6 @@ using json = nlohmann::json;
  */
 AgriDataCamera::AgriDataCamera() :
     ctx_(1), 
-    imu_(ctx_, zmq::ZMQ_REQ), 
     conn { mongocxx::uri { MONGODB_HOST }}
     {
 }
@@ -97,7 +96,7 @@ AgriDataCamera::~AgriDataCamera()
  * connected to the IMU server
  */
 
-static zmq::socket_t * s_client_socket (zmq::context_t & context) {
+zmq::socket_t * AgriDataCamera::s_client_socket (zmq::context_t & context) {
     std::cout << "Connecting to IMU server..." << std::endl;
     zmq::socket_t * client = new zmq::socket_t (context, ZMQ_REQ);
     client->connect ("tcp://localhost:4997");
