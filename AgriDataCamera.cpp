@@ -663,8 +663,8 @@ json AgriDataCamera::GetStatus()
 
         } else {                                        // Response NOT RECEIVED
             // Close this socket and open another one
-            delete client;
-            client = s_client_socket (context);
+            delete ctx_;
+            ctx_ = s_client_socket (ctx_);
         }
 	}
 
