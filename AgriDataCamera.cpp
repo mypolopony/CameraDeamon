@@ -283,7 +283,7 @@ void AgriDataCamera::Run()
                     } else {                                        // Response NOT RECEIVED
                         // Close this socket and open another one
                         delete client;
-                        client = s_client_socket (context);
+                        imu_ = s_client_socket (ctx_);
                     }
                     
                     // Exposure time
