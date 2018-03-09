@@ -77,7 +77,7 @@ using json = nlohmann::json;
  */
 AgriDataCamera::AgriDataCamera() :
     ctx_(1), 
-    imu_(ctx_, ZMQ_REQ), 
+    imu_(ctx_, zmq::ZMQ_REQ), 
     conn { mongocxx::uri { MONGODB_HOST }}
     {
 }
