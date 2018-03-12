@@ -266,7 +266,7 @@ int main()
                             //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
 
                             doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-                            doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64 {AGDUtils::grabSeconds()}));
+                            doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64 {AGDUtils::grabMilliseconds()}));
 
                             // Create document *before* running the cameras
                             scans.insert_one(doc.view());
@@ -316,7 +316,7 @@ int main()
                             // Using the stream here since it's so popular
                             scans.update_one(bsoncxx::builder::stream::document {} << "scanid" << id << bsoncxx::builder::stream::finalize,
                                              bsoncxx::builder::stream::document {} << "$set" <<
-                                             bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64 {AGDUtils::grabSeconds()} <<
+                                             bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64 {AGDUtils::grabMilliseconds()} <<
                                              bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
 
                             // Stop cameras

@@ -21,8 +21,7 @@
 
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "hdf5.h"
@@ -34,18 +33,16 @@ extern "C"
 
 #define MAX_NAME 1024
 
-namespace AGDUtils
-{
-bool mkdirp(const char* path, mode_t mode);
-std::vector <std::string> split(const std::string &s, char delim);
-std::string grabTime(std::string format);
-int64_t grabSeconds();
-std::string pipe_to_string(const char *command);
+namespace AGDUtils {
+    bool mkdirp(const char* path, mode_t mode);
+    std::vector <std::string> split(const std::string &s, char delim);
+    std::string grabTime(std::string format);
+    int64_t grabSeconds();
+    int64_t grabMilliseconds();
+    std::string pipe_to_string(const char *command);
 }
 
-class ImageReader
-{
-
+class ImageReader {
 public:
     // Constructor / Destructor
     ImageReader();

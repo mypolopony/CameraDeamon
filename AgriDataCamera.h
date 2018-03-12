@@ -66,7 +66,7 @@ public:
 
 private:
     struct FramePacket {
-        std::string camera_time, time_now, imu_data;
+        std::string camera_time, time_now;
         float balance_red, balance_green, balance_blue, exposure_time;
         Pylon::CGrabResultPtr img_ptr;
     };
@@ -127,13 +127,9 @@ private:
     // Timestamp (should go in status block)
     std::string last_timestamp;
 
-    // IMU
-    std::string last_imu_data;  // Data to store while recording
-    zmq::socket_t * s_client_socket (zmq::context_t & context);
-
     // ZMQ
     zmq::context_t ctx_;
-    zmq::socket_t *imu_;
+    zmq::socket_t * s_client_socket (zmq::context_t & context);
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);
@@ -141,7 +137,6 @@ private:
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);
-    std::string imu_wrapper(AgriDataCamera::FramePacket);
 };
 
 #endif /* AGRIDATACAMERA_H */
