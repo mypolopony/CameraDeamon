@@ -1,6 +1,9 @@
 # Collateral
 *.jpg
 
+# Logs
+logs/
+
 #Build
 src/build
 *build*
@@ -66,4 +69,5 @@ utils/*.html
 site/
 /cmake-build-debug/
 CameraDeamon/Debug/CameraDeamon
+CameraDeamon/Release/CameraDeamon
 /build-clion/
