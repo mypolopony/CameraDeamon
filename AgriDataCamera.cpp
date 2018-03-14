@@ -268,10 +268,12 @@ void AgriDataCamera::Run() {
                     }
 
                     // Image
+
                     fp.img_ptr = ptrGrabResult;
 
                     // Process the frame
                     HandleFrame(fp);
+
                 } else {
                     cout << "Error: " << ptrGrabResult->GetErrorCode() << " "
                             << ptrGrabResult->GetErrorDescription() << endl;
@@ -315,7 +317,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
 
     // Computer time and output directory
-    vector<string> hms = AGDUtils::split(fp.time_now, ':');
+    vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
     string hdf5file = save_prefix + scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
 
     // Should we open a new file?
@@ -528,9 +530,9 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
             "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
             + "streaming_t.png", thumb, compression_params);
     // Full
-    //imwrite(
-    //		"/home/nvidia/EmbeddedServer/images/" + snumber + '_'
-    //				+ "streaming.png", img, compression_params);
+    imwrite(
+    		"/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
+    		+ "streaming.png", img, compression_params);
 
 }
 
@@ -578,11 +580,7 @@ int AgriDataCamera::Stop() {
  */
 json AgriDataCamera::GetStatus() {
     json status;
-    string docstring;
     INodeMap &nodeMap = GetNodeMap();
-
-    // Document
-    auto doc = bsoncxx::builder::stream::document{};
 
     status["Serial Number"] = serialnumber;
     status["Model Name"] = modelname;
@@ -611,7 +609,7 @@ json AgriDataCamera::GetStatus() {
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
     }
 
-    doc << "Serial Number" << (string) status["Serial Number"].get<string>()
+    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
             << "Recording" << (bool) status["Recording"].get<bool>()
             << "Timestamp" << (string) status["Timestamp"].get<string>()
@@ -623,7 +621,7 @@ json AgriDataCamera::GetStatus() {
             << bsoncxx::builder::stream::finalize;
 
     // Insert into the DB
-    auto ret = frames.insert_one(doc.view());
+    auto ret = frames.insert_one(document.view());
 
     // Lazily add luminance (bit of delay here, but checking luminance is done via DB by clients that want it)
     if (!isRecording) {

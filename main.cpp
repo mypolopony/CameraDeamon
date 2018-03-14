@@ -361,16 +361,29 @@ int main()
                         reply["status"] = "1";
                     }
 
+					// Auto Function ROI
+					else if (received["action"] == "autoaoi") {
+						for (size_t i = 0; i < devices.size(); ++i) {
+                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+								if (received["value"] == 1)
+									GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetValue(AutoFunctionAOISelector_AOI1);
+								else
+									GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetValue(AutoFunctionAOISelector_AOI2);
+                            }
+                        }
+                        reply["status"] = "1";
+                        reply["message"] = "Auto Function AOI set for camera " + received["camera"].get<std::string>();
+					}
+
                     // White Balance
                     else if (received["action"] == "whitebalance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            // TODO: This is weird, why do we compare to "ji"?
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
                                 GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
                             }
                         }
                         reply["status"] = "1";
-                        reply["message"] = "White Balance Set on Camera " + received["camera"].get<std::string>();
+                        reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
                     }
 
                     // Luminance
@@ -385,21 +398,18 @@ int main()
                     }
 
                 } catch (const GenericException &e) {
+                    // Error block
                     LOG(ERROR) << "An exception occurred.";
                     LOG(ERROR) << e.GetDescription();
-
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
                 }
 
-                LOG(INFO) << "Sending Response\n";
+                // LOG(INFO) << "Sending Response\n";
                 zmq::message_t messageS(reply.dump().size());
                 memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
                 publisher.send(messageS);
 
-                //if (received["action"] != "status") {
-                LOG(INFO) << "Response: " << reply.dump().c_str();
-                //}
             }
         } catch (const GenericException &e) {
             LOG(FATAL) << "Exception caught: " << e.GetDescription() << "\n";

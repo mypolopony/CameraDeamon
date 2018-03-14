@@ -61,7 +61,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath>CameraDeamon/Debug/CameraDeamon</executablePath>
+          <executablePath>CameraDeamon/Release/CameraDeamon</executablePath>
           <cTool>
             <incDir>
               <pElem>cmake-build-debug</pElem>
