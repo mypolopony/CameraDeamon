@@ -61,8 +61,8 @@
 // Initialize logging
 INITIALIZE_EASYLOGGINGPP
 
-// Namespaces for convenience
-using namespace Basler_GigECameraParams;
+        // Namespaces for convenience
+        using namespace Basler_GigECameraParams;
 using namespace Pylon;
 using namespace cv;
 using namespace GenApi;
@@ -82,8 +82,7 @@ volatile sig_atomic_t sigint_flag = 0;
  * Catches SIGINT to flag a graceful exit. This can be called asynchronously.
  * Actual code execution in the case of SIGINT is handled in main()
  */
-void sigint_function(int sig)
-{
+void sigint_function(int sig) {
     sigint_flag = 1;
 }
 
@@ -93,8 +92,7 @@ void sigint_function(int sig)
  * An initialization message that prints some relevant information about the
  * program, cameras, etc.
  */
-static void printIntro()
-{
+static void printIntro() {
     LOG(INFO) << "*------------------------------*";
     LOG(INFO) << "*****  OpenCV Parameters  ******";
     LOG(INFO) << "*------------------------------*";
@@ -136,8 +134,7 @@ static void printIntro()
  * main
  *
  */
-int main()
-{
+int main() {
     // Configure Logging
     el::Configurations conf("config/easylogging.conf");
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
@@ -164,8 +161,9 @@ int main()
     // Initialize MongoDB connection
     // The use of auto here is unfortunate, but it is apparently recommended
     // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
-    mongocxx::instance inst {};
-    mongocxx::client conn {mongocxx::uri{"mongodb://localhost:27017"}};
+    mongocxx::instance inst{};
+    mongocxx::client conn{mongocxx::uri
+        {"mongodb://localhost:27017"}};
     mongocxx::database db = conn["agdb"];
     mongocxx::collection scans = db["scan"];
 
@@ -189,7 +187,7 @@ int main()
             cameras[i] = new AgriDataCamera();
             cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
             cameras[i]->Initialize();
-        } 
+        }
     } catch (const GenericException &e) {
         LOG(ERROR) << "Camera Initialization Failed";
         LOG(ERROR) << "Exception caught: " << e.what();
@@ -259,14 +257,14 @@ int main()
                             LOG(INFO) << "Starting scan " + scanid;
 
                             // Generate MongoDB doc
-                            auto doc = bsoncxx::builder::basic::document {};
+                            auto doc = bsoncxx::builder::basic::document{};
 
                             //auto doc_cameras = bsoncxx::builder::basic::array{};
                             //doc_cameras.append(cameras[i]->DeviceSerialNumber());
                             //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
 
                             doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-                            doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64 {AGDUtils::grabMilliseconds()}));
+                            doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64{AGDUtils::grabMilliseconds()}));
 
                             // Create document *before* running the cameras
                             scans.insert_one(doc.view());
@@ -283,8 +281,7 @@ int main()
                             reply["status"] = "1";
                         }
                     }
-
-                    // Pause
+                        // Pause
                     else if (received["action"] == "pause") {
                         if (isRecording) {
                             for (size_t i = 0; i < devices.size(); ++i) {
@@ -302,8 +299,7 @@ int main()
                             reply["message"] = "Cameras are not recording!";
                             reply["status"] = "0";
                         }
-                    }
-                    // Stop
+                    }                        // Stop
                     else if (received["action"] == "stop") {
                         if (!isRecording) {
                             reply["status"] = "1";
@@ -314,10 +310,13 @@ int main()
                             string id = status["scanid"];
 
                             // Using the stream here since it's so popular
-                            scans.update_one(bsoncxx::builder::stream::document {} << "scanid" << id << bsoncxx::builder::stream::finalize,
-                                             bsoncxx::builder::stream::document {} << "$set" <<
-                                             bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64 {AGDUtils::grabMilliseconds()} <<
-                                             bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+                            scans.update_one(bsoncxx::builder::stream::document{}
+                            << "scanid" << id << bsoncxx::builder::stream::finalize,
+                                    bsoncxx::builder::stream::document{}
+                            << "$set" <<
+                            bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64{AGDUtils::grabMilliseconds()}
+                            <<
+                            bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
 
                             // Stop cameras
                             for (size_t i = 0; i < devices.size(); ++i) {
@@ -341,8 +340,7 @@ int main()
 
                         }
                     }
-
-                    // Status
+                        // Status
                     else if (received["action"] == "status") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             status = cameras[i]->GetStatus();
@@ -351,8 +349,7 @@ int main()
                         }
                         reply["status"] = "1";
                     }
-
-                    // Snap
+                        // Snap
                     else if (received["action"] == "snap") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             cameras[i]->Snap();
@@ -360,37 +357,35 @@ int main()
                         reply["message"] = "Snapshot Taken";
                         reply["status"] = "1";
                     }
-
-					// Auto Function ROI
-					else if (received["action"] == "autoaoi") {
-						for (size_t i = 0; i < devices.size(); ++i) {
-                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-								if (received["value"] == 1)
-									GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetValue(AutoFunctionAOISelector_AOI1);
-								else
-									GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetValue(AutoFunctionAOISelector_AOI2);
+                        // Auto Function ROI
+                    else if (received["action"] == "autoaoi") {
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
+                                if (received["value"] == 1) {
+                                    GenApi::CEnumerationPtr(cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetIntValue(AutoFunctionAOISelector_AOI1);
+                                } else {
+                                    GenApi::CEnumerationPtr(cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetIntValue(AutoFunctionAOISelector_AOI2);
+                                }
                             }
                         }
                         reply["status"] = "1";
                         reply["message"] = "Auto Function AOI set for camera " + received["camera"].get<std::string>();
-					}
-
-                    // White Balance
+                    }
+                        // White Balance
                     else if (received["action"] == "whitebalance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-                                GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
+                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
                             }
                         }
                         reply["status"] = "1";
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
                     }
-
-                    // Luminance
+                        // Luminance
                     else if (received["action"] == "luminance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-                                GenApi::CIntegerPtr (cameras[i]->GetNodeMap().GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
+                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
                             }
                         }
                         reply["status"] = "1";

@@ -608,6 +608,10 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
     }
+    
+    // Debug
+    status["AutoFunctionAOIWidth"] = (int) CIntegerPtr(nodeMap.GetNode("AutoFunctionAOIWidth"))->GetValue();
+    LOG(DEBUG) << (int) status["AutoFunctionAOIWidth"].get<int>() << endl;
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
