@@ -236,7 +236,6 @@ int main() {
             if (rec) {
                 receivedstring = string(static_cast<char *> (messageR.data()), messageR.size());
                 received = json::parse(receivedstring);
-                LOG(INFO) << "Received: " << receivedstring;
 
                 try {
                     reply = {

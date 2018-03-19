@@ -190,10 +190,8 @@ void AgriDataCamera::Initialize() {
     tick = 0;
 
     // Streaming image compression
-    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    compression_params.push_back(3);
-    compression_params.push_back(3);
-    compression_params.push_back(3);
+    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(30);
 
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
@@ -493,7 +491,7 @@ void AgriDataCamera::Snap() {
 
         // There might be a reason to allow the camera to take a few shots first to
         // allow any auto adjustments to take place.
-        uint32_t c_countOfImagesToGrab = 20;
+        uint32_t c_countOfImagesToGrab = 21;
 
         if (!IsGrabbing()) {
             StartGrabbing();
@@ -523,16 +521,18 @@ void AgriDataCamera::Snap() {
  */
 void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
     Mat thumb;
-    resize(img, thumb, Size(), 0.2, 0.2);
+    resize(img, thumb, Size(), 0.3, 0.3);
 
     // Thumbnail
     imwrite(
             "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
-            + "streaming_t.png", thumb, compression_params);
+            + "streaming_t.jpg", thumb, compression_params);
     // Full
+    /*
     imwrite(
     		"/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
-    		+ "streaming.png", img, compression_params);
+    		+ "streaming.jpg", img, compression_params);
+    */
 
 }
 
@@ -608,10 +608,6 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
     }
-    
-    // Debug
-    status["AutoFunctionAOIWidth"] = (int) CIntegerPtr(nodeMap.GetNode("AutoFunctionAOIWidth"))->GetValue();
-    LOG(DEBUG) << (int) status["AutoFunctionAOIWidth"].get<int>() << endl;
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
