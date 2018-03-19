@@ -150,7 +150,7 @@ void AgriDataCamera::Initialize() {
     } catch (...) { // GigE
         serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceID"))->GetValue();
     }
-    //modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
+    modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Print camera device information.
     cout << "Camera Device Information" << endl << "========================="
@@ -585,7 +585,7 @@ json AgriDataCamera::GetStatus() {
     status["Serial Number"] = serialnumber;
     status["Model Name"] = modelname;
     status["Recording"] = isRecording;
-
+    
     // Something funny here, occasionally the ptrGrabResult is not available
     // even though the camera is grabbing?
     if (isRecording) {
@@ -608,6 +608,9 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
     }
+    
+    // Target brightness
+    status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
@@ -618,6 +621,7 @@ json AgriDataCamera::GetStatus() {
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()
             << "Temperature" << (int) status["Temperature"].get<int>()
+            << "Target Brightness" << (int) status["Target Brightness"].get<int>()
             << bsoncxx::builder::stream::finalize;
 
     // Insert into the DB
