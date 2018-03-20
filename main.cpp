@@ -61,8 +61,8 @@
 // Initialize logging
 INITIALIZE_EASYLOGGINGPP
 
-        // Namespaces for convenience
-        using namespace Basler_GigECameraParams;
+// Namespaces for convenience
+using namespace Basler_GigECameraParams;
 using namespace Pylon;
 using namespace cv;
 using namespace GenApi;
