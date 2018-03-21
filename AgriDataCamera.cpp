@@ -621,7 +621,7 @@ json AgriDataCamera::GetStatus() {
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
             << "Recording" << (bool) status["Recording"].get<bool>()
-            << "Timestamp" << (string) status["Timestamp"].get<string>()
+            << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
             << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()

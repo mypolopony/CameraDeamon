@@ -66,7 +66,7 @@ public:
 
 private:
     struct FramePacket {
-        std::string time_now;
+        int64_t time_now;
         float exposure_time;
         Pylon::CGrabResultPtr img_ptr;
     };
@@ -125,7 +125,7 @@ private:
     std::vector<bsoncxx::v_noabi::document::value> documents;
 
     // Timestamp (should go in status block)
-    std::string last_timestamp;
+    int64_t last_timestamp;
 
     // ZMQ
     zmq::context_t ctx_;
