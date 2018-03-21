@@ -93,9 +93,6 @@ private:
     // Output base
     std::string save_prefix;
 
-    // Frame log stream
-    std::ofstream frameout;
-
     // PNG compression
     std::vector<int> compression_params;
 

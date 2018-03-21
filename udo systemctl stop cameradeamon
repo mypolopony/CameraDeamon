@@ -1,0 +1,17 @@
+[0;1;32m●[0m cameradeamon.service - Basler Camera Deamon
+   Loaded: loaded (/etc/systemd/system/cameradeamon.service; enabled; vendor preset: enabled)
+   Active: [0;1;32mactive (running)[0m since Wed 2018-03-21 15:16:10 PDT; 6min ago
+ Main PID: 11433 (CameraDeamon)
+   CGroup: /system.slice/cameradeamon.service
+           └─11433 /home/nvidia/CameraDeamon/CameraDeamon/Release/CameraDeamon
+
+Mar 21 15:18:04 agridata CameraDeamon[11433]: Reading from configuration file: /home/nvidia/CameraDeamon/config/acA1920-40gc.pfs
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Camera Device Information
+Mar 21 15:18:08 agridata CameraDeamon[11433]: =========================
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Vendor : Basler
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Model : acA1920-40gc
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Firmware version : 106908-09;U;acA1920_40g;V1.1-1;1
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Serial Number : 22544113
+Mar 21 15:18:08 agridata CameraDeamon[11433]: Frame Size  : 1280x1024
+Mar 21 15:18:08 agridata CameraDeamon[11433]: 2018-03-21 15:18:08,466 WARNING [default] Unable to determine camera orientation
+Mar 21 15:18:08 agridata CameraDeamon[11433]: 2018-03-21 15:18:08,466 WARNING [default] Rotation disabled

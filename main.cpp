@@ -319,11 +319,7 @@ int main() {
 
                             // Stop cameras
                             for (size_t i = 0; i < devices.size(); ++i) {
-                                // Here we're going to destroy the devices and immediately
-                                // recreate them -- we need them initialized before we can
-                                // return any statuses
                                 cameras[i]->Stop();
-                                // cameras[i]->DestroyDevice();
                             }
 
                             // This sleep (is / may be) necessary to allow the threads to finish

@@ -263,11 +263,14 @@ void AgriDataCamera::Run() {
                     }
 
                     // Image
-
                     fp.img_ptr = ptrGrabResult;
 
                     // Process the frame
-                    HandleFrame(fp);
+                    try {
+                        HandleFrame(fp);
+                    } catch (...) {
+                        LOG(WARNING) << "Frame slipped!" << endl;
+                    }
 
                 } else {
                     cout << "Error: " << ptrGrabResult->GetErrorCode() << " "
@@ -304,6 +307,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
     doc.append(bsoncxx::builder::basic::kvp("camera_time", (string) camera_time.str()));
+    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
     doc.append(
             bsoncxx::builder::basic::kvp("frame_number",
             fp.img_ptr->GetImageNumber()));
@@ -352,7 +356,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
 
     // Write
-    H5IMmake_image_8bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), small_last_img.cols, small_last_img.rows, (uint8_t *) jpg_image.data);
+    H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_img.cols, jpg_img.rows, "INTERLACE_PLANE", (uint8_t *) jpg_image.data);
 
     // Write to streaming image
     if (tick % T_LATEST == 0) {
@@ -360,7 +364,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
                 ref(compression_params));
         t.detach();
     }
-
 
     // Check Luminance (and add to documents)
     if (tick % T_LUMINANCE == 0) {
@@ -575,7 +578,6 @@ int AgriDataCamera::Stop() {
     H5Fclose(hdf5_output);
 
     LOG(INFO) << "*** Done ***";
-    frameout.close();
     return 0;
 }
 
@@ -598,7 +600,7 @@ json AgriDataCamera::GetStatus() {
         status["Timestamp"] = last_timestamp;
         status["scanid"] = scanid;
     } else {
-        status["Timestamp"] = "Not Recording";
+        status["Timestamp"] = 0;
         status["scanid"] = "Not Recording";
     }
 
