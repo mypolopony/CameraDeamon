@@ -356,7 +356,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
 
     // Write
-    H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_img.cols, jpg_img.rows, "INTERLACE_PLANE", (uint8_t *) jpg_image.data);
+    H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
 
     // Write to streaming image
     if (tick % T_LATEST == 0) {
