@@ -66,8 +66,8 @@ public:
 
 private:
     struct FramePacket {
-        std::string camera_time, time_now;
-        float balance_red, balance_green, balance_blue, exposure_time;
+        std::string time_now;
+        float exposure_time;
         Pylon::CGrabResultPtr img_ptr;
     };
 
@@ -137,6 +137,7 @@ private:
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);
+    void AddTask(std::string);
 };
 
 #endif /* AGRIDATACAMERA_H */

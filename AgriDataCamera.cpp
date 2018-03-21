@@ -57,9 +57,6 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
-// Redis
-#include <redox.hpp>
-
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
 
@@ -324,20 +321,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
             H5Fclose(hdf5_output);
-
-            // Add to queue
-            redox::Redox rdx;
-            if (rdx.connect() == 1) {
-                redox::Command<int>& c = rdx.commandSync<int>({"RPUSH", "detection", current_hdf5_file});
-                if (!c.ok()) {
-                    try {
-                        LOG(ERROR) << "Error while communicating with redis" << c.status() << endl;
-                    } catch (runtime_error& e) {
-                        LOG(ERROR) << "Exception in redox: " << e.what() << endl;
-                    }
-                }
-                c.free();
-            }
+            AddTask(current_hdf5_file);
         }
         hdf5_output = H5Fcreate(hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
@@ -400,6 +384,38 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } catch (exception const &exc) {
         LOG(DEBUG) << "Exception caught " << exc.what() << "\n";
     }
+}
+
+/**
+ * AddTask
+ *
+ * Create a task entry in the database for an HDF5 file
+ */
+ 
+void AgriDataCamera::AddTask(string hdf5file) {
+    // New Mongo Connection
+    mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
+    mongocxx::database _db = _conn["agdb"];
+    mongocxx::collection _tasks = _db["tasks"];
+   
+    // Get highest priority and increment by one
+    auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
+    auto opts = mongocxx::options::find{};
+    opts.sort(order.view());
+    bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one({}, opts);
+
+    int priority = json::parse(bsoncxx::to_json(*val))["priority"];
+    ++priority;
+    
+    // Create the document
+    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
+            << "scanid" << scanid
+            << "priority" << priority
+            << "h5filepath" << hdf5file
+            << bsoncxx::builder::stream::finalize;
+   
+    // Insert
+    auto ret = _tasks.insert_one(document.view());
 }
 
 /**
@@ -550,21 +566,8 @@ int AgriDataCamera::Stop() {
     frames.insert_many(documents);
     documents.clear();
 
-    redox::Redox rdx;
-    if (rdx.connect() == 1) {
-        redox::Command<int>& c = rdx.commandSync<int>({"RPUSH", "detection", current_hdf5_file});
-        if (!c.ok()) {
-            try {
-                LOG(ERROR) << "Error while communicating with redis" << c.status();
-            } catch (runtime_error& e) {
-                LOG(ERROR) << "send_message: Exception in redox: " << e.what();
-            }
-        }
-        c.free();
-    } else {
-        LOG(ERROR) << "Cound not connect to Redis";
-    }
-
+    AddTask(current_hdf5_file);
+    
     LOG(INFO) << "Closing active HDF5 file";
     H5Fclose(hdf5_output);
 
