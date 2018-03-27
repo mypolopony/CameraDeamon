@@ -257,19 +257,21 @@ int main() {
 
                             // Generate MongoDB doc
                             auto doc = bsoncxx::builder::basic::document{};
-
-                            //auto doc_cameras = bsoncxx::builder::basic::array{};
-                            //doc_cameras.append(cameras[i]->DeviceSerialNumber());
-                            //doc.append(bsoncxx::builder::basic::kvp("cameras", doc_cameras));
-
+                            
                             doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
+                            doc.append(bsoncxx::builder::basic::kvp("finalized", 0));
+                            doc.append(bsoncxx::builder::basic::kvp("problem", 0));
                             doc.append(bsoncxx::builder::basic::kvp("start", bsoncxx::types::b_int64{AGDUtils::grabMilliseconds()}));
 
                             // Create document *before* running the cameras
                             scans.insert_one(doc.view());
 
                             for (size_t i = 0; i < devices.size(); ++i) {
+                                // Set Scan ID
                                 cameras[i]->scanid = scanid;
+                                // Set Scan type
+                                cameras[i]->calibration = (reply.value("calibration", false) && reply["calibration"].get<bool>());
+                            
                                 thread t(&AgriDataCamera::Run, cameras[i]);
                                 t.detach();
                             }

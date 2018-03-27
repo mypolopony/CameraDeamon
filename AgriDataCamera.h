@@ -61,6 +61,7 @@ public:
     std::string scanid;
     bool isPaused;
     bool isRecording;
+    bool calibration;
     std::string serialnumber;
     std::string modelname;
 

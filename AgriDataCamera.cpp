@@ -400,27 +400,37 @@ void AgriDataCamera::AddTask(string hdf5file) {
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
     mongocxx::collection _tasks = _db["tasks"];
-   
-    // Get highest priority and increment by one
-    auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
-    auto opts = mongocxx::options::find{};
-    opts.sort(order.view());
-    bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one({}, opts);
-
-    int priority = json::parse(bsoncxx::to_json(*val))["priority"];
-    ++priority;
     
-    // Create the document
-    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
-            << "scanid" << scanid
-            << "priority" << priority
-            << "h5filepath" << hdf5file
-            << "preprocess" << 0
-            << "detection" << 0
-            << "process" << 0
-            << bsoncxx::builder::stream::finalize;
+    // Create the document (Stream Builder is not appropriate because the construction is broken up)
+    bsoncxx::builder::basic::document builder{};
+    
+    builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
+    builder.append(bsoncxx::builder::basic::kvp("h5filepath", hdf5file));
+    builder.append(bsoncxx::builder::basic::kvp("detection", 0));
+
+    if (calibration) {
+        // Only need detection
+        builder.append(bsoncxx::builder::basic::kvp("priority", 0));
+        builder.append(bsoncxx::builder::basic::kvp("scandetectionid", 0));
+    } else {
+        // Get highest priority and increment by one
+        auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
+        auto opts = mongocxx::options::find{};
+        opts.sort(order.view());
+        bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one({}, opts);
+
+        int priority = json::parse(bsoncxx::to_json(*val))["priority"];
+        ++priority;
+        
+        // Create the document
+        builder.append(bsoncxx::builder::basic::kvp("priority", priority));
+        builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
+        builder.append(bsoncxx::builder::basic::kvp("detecetion", 0));
+        builder.append(bsoncxx::builder::basic::kvp("process", 0));
+    }
    
-    // Insert
+    // Close and insert the document
+    bsoncxx::document::value document = builder.extract();
     auto ret = _tasks.insert_one(document.view());
 }
 
@@ -528,6 +538,7 @@ void AgriDataCamera::Snap() {
                 CV_8UC3, (uint8_t *) image.GetBuffer());
 
         snap_img.copyTo(last_img);
+        last_img = AgriDataCamera::Rotate(last_img);
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
                 ref(compression_params));
         t.detach();
@@ -610,15 +621,14 @@ json AgriDataCamera::GetStatus() {
         status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTime"))->GetValue();
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRate"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("DeviceTemperature"))->GetValue();
+        status["Target Brightness"] = (int) CFloatPtr(nodeMap.GetNode("AutoTargetBrightness"))->GetValue();
     } catch (...) { // GigE
         status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("GainRaw"))->GetValue(); // Gotcha!
         status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue();
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
+        status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
     }
-    
-    // Target brightness
-    status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
