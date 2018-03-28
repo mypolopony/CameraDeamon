@@ -317,8 +317,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
-    string timestub = save_prefix + scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str();
-    string hdf5file = timestub + "/raw.hdf5";
+    string hdf5file = save_prefix + scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
 
     // Should we open a new file?
     if (hdf5file.compare(current_hdf5_file) != 0) {
@@ -328,7 +327,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
             H5Fclose(hdf5_output);
             AddTask(current_hdf5_file);
         }
-        AGDUtils::mkdirp(timestub.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         hdf5_output = H5Fcreate(hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
     }
