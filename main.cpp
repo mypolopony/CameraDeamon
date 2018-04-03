@@ -248,8 +248,6 @@ int main() {
                             reply["status"] = "1";
                             reply["message"] = "Already Recording";
                         } else {
-                            LOG(INFO) << "Row: " + received["row"].get<string>() + ", Direction: " + received["direction"].get<string>();
-
                             // Generate UUID for scan
                             //vector <string> fulluuid = AGDUtils::split(AGDUtils::pipe_to_string("cat /proc/sys/kernel/random/uuid"), '-');
                             string scanid = AGDUtils::grabTime("%Y-%m-%d_%H-%M");
@@ -270,7 +268,7 @@ int main() {
                                 // Set Scan ID
                                 cameras[i]->scanid = scanid;
                                 // Set Scan type
-                                cameras[i]->calibration = (reply.value("calibration", false) && reply["calibration"].get<bool>());
+                                // cameras[i]->calibration = (reply.value("calibration", false) && reply["calibration"].get<bool>());
                             
                                 thread t(&AgriDataCamera::Run, cameras[i]);
                                 t.detach();

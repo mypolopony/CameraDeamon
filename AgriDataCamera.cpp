@@ -402,6 +402,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
     mongocxx::collection _tasks = _db["tasks"];
     mongocxx::collection _box = _db["box"];
     bool calibration = false;
+    int priority;
     
     // Create the document (Stream Builder is not appropriate because the construction is broken up)
     bsoncxx::builder::basic::document builder{};
@@ -409,16 +410,11 @@ void AgriDataCamera::AddTask(string hdf5file) {
     builder.append(bsoncxx::builder::basic::kvp("clientid", clientid));
     builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
     builder.append(bsoncxx::builder::basic::kvp("hdf5filename", hdf5file));
-    builder.append(bsoncxx::builder::basic::kvp("detection", 0));
     builder.append(bsoncxx::builder::basic::kvp("cameraid", serialnumber));
 
     if (calibration) {
-        // Only need detection
-        builder.append(bsoncxx::builder::basic::kvp("priority", 0));
-        builder.append(bsoncxx::builder::basic::kvp("scandetectionid", 0));
+        priority = 0;
     } else {
-        int priority;
-        
         // Get highest priority and increment by one
         auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
         auto opts = mongocxx::options::find{};
@@ -433,12 +429,14 @@ void AgriDataCamera::AddTask(string hdf5file) {
             priority = 1;
         }
     
-        // Create the document
-        builder.append(bsoncxx::builder::basic::kvp("priority", priority));
-        builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
-        builder.append(bsoncxx::builder::basic::kvp("detection", 0));
-        builder.append(bsoncxx::builder::basic::kvp("process", 0));
     }
+    
+    // Create the document
+    builder.append(bsoncxx::builder::basic::kvp("priority", priority));
+    builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
+    builder.append(bsoncxx::builder::basic::kvp("cluster_detection", 0));
+    builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
+    builder.append(bsoncxx::builder::basic::kvp("process", 0));
    
     // Close and insert the document
     bsoncxx::document::value document = builder.extract();
