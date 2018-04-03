@@ -192,11 +192,12 @@ void AgriDataCamera::Initialize() {
 
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
-    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}
-    << bsoncxx::builder::stream::finalize);
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
+    string resultstring = bsoncxx::to_json(*maybe_result);
+    auto thisbox = json::parse(resultstring);
+    clientid = thisbox["clientid"];
+    
     try {
-        string resultstring = bsoncxx::to_json(*maybe_result);
-        auto thisbox = json::parse(resultstring);
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
         } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
@@ -210,7 +211,7 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Rotation disabled";
         rotation = 0;
     }
-
+    
     // HDF5
     current_hdf5_file = "";
 
@@ -224,7 +225,7 @@ void AgriDataCamera::Initialize() {
  */
 void AgriDataCamera::Run() {
     // Output parameters
-    save_prefix = "/data/output/" + scanid + "/"
+    save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
             + serialnumber + "/";
     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -317,7 +318,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
-    string hdf5file = save_prefix + scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+    string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
 
     // Should we open a new file?
     if (hdf5file.compare(current_hdf5_file) != 0) {
@@ -327,11 +328,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
             H5Fclose(hdf5_output);
             AddTask(current_hdf5_file);
         }
-        hdf5_output = H5Fcreate(hdf5file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        string hdf5path = save_prefix + hdf5file;
+        hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
     }
-
-    doc.append(bsoncxx::builder::basic::kvp("filename", current_hdf5_file));
 
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
@@ -400,32 +400,43 @@ void AgriDataCamera::AddTask(string hdf5file) {
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
     mongocxx::collection _tasks = _db["tasks"];
+    mongocxx::collection _box = _db["box"];
+    bool calibration = false;
     
     // Create the document (Stream Builder is not appropriate because the construction is broken up)
     bsoncxx::builder::basic::document builder{};
     
+    builder.append(bsoncxx::builder::basic::kvp("clientid", clientid));
     builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-    builder.append(bsoncxx::builder::basic::kvp("h5filepath", hdf5file));
+    builder.append(bsoncxx::builder::basic::kvp("hdf5filename", hdf5file));
     builder.append(bsoncxx::builder::basic::kvp("detection", 0));
+    builder.append(bsoncxx::builder::basic::kvp("cameraid", serialnumber));
 
     if (calibration) {
         // Only need detection
         builder.append(bsoncxx::builder::basic::kvp("priority", 0));
         builder.append(bsoncxx::builder::basic::kvp("scandetectionid", 0));
     } else {
+        int priority;
+        
         // Get highest priority and increment by one
         auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
         auto opts = mongocxx::options::find{};
         opts.sort(order.view());
         bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one({}, opts);
 
-        int priority = json::parse(bsoncxx::to_json(*val))["priority"];
-        ++priority;
-        
+        if (val) {
+            priority = json::parse(bsoncxx::to_json(*val))["priority"];
+            ++priority;
+        } else {
+            // Special case (first task in the database)
+            priority = 1;
+        }
+    
         // Create the document
         builder.append(bsoncxx::builder::basic::kvp("priority", priority));
         builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
-        builder.append(bsoncxx::builder::basic::kvp("detecetion", 0));
+        builder.append(bsoncxx::builder::basic::kvp("detection", 0));
         builder.append(bsoncxx::builder::basic::kvp("process", 0));
     }
    

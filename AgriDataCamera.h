@@ -128,6 +128,9 @@ private:
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t * s_client_socket (zmq::context_t & context);
+    
+    // Client info
+    std::string clientid;
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);
