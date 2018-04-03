@@ -401,18 +401,20 @@ void AgriDataCamera::AddTask(string hdf5file) {
     mongocxx::database _db = _conn["agdb"];
     mongocxx::collection _tasks = _db["tasks"];
     mongocxx::collection _box = _db["box"];
-    bool calibration = false;
     int priority;
     
     // Create the document (Stream Builder is not appropriate because the construction is broken up)
     bsoncxx::builder::basic::document builder{};
     
+    // Every task gets these fields
     builder.append(bsoncxx::builder::basic::kvp("clientid", clientid));
     builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
     builder.append(bsoncxx::builder::basic::kvp("hdf5filename", hdf5file));
     builder.append(bsoncxx::builder::basic::kvp("cameraid", serialnumber));
+    builder.append(bsoncxx::builder::basic::kvp("cluster_detection", 0));
 
-    if (calibration) {
+    // If calibration. . .
+    if (T_CALIBRATION-- > 0) {
         priority = 0;
     } else {
         // Get highest priority and increment by one
@@ -428,15 +430,16 @@ void AgriDataCamera::AddTask(string hdf5file) {
             // Special case (first task in the database)
             priority = 1;
         }
+        
+        // Only non-calibration tasks get these fields
+        builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
+        builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
+        builder.append(bsoncxx::builder::basic::kvp("process", 0));
     
     }
     
-    // Create the document
+    // Set the priority
     builder.append(bsoncxx::builder::basic::kvp("priority", priority));
-    builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
-    builder.append(bsoncxx::builder::basic::kvp("cluster_detection", 0));
-    builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
-    builder.append(bsoncxx::builder::basic::kvp("process", 0));
    
     // Close and insert the document
     bsoncxx::document::value document = builder.extract();
