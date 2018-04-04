@@ -136,6 +136,8 @@ void AgriDataCamera::Initialize() {
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
+    int packetsize = (int) CIntegerPtr(nodeMap.GetNode("GevSCPSPacketSize"))->GetValue();
+    CIntegerPtr(GetNodeMap().GetNode("GevSCBWRA"))->SetValue(10);
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -194,10 +196,13 @@ void AgriDataCamera::Initialize() {
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
+    LOG(DEBUG) << "WOAH";
     auto thisbox = json::parse(resultstring);
+    LOG(DEBUG) << "HI";
     clientid = thisbox["clientid"];
     
     try {
+        LOG(DEBUG) << "!!!";
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
         } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
