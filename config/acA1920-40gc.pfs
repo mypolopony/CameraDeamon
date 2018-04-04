@@ -166,7 +166,7 @@ BalanceWhiteAdjustmentDampingRaw	1000
 AutoGainRawLowerLimit	0
 AutoGainRawUpperLimit	239
 AutoExposureTimeAbsLowerLimit	76
-AutoExposureTimeAbsUpperLimit	80000
+AutoExposureTimeAbsUpperLimit	1200
 AutoFunctionProfile	ExposureMinimum
 AutoFunctionAOISelector	AOI1
 AutoFunctionAOIWidth	426
