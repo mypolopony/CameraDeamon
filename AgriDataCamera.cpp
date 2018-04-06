@@ -124,7 +124,7 @@ void AgriDataCamera::Initialize() {
     }
 
     // Print the model name of the
-    cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
+    cout << "xInitializing device " << GetDeviceInfo().GetModelName() << endl;
 
     try {
         string config = "/home/nvidia/CameraDeamon/config/"
@@ -136,8 +136,6 @@ void AgriDataCamera::Initialize() {
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
-    int packetsize = (int) CIntegerPtr(nodeMap.GetNode("GevSCPSPacketSize"))->GetValue();
-    CIntegerPtr(GetNodeMap().GetNode("GevSCBWRA"))->SetValue(10);
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -196,13 +194,10 @@ void AgriDataCamera::Initialize() {
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
-    LOG(DEBUG) << "WOAH";
     auto thisbox = json::parse(resultstring);
-    LOG(DEBUG) << "HI";
     clientid = thisbox["clientid"];
     
     try {
-        LOG(DEBUG) << "!!!";
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
         } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
@@ -210,7 +205,7 @@ void AgriDataCamera::Initialize() {
         } else {
             rotation = 0;
         }
-        LOG(INFO) << "This camera will be rotated by " << rotation << " degrees";
+        LOG(INFO) << "xThis camera will be rotated by " << rotation << " degrees";
     } catch (...) {
         LOG(WARNING) << "Unable to determine camera orientation";
         LOG(WARNING) << "Rotation disabled";
