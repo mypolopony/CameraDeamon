@@ -124,7 +124,7 @@ void AgriDataCamera::Initialize() {
     }
 
     // Print the model name of the
-    cout << "xInitializing device " << GetDeviceInfo().GetModelName() << endl;
+    cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
 
     try {
         string config = "/home/nvidia/CameraDeamon/config/"
