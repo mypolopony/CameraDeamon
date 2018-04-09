@@ -196,7 +196,7 @@ void AgriDataCamera::Initialize() {
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
-    
+
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
@@ -211,7 +211,7 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Rotation disabled";
         rotation = 0;
     }
-    
+
     // HDF5
     current_hdf5_file = "";
 
@@ -339,21 +339,43 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // To OpenCV Mat
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
 
+// Debug
+size_t sizeInBytes;
+
+sizeInBytes = last_img.total() * last_img.elemSize();
+LOG(DEBUG) << "Original OpenCV Mat: " << sizeInBytes << endl;
+
     // Resize
     resize(last_img, small_last_img, Size(), 0.5, 0.5);
+
+sizeInBytes = small_last_img.total() * small_last_img.elemSize();
+LOG(DEBUG) << "Resized image: " << sizeInBytes << endl;
 
     // Color Conversion
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
 
+sizeInBytes = small_last_img.total() * small_last_img.elemSize();
+LOG(DEBUG) << "Color conversion: " << sizeInBytes << endl;
+
     // Rotate
     small_last_img = AgriDataCamera::Rotate(small_last_img);
+
+sizeInBytes = small_last_img.total() * small_last_img.elemSize();
+LOG(DEBUG) << "After rotation: " << sizeInBytes << endl;
 
     // Encode to JPG Buffer
     vector<uint8_t> outbuffer;
 
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
+
+sizeInBytes = outbuffer.size() * sizeof(uint8_t);
+LOG(DEBUG) << "In-memory JPEG conversion: " << sizeInBytes << endl;
+
     Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
+
+sizeInBytes = jpg_image.total() * jpg_image.elemSize();
+LOG(DEBUG) << "In-memory OpenCV representation: " << sizeInBytes << endl;
 
     // Write
     H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
@@ -394,7 +416,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
  *
  * Create a task entry in the database for an HDF5 file
  */
- 
+
 void AgriDataCamera::AddTask(string hdf5file) {
     // New Mongo Connection
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
@@ -402,10 +424,10 @@ void AgriDataCamera::AddTask(string hdf5file) {
     mongocxx::collection _tasks = _db["tasks"];
     mongocxx::collection _box = _db["box"];
     int priority;
-    
+
     // Create the document (Stream Builder is not appropriate because the construction is broken up)
     bsoncxx::builder::basic::document builder{};
-    
+
     // Every task gets these fields
     builder.append(bsoncxx::builder::basic::kvp("clientid", clientid));
     builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
@@ -430,17 +452,17 @@ void AgriDataCamera::AddTask(string hdf5file) {
             // Special case (first task in the database)
             priority = 1;
         }
-        
+
         // Only non-calibration tasks get these fields
         builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
         builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
         builder.append(bsoncxx::builder::basic::kvp("process", 0));
-    
+
     }
-    
+
     // Set the priority
     builder.append(bsoncxx::builder::basic::kvp("priority", priority));
-   
+
     // Close and insert the document
     bsoncxx::document::value document = builder.extract();
     auto ret = _tasks.insert_one(document.view());
@@ -550,7 +572,7 @@ void AgriDataCamera::Snap() {
                 CV_8UC3, (uint8_t *) image.GetBuffer());
 
         snap_img.copyTo(last_img);
-        last_img = AgriDataCamera::Rotate(last_img);
+        //last_img = AgriDataCamera::Rotate(last_img);
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
                 ref(compression_params));
         t.detach();
@@ -575,8 +597,8 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
     // Full
     /*
     imwrite(
-    		"/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
-    		+ "streaming.jpg", img, compression_params);
+            "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
+            + "streaming.jpg", img, compression_params);
     */
 
 }
@@ -596,7 +618,7 @@ int AgriDataCamera::Stop() {
     documents.clear();
 
     AddTask(current_hdf5_file);
-    
+
     LOG(INFO) << "Closing active HDF5 file";
     H5Fclose(hdf5_output);
 
@@ -616,7 +638,7 @@ json AgriDataCamera::GetStatus() {
     status["Serial Number"] = serialnumber;
     status["Model Name"] = modelname;
     status["Recording"] = isRecording;
-    
+
     // Something funny here, occasionally the ptrGrabResult is not available
     // even though the camera is grabbing?
     if (isRecording) {

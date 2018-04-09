@@ -176,8 +176,9 @@ int main() {
 
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
-    if (tlFactory.EnumerateDevices(devices) == 0) {
-        LOG(FATAL) << "No cameras present";
+    if (tlFactory.EnumerateDevices(devices) < 2) {
+        LOG(FATAL) << "Not enough cameras present. Dying now.";
+        return 0;
     }
 
     // Camera Initialization

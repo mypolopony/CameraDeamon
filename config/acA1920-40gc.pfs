@@ -114,7 +114,6 @@ LineSelector	Line2
 MinOutPulseWidthRaw	0
 LineSelector	Line1
 UserOutputValueAll	0
-SyncUserOutputValueAll	0
 TimerDelayTimebaseAbs	1
 TimerDurationTimebaseAbs	1
 TimerSelector	Timer1
@@ -220,10 +219,6 @@ EventNotification	Off
 EventSelector	OverTemperature
 EventNotification	Off
 EventSelector	ActionLate
-EventNotification	Off
-EventSelector	FrameStartWait
-EventNotification	Off
-EventSelector	AcquisitionStartWait
 EventNotification	Off
 EventSelector	EventOverrun
 EventNotification	Off
