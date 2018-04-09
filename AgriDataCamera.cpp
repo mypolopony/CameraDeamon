@@ -205,7 +205,7 @@ void AgriDataCamera::Initialize() {
         } else {
             rotation = 0;
         }
-        LOG(INFO) << "This camera will be rotated by " << rotation << " degrees";
+        LOG(INFO) << "xThis camera will be rotated by " << rotation << " degrees";
     } catch (...) {
         LOG(WARNING) << "Unable to determine camera orientation";
         LOG(WARNING) << "Rotation disabled";

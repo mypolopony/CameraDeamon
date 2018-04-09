@@ -206,6 +206,8 @@ int main() {
 
     while (true) {
         try {
+	    // Chill out
+            usleep(150000); // 0.15 seconds?
             // Check for and handle signals
             if (sigint_flag) {
                 LOG(INFO) << "SIGINT Caught!";
@@ -218,8 +220,8 @@ int main() {
                     cameras[i]->Close();
                 }
 
-                // Wait a second and a half (I forget why)
-                usleep(1500000);
+                // Take a break! (0.15 seconds)
+                usleep(150000);
                 break;
             }
 
