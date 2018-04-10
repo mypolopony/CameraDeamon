@@ -11,6 +11,7 @@ include_directories(
     /opt/pylon5/include
     /usr/local/include/bsoncxx/v_noabi
     /usr/local/include/mongocxx/v_noabi
+    /usr/local/include/bsoncxx/v_noabi/bsoncxx/
     /home/nvidia/CameraDeamon/lib
     /usr/include/opencv2
     /usr/include
