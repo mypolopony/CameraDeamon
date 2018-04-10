@@ -58,6 +58,7 @@
 #include "opencv2/imgproc.hpp"
 
 // HDF5
+#include <H5Library.h>
 #include <hdf5_wrapper.h>
 
 // Definitions
@@ -328,11 +329,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
-            delete hdf5_out;
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
-        HDF5Writer::HDF5Writer hdf5_out = HDF5Wrapper(string(hdf5path, string("images"));
+        hdf5_out = HDF5Wrapper(hdf5path, "images");
         //hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
         // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
@@ -626,8 +626,8 @@ int AgriDataCamera::Stop() {
 
     AddTask(current_hdf5_file);
 
-    LOG(INFO) << "Closing active HDF5 file";
-    H5Fclose(hdf5_output);
+    LOG(INFO) << "(NOT) Closing active HDF5 file";
+    // H5Fclose(hdf5_output);
 
     LOG(INFO) << "*** Done ***";
     return 0;

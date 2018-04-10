@@ -3,6 +3,8 @@
 using namespace H5;
 using namespace std;
 
+HDF5Wrapper::HDF5Wrapper(){}
+
 HDF5Wrapper::HDF5Wrapper(string filename, string dataset_name) {
   try {
     // open file, deleting content if it exists
@@ -32,7 +34,7 @@ HDF5Wrapper::HDF5Wrapper(string filename, string dataset_name) {
   }
 }
 
-int HDF5Wrapper::write(vector<double> data) {
+int HDF5Wrapper::write(vector<uint8_t> data) {
   try {
     // offset is the position where new data will be placed
     // for appending, offset = end of current data

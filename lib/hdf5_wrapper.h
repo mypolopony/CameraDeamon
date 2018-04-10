@@ -12,8 +12,9 @@ class HDF5Wrapper {
     H5::DataSpace *dataspace;
     H5::DataSet *dataset;
   public:
+    HDF5Wrapper();
     HDF5Wrapper(std::string filename, std::string dataset_name);
-    int write(std::vector<double> data);
+    int write(std::vector<uint8_t> data);
     ~HDF5Wrapper();
 };
 
