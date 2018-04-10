@@ -114,6 +114,7 @@ private:
     std::string output_dir;
 
     // HDF5
+    HDF5Wrapper::HDF5Wrapper hdf5_out;
     std::string current_hdf5_file;
 
     // MongoDB

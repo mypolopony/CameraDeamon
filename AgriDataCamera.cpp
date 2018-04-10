@@ -328,12 +328,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
-            //H5Fclose(hdf5_output);
-            delete h;
+            delete hdf5_out;
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
-        HDF5Wrapper h(string(hdf5path, string("images"));
+        HDF5Writer::HDF5Writer hdf5_out = HDF5Wrapper(string(hdf5path, string("images"));
         //hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
         // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
@@ -386,7 +385,7 @@ LOG(DEBUG) << "In-memory OpenCV representation: " << sizeInBytes << endl;
 
     // Write
     // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
-    h.write(outbuffer);
+    hdf5_out.write(outbuffer);
     
     // Write to streaming image
     if (tick % T_LATEST == 0) {
