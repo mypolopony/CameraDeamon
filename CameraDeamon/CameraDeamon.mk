@@ -73,10 +73,10 @@ Objects=$(Objects0)
 all: $(OutputFile)
 
 $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
-    @$(MakeDirCommand) $(@D)
-    @echo "" > $(IntermediateDirectory)/.d
-    @echo $(Objects0)  > $(ObjectsFileList)
-    $(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
+	@$(MakeDirCommand) $(@D)
+	@echo "" > $(IntermediateDirectory)/.d
+	@echo $(Objects0)  > $(ObjectsFileList)
+	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 
 MakeIntermediateDirs:
 	@test -d ./Release || $(MakeDirCommand) ./Release
@@ -92,44 +92,44 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix): ../main.cpp $(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix)
-    $(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix): ../main.cpp
-    @$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix) -MM "../main.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_main.cpp$(DependSuffix) -MM "../main.cpp"
 
 $(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix): ../main.cpp
-    $(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix) "../main.cpp"
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_main.cpp$(PreprocessSuffix) "../main.cpp"
 
 $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix): ../AgriDataCamera.cpp $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix)
-    $(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/AgriDataCamera.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/AgriDataCamera.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix): ../AgriDataCamera.cpp
-    @$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix) -MM "../AgriDataCamera.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(DependSuffix) -MM "../AgriDataCamera.cpp"
 
 $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(PreprocessSuffix): ../AgriDataCamera.cpp
-    $(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(PreprocessSuffix) "../AgriDataCamera.cpp"
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AgriDataCamera.cpp$(PreprocessSuffix) "../AgriDataCamera.cpp"
 
 $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix): ../AGDUtils.cpp $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix)
-    $(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/AGDUtils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/AGDUtils.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix): ../AGDUtils.cpp
-    @$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix) -MM "../AGDUtils.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(DependSuffix) -MM "../AGDUtils.cpp"
 
 $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix): ../AGDUtils.cpp
-    $(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix) "../AGDUtils.cpp"
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/CameraDeamon_AGDUtils.cpp$(PreprocessSuffix) "../AGDUtils.cpp"
 
 $(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix): ../lib/easylogging++.cc $(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix)
-    $(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/easylogging++.cc" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/easylogging++.cc" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix): ../lib/easylogging++.cc
-    @$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix) -MM "../lib/easylogging++.cc"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_easylogging++.cc$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_easylogging++.cc$(DependSuffix) -MM "../lib/easylogging++.cc"
 
 $(IntermediateDirectory)/lib_easylogging++.cc$(PreprocessSuffix): ../lib/easylogging++.cc
-    $(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_easylogging++.cc$(PreprocessSuffix) "../lib/easylogging++.cc"
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_easylogging++.cc$(PreprocessSuffix) "../lib/easylogging++.cc"
 
 $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(ObjectSuffix): ../lib/hdf5_wrapper.cpp $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(DependSuffix)
-    $(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/hdf5_wrapper.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/nvidia/CameraDeamon/lib/hdf5_wrapper.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(DependSuffix): ../lib/hdf5_wrapper.cpp
-    @$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(DependSuffix) -MM "../lib/hdf5_wrapper.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(DependSuffix) -MM "../lib/hdf5_wrapper.cpp"
 
 $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(PreprocessSuffix): ../lib/hdf5_wrapper.cpp
-    $(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(PreprocessSuffix) "../lib/hdf5_wrapper.cpp"
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_hdf5_wrapper.cpp$(PreprocessSuffix) "../lib/hdf5_wrapper.cpp"
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
 ##
