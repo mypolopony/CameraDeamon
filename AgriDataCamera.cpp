@@ -1,8 +1,6 @@
  /*
- * File:   AgriDatacpp
+ * File:   AgriDataCamera.cpp
  * Author: agridata
- *
- * Created on March 13, 2017, 1:33 PM
  */
 
 #include "AgriDataCamera.h"
@@ -60,8 +58,6 @@
 
 // HDF5
 #include <H5Library.h>
-#include <hdf5_wrapper.h>
-#include "h5rd/h5rd.h"
 
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
@@ -73,7 +69,6 @@ using namespace Pylon;
 using namespace std;
 using namespace cv;
 using namespace GenApi;
-using namespace h5rd;
 using namespace std::chrono;
 using json = nlohmann::json;
 
@@ -83,9 +78,7 @@ using json = nlohmann::json;
 AgriDataCamera::AgriDataCamera() :
 ctx_(1),
 conn{mongocxx::uri
-    { MONGODB_HOST}},
-hdf5_out((string) "placeholder.h5", File::Flag::OVERWRITE),
-hdf5_group((string) "/images")
+    { MONGODB_HOST}}
 {
 }
 
@@ -348,7 +341,7 @@ auto t1 = Clock::now();
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
-        hdf5_out.setFileName(hdf5path);
+        // hdf5_out.setFileName(hdf5path);
         // hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
         // hdf5_group = hdf5_out->createGroup("/images");
         // hdf5_out = HDF5Wrapper(hdf5path, "images");
@@ -389,8 +382,8 @@ auto t1 = Clock::now();
     // Write
     // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
     // hdf5_group.write(to_string(fp.img_ptr->GetImageNumber()).c_str(), outbuffer);
-    hdf5_out.setVarName(fp.img_ptr->GetImageNumber());
-    hdf5_out.writeData(outbuffer);
+    //hdf5_out.setVarName(to_string(fp.img_ptr->GetImageNumber()));
+    //hdf5_out.writeData(outbuffer);
 
     // Write to streaming image
     if (tick % T_LATEST == 0) {

@@ -1,8 +1,6 @@
 /*
  * File:   AgriDataCamera.h
- * Author: agridata
- *
- * Created on March 13, 2017, 1:33 PM
+   Author: agridata
  */
 
 #ifndef AGRIDATACAMERA_H
@@ -31,9 +29,6 @@
 // HDF5
 #include "hdf5.h"
 #include "hdf5_hl.h"
-#include <hdf5_wrapper.h>
-#include <h5rd/h5rd.h>
-#include "H5Easy.h"
 
 // Utilities
 #include "json.hpp"
@@ -116,7 +111,7 @@ private:
     std::string output_dir;
 
     // HDF5
-    WriteH5 hdf5_out;
+    //WriteH5 hdf5_out;
     std::string current_hdf5_file;
 
     // MongoDB

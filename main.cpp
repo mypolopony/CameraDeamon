@@ -1,4 +1,4 @@
-// CameraDeamon
+// CameraDeamon (main.cpp)
 // Last modified by: Selwyn-Lloyd McPherson
 // Copyright © 2016-2017 AgriData.
 

@@ -32,7 +32,6 @@ set ( CXX_SRCS
         ../AgriDataCamera.cpp
         ../AGDUtils.cpp
         ../lib/easylogging++.cc
-        ../lib/hdf5_wrapper.cpp
         ../lib/json.hpp
         )
 
