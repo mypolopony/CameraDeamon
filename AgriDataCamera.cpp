@@ -1,4 +1,4 @@
-/*
+ /*
  * File:   AgriDatacpp
  * Author: agridata
  *
@@ -146,7 +146,7 @@ void AgriDataCamera::Initialize() {
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
-    
+
     // Set Interpacket Delayi
     srand(time(NULL));
     CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
@@ -316,14 +316,14 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
     tick++;
-    
+
 auto t1 = Clock::now();
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(
             bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-    
+
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
@@ -348,10 +348,11 @@ auto t1 = Clock::now();
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
-        hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
-        hdf5_group = hdf5_out->createGroup("/images");
+        hdf5_out.setFileName(hdf5path);
+        // hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
+        // hdf5_group = hdf5_out->createGroup("/images");
         // hdf5_out = HDF5Wrapper(hdf5path, "images");
-        //hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        // hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
         // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
     }
@@ -381,12 +382,16 @@ auto t1 = Clock::now();
 
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
-    Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
+
+    // Reload JPG to Mat (Decode)
+    // Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
 
     // Write
     // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
-    hdf5_group.write(to_string(fp.img_ptr->GetImageNumber()).c_str(), outbuffer);
-    
+    // hdf5_group.write(to_string(fp.img_ptr->GetImageNumber()).c_str(), outbuffer);
+    hdf5_out.setVarName(fp.img_ptr->GetImageNumber());
+    hdf5_out.writeData(outbuffer);
+
     // Write to streaming image
     if (tick % T_LATEST == 0) {
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,

@@ -8,9 +8,10 @@
 #ifndef AGRIDATACAMERA_H
 #define AGRIDATACAMERA_H
 
+// Standard
 #include <fstream>
 
-// Include files to use the PYLON API.
+// Pylon
 #include <pylon/PylonIncludes.h>
 #include <pylon/InstantCamera.h>
 #include <pylon/gige/BaslerGigEInstantCamera.h>
@@ -32,7 +33,7 @@
 #include "hdf5_hl.h"
 #include <hdf5_wrapper.h>
 #include <h5rd/h5rd.h>
-
+#include "H5Easy.h"
 
 // Utilities
 #include "json.hpp"
@@ -44,7 +45,6 @@
 #include <bsoncxx/types.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
-
 
 
 class AgriDataCamera : public Pylon::CInstantCamera
@@ -116,8 +116,7 @@ private:
     std::string output_dir;
 
     // HDF5
-    std::shared_ptr<h5rd::File> hdf5_out;
-    std::unique_ptr<h5rd::Group> hdf5_group;
+    WriteH5 hdf5_out;
     std::string current_hdf5_file;
 
     // MongoDB
@@ -133,7 +132,7 @@ private:
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t * s_client_socket (zmq::context_t & context);
-    
+
     // Client info
     std::string clientid;
 
