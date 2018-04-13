@@ -30,6 +30,7 @@
 // HDF5
 #include "hdf5.h"
 #include "hdf5_hl.h"
+#include <hdf5_wrapper.h>
 
 // Utilities
 #include "json.hpp"
@@ -113,7 +114,7 @@ private:
     std::string output_dir;
 
     // HDF5
-    hid_t hdf5_output;
+    HDF5Wrapper hdf5_out;
     std::string current_hdf5_file;
 
     // MongoDB
