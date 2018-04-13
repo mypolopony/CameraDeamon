@@ -31,6 +31,8 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include <hdf5_wrapper.h>
+#include <h5rd/h5rd.h>
+
 
 // Utilities
 #include "json.hpp"
@@ -114,7 +116,8 @@ private:
     std::string output_dir;
 
     // HDF5
-    HDF5Wrapper hdf5_out;
+    std::shared_ptr<h5rd::File> hdf5_out;
+    std::unique_ptr<h5rd::Group> hdf5_group;
     std::string current_hdf5_file;
 
     // MongoDB

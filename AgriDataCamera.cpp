@@ -61,6 +61,7 @@
 // HDF5
 #include <H5Library.h>
 #include <hdf5_wrapper.h>
+#include "h5rd/h5rd.h"
 
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
@@ -72,6 +73,7 @@ using namespace Pylon;
 using namespace std;
 using namespace cv;
 using namespace GenApi;
+using namespace h5rd;
 using namespace std::chrono;
 using json = nlohmann::json;
 
@@ -81,7 +83,9 @@ using json = nlohmann::json;
 AgriDataCamera::AgriDataCamera() :
 ctx_(1),
 conn{mongocxx::uri
-    { MONGODB_HOST}}
+    { MONGODB_HOST}},
+hdf5_out((string) "placeholder.h5", File::Flag::OVERWRITE),
+hdf5_group((string) "/images")
 {
 }
 
@@ -231,8 +235,6 @@ void AgriDataCamera::Initialize() {
 
     // HDF5
     current_hdf5_file = "";
-
-
 }
 
 /**
@@ -346,7 +348,9 @@ auto t1 = Clock::now();
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
-        hdf5_out = HDF5Wrapper(hdf5path, "images");
+        hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
+        hdf5_group = hdf5_out->createGroup("/images");
+        // hdf5_out = HDF5Wrapper(hdf5path, "images");
         //hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
         // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
@@ -381,7 +385,7 @@ auto t1 = Clock::now();
 
     // Write
     // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
-    hdf5_out.write(outbuffer);
+    hdf5_group.write(to_string(fp.img_ptr->GetImageNumber()).c_str(), outbuffer);
     
     // Write to streaming image
     if (tick % T_LATEST == 0) {
