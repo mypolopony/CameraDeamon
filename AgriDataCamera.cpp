@@ -42,6 +42,7 @@
 #include <mutex>
 #include <ratio>
 #include <condition_variable>
+#include <ctime>
 
 // Logging
 #include "easylogging++.h"
@@ -59,6 +60,7 @@
 
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
+typedef std::chrono::high_resolution_clock Clock;
 
 // Namespaces
 using namespace Basler_GigECameraParams;
@@ -136,6 +138,17 @@ void AgriDataCamera::Initialize() {
     } catch (const GenericException &e) {
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
+    
+    // Set Interpacket Delayi
+    srand(time(NULL));
+    CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
+    intFeature->SetValue((rand() % 12150) + 7150);
+//    intFeature->SetValue(GevStreamChannelSelector_StreamChannel0);
+//    CIntegerPtr p;
+//    p = nodeMap.GetNode("GevStreamChannelSelector");
+//    p->SetValue(GevStreamChannelSelector_StreamChannel0);
+//    p = nodeMap.GetNode("GevSCPD");
+//    p->SetValue(12150);
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -205,7 +218,7 @@ void AgriDataCamera::Initialize() {
         } else {
             rotation = 0;
         }
-        LOG(INFO) << "xThis camera will be rotated by " << rotation << " degrees";
+        LOG(INFO) << "This camera will be rotated by " << rotation << " degrees";
     } catch (...) {
         LOG(WARNING) << "Unable to determine camera orientation";
         LOG(WARNING) << "Rotation disabled";
@@ -297,13 +310,14 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
     tick++;
-
+    
+auto t1 = Clock::now();
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(
             bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
     doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
-
+    
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
@@ -333,49 +347,32 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         current_hdf5_file = hdf5file;
     }
 
+
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
 
     // To OpenCV Mat
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
 
-// Debug
-size_t sizeInBytes;
-
-sizeInBytes = last_img.total() * last_img.elemSize();
-LOG(DEBUG) << "Original OpenCV Mat: " << sizeInBytes << endl;
-
     // Resize
     resize(last_img, small_last_img, Size(), 0.5, 0.5);
 
-sizeInBytes = small_last_img.total() * small_last_img.elemSize();
-LOG(DEBUG) << "Resized image: " << sizeInBytes << endl;
-
-    // Color Conversion
+    // Color
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
 
-sizeInBytes = small_last_img.total() * small_last_img.elemSize();
-LOG(DEBUG) << "Color conversion: " << sizeInBytes << endl;
+    // Rotate (Expensive, 11ms)
+    // small_last_img = AgriDataCamera::Rotate(small_last_img);
 
-    // Rotate
-    small_last_img = AgriDataCamera::Rotate(small_last_img);
+    // Write JPEG
+    // imwrite(string("/data/output/image/") + hms[0].c_str() + "_" + hms[1].c_str() +  to_string(fp.img_ptr->GetImageNumber()).c_str() + ".jpg", small_last_img);
 
-sizeInBytes = small_last_img.total() * small_last_img.elemSize();
-LOG(DEBUG) << "After rotation: " << sizeInBytes << endl;
 
     // Encode to JPG Buffer
     vector<uint8_t> outbuffer;
 
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
-
-sizeInBytes = outbuffer.size() * sizeof(uint8_t);
-LOG(DEBUG) << "In-memory JPEG conversion: " << sizeInBytes << endl;
-
     Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
-
-sizeInBytes = jpg_image.total() * jpg_image.elemSize();
-LOG(DEBUG) << "In-memory OpenCV representation: " << sizeInBytes << endl;
 
     // Write
     H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
