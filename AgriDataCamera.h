@@ -27,9 +27,7 @@
 #include "opencv2/highgui.hpp"
 
 // HDF5
-//#include "H5Cpp.h"
-//#include "H5Easy.h"
-#include <hdf5.h>
+#include "H5Cpp.h"
 
 // Utilities
 #include "json.hpp"
@@ -112,10 +110,7 @@ private:
     std::string output_dir;
 
     // HDF5
-//    WriteH5 hdf5_out;
-//    H5::H5File hdf5_out;
-//    H5::DataSpace hdf5_dspace;
-    hid_t fileId, dataSetId, dataSpaceId, memSpaceId, vlDataTypeId, dataTypeId, pListId;
+    hid_t hdf5_out;
     std::string current_hdf5_file;
 
     // MongoDB

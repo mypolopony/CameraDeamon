@@ -51,10 +51,13 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
-// Include files to use openCV
+// OpenCV
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
+
+// HDF5
+#include "H5Cpp.h"
 
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
@@ -63,6 +66,7 @@ typedef std::chrono::high_resolution_clock Clock;
 // Namespaces
 using namespace Basler_GigECameraParams;
 using namespace Pylon;
+using namespace H5;
 using namespace std;
 using namespace cv;
 using namespace GenApi;
@@ -225,7 +229,6 @@ void AgriDataCamera::Initialize() {
 
     // HDF5
     current_hdf5_file = "";
-    hsize_t maxdims[2] = {H5S_UNLIMITED, H5S_UNLIMITED};
     
 }
 
@@ -340,11 +343,12 @@ auto t1 = Clock::now();
             AddTask(current_hdf5_file);
         }
         string hdf5path = save_prefix + hdf5file;
+        //fileId = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         // hdf5_out.setFileName(hdf5path);
         // hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
         // hdf5_group = hdf5_out->createGroup("/images");
         // hdf5_out = HDF5Wrapper(hdf5path, "images");
-        // hdf5_output = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        hdf5_out = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         current_hdf5_file = hdf5file;
         // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
     }
@@ -377,10 +381,17 @@ auto t1 = Clock::now();
 
     // Reload JPG to Mat (Decode)
     // Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
-
+    
+    // Create HDF5 Dataset
+    hsize_t buffersize = outbuffer.size();
+    H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
     // Write
     // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
-    // hdf5_group.write(to_string(fp.img_ptr->GetImageNumber()).c_str(), outbuffer);
+   // to_string(fp.img_ptr->GetImageNumber()));
+   // DataSet dset = hdf5_out.openDataSet(dsetname);
+    // dset.write(outbuffer, PredType::NATIVE_UCHAR);
+   // H5LTmake_dataset_char(hdf5_out, dsetname, 1, outbuffer.size(), outbuffer);
+   
     //hdf5_out.setVarName(to_string(fp.img_ptr->GetImageNumber()));
     //hdf5_out.writeData(outbuffer);
 
