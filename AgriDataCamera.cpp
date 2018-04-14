@@ -342,17 +342,12 @@ auto t1 = Clock::now();
 
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
+            H5Fclose(hdf5_out);
             AddTask(current_hdf5_file);
         }
-        string hdf5path = save_prefix + hdf5file;
-        //fileId = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        // hdf5_out.setFileName(hdf5path);
-        // hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
-        // hdf5_group = hdf5_out->createGroup("/images");
-        // hdf5_out = HDF5Wrapper(hdf5path, "images");
-        hdf5_out = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        
         current_hdf5_file = hdf5file;
-        // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
+        hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
 
 
