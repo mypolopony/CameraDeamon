@@ -183,7 +183,7 @@ void AgriDataCamera::Initialize() {
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
     last_img = Mat(width, height, CV_8UC3);
-    resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
 
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
