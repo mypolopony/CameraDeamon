@@ -69,9 +69,13 @@ private:
         Pylon::CGrabResultPtr img_ptr;
     };
 
-    // Dimensions
+    // Dimensions (change these to ALL CAPS?)
     int64_t width;
     int64_t height;
+
+    // Target dimensions
+    int TARGET_HEIGHT = 960;
+    int TARGET_WIDTH  = 600;
 
     // Mat image templates
     cv::Mat cv_img;
@@ -91,11 +95,8 @@ private:
     // Output base
     std::string save_prefix;
 
-    // PNG compression
+    // Image compression
     std::vector<int> compression_params;
-
-    // Camera rotation
-    int rotation;
 
     // Timers
     const int T_LATEST = 20;            // Every second
@@ -111,7 +112,7 @@ private:
     std::string output_dir;
 
     // HDF5
-    hid_t hdf5_out;
+    hid_t hdf5_out, dataSetId, dataSpaceId, memSpaceId, vlDataTypeId, dataTypeId, pListId;
     std::string current_hdf5_file;
 
     // MongoDB
