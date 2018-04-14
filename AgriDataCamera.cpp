@@ -204,7 +204,8 @@ void AgriDataCamera::Initialize() {
     // Streaming image compression
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(30);
-
+    
+    /*
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
@@ -226,6 +227,7 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Rotation disabled";
         rotation = 0;
     }
+    */
 
     // HDF5
     current_hdf5_file = "";
@@ -340,17 +342,12 @@ auto t1 = Clock::now();
 
         // Close the previous file (if it is a thing)
         if (current_hdf5_file.compare("") != 0) {
+            H5Fclose(hdf5_out);
             AddTask(current_hdf5_file);
         }
-        string hdf5path = save_prefix + hdf5file;
-        //fileId = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        // hdf5_out.setFileName(hdf5path);
-        // hdf5_out->create(hdf5path, File::Flag::OVERWRITE);
-        // hdf5_group = hdf5_out->createGroup("/images");
-        // hdf5_out = HDF5Wrapper(hdf5path, "images");
-        hdf5_out = H5Fcreate(hdf5path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        
         current_hdf5_file = hdf5file;
-        // H5::DataSet dataset = hdf5_output.openDataSet(DATASET_NAME("images"));
+        hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
 
 
@@ -487,8 +484,8 @@ void AgriDataCamera::AddTask(string hdf5file) {
  * Rotation
  *
  * Rotate the input image by an angle (the proper way!)
- */
-Mat AgriDataCamera::Rotate(Mat input) {
+
+Mat AgriDataCamera::Rotate(Mat input, int rotation) {
     // Get rotation matrix for rotating the image around its center
     cv::Point2f center(input.cols / 2.0, input.rows / 2.0);
     cv::Mat rot = cv::getRotationMatrix2D(center, rotation, 1.0);
@@ -506,6 +503,7 @@ Mat AgriDataCamera::Rotate(Mat input) {
 
     return dst;
 }
+**/
 
 float AgriDataCamera::_luminance(cv::Mat input) {
     cv::Mat grayMat;
