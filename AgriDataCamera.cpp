@@ -204,7 +204,8 @@ void AgriDataCamera::Initialize() {
     // Streaming image compression
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(30);
-
+    
+    /*
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
@@ -226,6 +227,7 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Rotation disabled";
         rotation = 0;
     }
+    */
 
     // HDF5
     current_hdf5_file = "";
@@ -487,8 +489,8 @@ void AgriDataCamera::AddTask(string hdf5file) {
  * Rotation
  *
  * Rotate the input image by an angle (the proper way!)
- */
-Mat AgriDataCamera::Rotate(Mat input) {
+
+Mat AgriDataCamera::Rotate(Mat input, int rotation) {
     // Get rotation matrix for rotating the image around its center
     cv::Point2f center(input.cols / 2.0, input.rows / 2.0);
     cv::Mat rot = cv::getRotationMatrix2D(center, rotation, 1.0);
@@ -506,6 +508,7 @@ Mat AgriDataCamera::Rotate(Mat input) {
 
     return dst;
 }
+**/
 
 float AgriDataCamera::_luminance(cv::Mat input) {
     cv::Mat grayMat;
