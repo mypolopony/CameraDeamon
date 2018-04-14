@@ -1,0 +1,3 @@
+/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/edit_cache.dir
+/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/rebuild_cache.dir
+/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir

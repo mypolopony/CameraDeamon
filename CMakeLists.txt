@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8.11)
 
 project(CameraDeamon)
 
-
-
 include_directories(
         /home/nvidia/CameraDeamon/CameraDeamon/
         /home/nvidia/CameraDeamon/lib
@@ -40,6 +38,7 @@ set_source_files_properties(
         " -pg -O0 -w -std=c++11 -Wall -Wunknown-pragmas -ggdb")
 
 find_package( OpenCV REQUIRED )
+find_package( HDF5 REQUIRED COMPONENTS C CXX )
 
 add_executable(CameraDeamon ${CXX_SRCS} ${C_SRCS})
 
