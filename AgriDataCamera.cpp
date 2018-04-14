@@ -225,6 +225,8 @@ void AgriDataCamera::Initialize() {
 
     // HDF5
     current_hdf5_file = "";
+    hsize_t maxdims[2] = {H5S_UNLIMITED, H5S_UNLIMITED};
+    
 }
 
 /**
@@ -246,9 +248,9 @@ void AgriDataCamera::Run() {
     }
 
     // Save configuration
-    //INodeMap &nodeMap = GetNodeMap();
-    //string config = save_prefix + "config.txt";
-    //CFeaturePersistence::Save(config.c_str(), &nodeMap);
+    INodeMap &nodeMap = GetNodeMap();
+    string config = save_prefix + "config.txt";
+    CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
     // Initiate main loop with algorithm
     while (isRecording) {
