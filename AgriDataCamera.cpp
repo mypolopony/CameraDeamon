@@ -56,9 +56,6 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 
-// HDF5
-#include <H5Library.h>
-
 // Definitions
 #define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
 typedef std::chrono::high_resolution_clock Clock;
