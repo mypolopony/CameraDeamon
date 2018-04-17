@@ -145,12 +145,6 @@ void AgriDataCamera::Initialize() {
     srand(time(NULL));
     CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
     intFeature->SetValue((rand() % 12150) + 7150);
-//    intFeature->SetValue(GevStreamChannelSelector_StreamChannel0);
-//    CIntegerPtr p;
-//    p = nodeMap.GetNode("GevStreamChannelSelector");
-//    p->SetValue(GevStreamChannelSelector_StreamChannel0);
-//    p = nodeMap.GetNode("GevSCPD");
-//    p->SetValue(12150);
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -205,7 +199,6 @@ void AgriDataCamera::Initialize() {
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(30);
     
-    /*
     // Obtain box info to determine camera rotation
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
@@ -213,6 +206,7 @@ void AgriDataCamera::Initialize() {
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
 
+    /* 
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
@@ -347,6 +341,7 @@ auto t1 = Clock::now();
         }
         
         current_hdf5_file = hdf5file;
+        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file << endl;
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
 
@@ -369,29 +364,18 @@ auto t1 = Clock::now();
     // Write JPEG
     // imwrite(string("/data/output/image/") + hms[0].c_str() + "_" + hms[1].c_str() +  to_string(fp.img_ptr->GetImageNumber()).c_str() + ".jpg", small_last_img);
 
-
     // Encode to JPG Buffer
     vector<uint8_t> outbuffer;
-
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
 
-    // Reload JPG to Mat (Decode)
-    // Mat jpg_image = imdecode(outbuffer, CV_LOAD_IMAGE_COLOR);
-    
     // Create HDF5 Dataset
     hsize_t buffersize = outbuffer.size();
-    H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-    // Write
-    // H5IMmake_image_24bit(hdf5_output, to_string(fp.img_ptr->GetImageNumber()).c_str(), jpg_image.cols, jpg_image.rows, "INTERLACE_PIXEL", (uint8_t *) jpg_image.data);
-   // to_string(fp.img_ptr->GetImageNumber()));
-   // DataSet dset = hdf5_out.openDataSet(dsetname);
-    // dset.write(outbuffer, PredType::NATIVE_UCHAR);
-   // H5LTmake_dataset_char(hdf5_out, dsetname, 1, outbuffer.size(), outbuffer);
-   
-    //hdf5_out.setVarName(to_string(fp.img_ptr->GetImageNumber()));
-    //hdf5_out.writeData(outbuffer);
-
+    try {
+        H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+    } catch (...) {
+        LOG(INFO) << "Frame dropped (likely end of recording)" << endl;
+    }
     // Write to streaming image
     if (tick % T_LATEST == 0) {
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
@@ -632,8 +616,8 @@ int AgriDataCamera::Stop() {
 
     AddTask(current_hdf5_file);
 
-    LOG(INFO) << "(NOT) Closing active HDF5 file";
-    // H5Fclose(hdf5_output);
+    LOG(INFO) << "Closing active HDF5 file";
+    H5Fclose(hdf5_out);
 
     LOG(INFO) << "*** Done ***";
     return 0;
