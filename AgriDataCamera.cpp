@@ -237,6 +237,7 @@ void AgriDataCamera::Run() {
     // Output parameters
     save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
             + serialnumber + "/";
+    LOG(INFO) << save_prefix << endl;
     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
