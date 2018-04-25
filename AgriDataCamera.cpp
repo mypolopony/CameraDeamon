@@ -399,7 +399,7 @@ auto t1 = Clock::now();
     // Send documents to database
     try {
         if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-            LOG(DEBUG) << "Sending to Database";
+            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
             frames.insert_many(documents);
             documents.clear();
         }
@@ -430,7 +430,11 @@ void AgriDataCamera::AddTask(string hdf5file) {
     builder.append(bsoncxx::builder::basic::kvp("scanid", scanid));
     builder.append(bsoncxx::builder::basic::kvp("hdf5filename", hdf5file));
     builder.append(bsoncxx::builder::basic::kvp("cameraid", serialnumber));
+    builder.append(bsoncxx::builder::basic::kvp("session_name", session_name));
     builder.append(bsoncxx::builder::basic::kvp("cluster_detection", 0));
+    builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
+    builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
+    builder.append(bsoncxx::builder::basic::kvp("process", 0));
 
     // If calibration. . .
     if (T_CALIBRATION-- > 0) {
@@ -449,11 +453,6 @@ void AgriDataCamera::AddTask(string hdf5file) {
             // Special case (first task in the database)
             priority = 1;
         }
-
-        // Only non-calibration tasks get these fields
-        builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
-        builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
-        builder.append(bsoncxx::builder::basic::kvp("process", 0));
 
     }
 

@@ -56,6 +56,7 @@ public:
     virtual ~AgriDataCamera();
 
     std::string scanid;
+    std::string session_name;
     bool isPaused;
     bool isRecording;
     bool calibration;
