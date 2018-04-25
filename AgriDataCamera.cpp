@@ -354,7 +354,7 @@ auto t1 = Clock::now();
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
 
     // Resize
-    resize(last_img, small_last_img, Size(), 0.5, 0.5);
+    resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
 
     // Color
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
@@ -435,6 +435,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
     builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
     builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
     builder.append(bsoncxx::builder::basic::kvp("process", 0));
+    builder.append(bsoncxx::builder::basic::kvp("shape_analysis_per_archive", 0));
 
     // If calibration. . .
     if (T_CALIBRATION-- > 0) {
