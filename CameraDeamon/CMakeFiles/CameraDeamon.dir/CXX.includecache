@@ -6,20 +6,6 @@
 
 #IncludeRegexTransform: 
 
-../lib/H5Easy.h
-iostream
--
-vector
--
-string
--
-sstream
--
-typeinfo
--
-H5Cpp.h
-../lib/H5Cpp.h
-
 ../lib/easylogging++.h
 cstddef
 -
@@ -809,8 +795,8 @@ opencv2/highgui.hpp
 /home/nvidia/CameraDeamon/opencv2/highgui.hpp
 opencv2/imgproc.hpp
 /home/nvidia/CameraDeamon/opencv2/imgproc.hpp
-H5Library.h
--
+H5Cpp.h
+/home/nvidia/CameraDeamon/H5Cpp.h
 
 /home/nvidia/CameraDeamon/AgriDataCamera.h
 fstream
@@ -837,12 +823,8 @@ opencv2/core.hpp
 /home/nvidia/CameraDeamon/opencv2/core.hpp
 opencv2/highgui.hpp
 /home/nvidia/CameraDeamon/opencv2/highgui.hpp
-hdf5.h
-/home/nvidia/CameraDeamon/hdf5.h
-hdf5_hl.h
-/home/nvidia/CameraDeamon/hdf5_hl.h
-H5Easy.h
-/home/nvidia/CameraDeamon/H5Easy.h
+H5Cpp.h
+/home/nvidia/CameraDeamon/H5Cpp.h
 json.hpp
 /home/nvidia/CameraDeamon/json.hpp
 zmq.hpp
