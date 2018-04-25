@@ -399,7 +399,7 @@ auto t1 = Clock::now();
     // Send documents to database
     try {
         if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
+            LOG(DEBUG) << "!!Sending " << documents.size() << " documents to Database";
             frames.insert_many(documents);
             documents.clear();
         }
