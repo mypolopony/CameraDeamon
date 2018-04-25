@@ -182,6 +182,7 @@ void AgriDataCamera::Initialize() {
     cv_img = Mat(width, height, CV_8UC3);
     last_img = Mat(width, height, CV_8UC3);
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
+
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
 
@@ -190,6 +191,7 @@ void AgriDataCamera::Initialize() {
     // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
     db = conn["agdb"];
     frames = db["frame"];
+
     // Initial status
     isRecording = false;
     isPaused = false;
@@ -207,7 +209,8 @@ void AgriDataCamera::Initialize() {
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
-    /* 
+
+    /*
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
@@ -226,6 +229,7 @@ void AgriDataCamera::Initialize() {
 
     // HDF5
     current_hdf5_file = "";
+
 }
 
 /**
@@ -399,7 +403,7 @@ auto t1 = Clock::now();
     // Send documents to database
     try {
         if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-            LOG(DEBUG) << "!!Sending " << documents.size() << " documents to Database";
+            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
             frames.insert_many(documents);
             documents.clear();
         }
