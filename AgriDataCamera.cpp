@@ -432,10 +432,6 @@ void AgriDataCamera::AddTask(string hdf5file) {
     builder.append(bsoncxx::builder::basic::kvp("cameraid", serialnumber));
     builder.append(bsoncxx::builder::basic::kvp("session_name", session_name));
     builder.append(bsoncxx::builder::basic::kvp("cluster_detection", 0));
-    builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
-    builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
-    builder.append(bsoncxx::builder::basic::kvp("process", 0));
-    builder.append(bsoncxx::builder::basic::kvp("shape_analysis_per_archive", 0));
 
     // If calibration. . .
     if (T_CALIBRATION-- > 0) {
@@ -454,6 +450,12 @@ void AgriDataCamera::AddTask(string hdf5file) {
             // Special case (first task in the database)
             priority = 1;
         }
+
+        // Non-calibration tasks also receive these fields
+        builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
+        builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
+        builder.append(bsoncxx::builder::basic::kvp("process", 0));
+        builder.append(bsoncxx::builder::basic::kvp("shape_analysis_per_archive", 0));
 
     }
 
