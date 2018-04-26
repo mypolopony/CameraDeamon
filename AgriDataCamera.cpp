@@ -309,7 +309,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     long int start, end;
     tick++;
 
-auto t1 = Clock::now();
+    // Tick report
+    LOG(DEBUG) << "Tick " << tick << endl;
+
+    auto t1 = Clock::now();
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(
@@ -393,13 +396,15 @@ auto t1 = Clock::now();
         t.detach();
     } else {
         // Add to documents
+        LOG(DEBUG) << "Adding a document (" << documents.size() << ")" << endl;
         documents.push_back(doc.extract());
     }
 
     // Send documents to database
     try {
+        LOG(DEBUG) << "Want to send " << documents.size() << " documents" << endl;
         if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-            LOG(DEBUG) << "!!Sending " << documents.size() << " documents to Database";
+            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
             frames.insert_many(documents);
             documents.clear();
         }
