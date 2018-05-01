@@ -104,8 +104,8 @@ private:
     const int T_MONGODB = 60*20;        // Every minute
     const int T_LUMINANCE = 10;         // Every half second
     const int T_SAMPLE = 10;		// Every half second
-    int T_CALIBRATION = 5;              // First five minutes are calibration
-    uint8_t tick;                       // Running counter
+    int T_CALIBRATION = 0;              // First five minutes are calibration
+    int tick;                           // Running counter
 
     // Output Parameters
     uint8_t max_filesize = 3;
