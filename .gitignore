@@ -68,3 +68,5 @@ site/
 CameraDeamon/Debug/CameraDeamon
 CameraDeamon/Release/CameraDeamon
 /build-clion/
+
+*.csv
