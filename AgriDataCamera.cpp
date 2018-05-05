@@ -297,10 +297,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     long int start, end;
     tick++;
 
-    // Tick report
-    LOG(DEBUG) << "Tick " << tick << endl;
-
-    auto t1 = Clock::now();
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(
