@@ -135,7 +135,6 @@ private:
 
     // Methods
     void Luminance(bsoncxx::oid, cv::Mat);
-    cv::Mat Rotate(cv::Mat);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);

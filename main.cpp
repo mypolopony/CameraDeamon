@@ -152,7 +152,6 @@ int main() {
     // Publish on 4448
     zmq::socket_t publisher(context, ZMQ_PUB);
     publisher.bind("tcp://*:4998");
-
     client.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 
     // Wait for sockets
@@ -230,7 +229,7 @@ int main() {
             // interrogating processes, they are interrupted very often. Use the catch to allow things to
             // proceed on smoothly
             try {
-                rec = client.recv(&messageR, ZMQ_NOBLOCK);
+                rec = client.recv(&messageR);
             } catch (zmq::error_t error) {
                 if (errno == EINTR) continue;
             }
