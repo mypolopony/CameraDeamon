@@ -322,6 +322,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
     string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+    doc.append(bsoncxx::builder::basic::kvp("filename", hdf5file));
 
     // Should we open a new file?
     if (hdf5file.compare(current_hdf5_file) != 0) {
