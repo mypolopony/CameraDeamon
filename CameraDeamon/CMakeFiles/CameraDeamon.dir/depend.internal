@@ -181,7 +181,6 @@ CMakeFiles/CameraDeamon.dir/AGDUtils.cpp.o
  /usr/local/include/opencv2/videostab/stabilizer.hpp
  /usr/local/include/opencv2/videostab/wobble_suppression.hpp
 CMakeFiles/CameraDeamon.dir/AgriDataCamera.cpp.o
- ../lib/H5Easy.h
  ../lib/easylogging++.h
  ../lib/json.hpp
  ../lib/zhelpers.hpp
@@ -658,7 +657,6 @@ CMakeFiles/CameraDeamon.dir/lib/easylogging++.cc.o
  /home/nvidia/CameraDeamon/lib/easylogging++.cc
  /home/nvidia/CameraDeamon/lib/easylogging++.h
 CMakeFiles/CameraDeamon.dir/main.cpp.o
- ../lib/H5Easy.h
  ../lib/easylogging++.h
  ../lib/json.hpp
  ../lib/zmq.hpp

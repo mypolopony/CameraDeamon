@@ -141,10 +141,14 @@ void AgriDataCamera::Initialize() {
         cerr << "An exception occurred." << endl << e.GetDescription() << endl;
     }
 
-    // Set Interpacket Delayi
-    srand(time(NULL));
-    CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
-    intFeature->SetValue((rand() % 12150) + 7150);
+    // Set Interpacket Delay
+    try {    // (GigE only)
+        srand(time(NULL));
+        CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
+        intFeature->SetValue((rand() % 12150) + 7150);
+    } catch (...) {
+        LOG(WARNING) << "Skipping GevSCPD parameter" << endl;
+    }
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -199,33 +203,17 @@ void AgriDataCamera::Initialize() {
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(30);
     
-    // Obtain box info to determine camera rotation
+    // Obtain box info
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
 
-    /* 
-    try {
-        if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
-            rotation = -90;
-        } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
-            rotation = 90;
-        } else {
-            rotation = 0;
-        }
-        LOG(INFO) << "This camera will be rotated by " << rotation << " degrees";
-    } catch (...) {
-        LOG(WARNING) << "Unable to determine camera orientation";
-        LOG(WARNING) << "Rotation disabled";
-        rotation = 0;
-    }
-    */
 
     // HDF5
     current_hdf5_file = "";
-    
+
 }
 
 /**
@@ -309,7 +297,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     long int start, end;
     tick++;
 
-auto t1 = Clock::now();
+    // Tick report
+    LOG(DEBUG) << "Tick " << tick << endl;
+
+    auto t1 = Clock::now();
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
     doc.append(
@@ -393,6 +384,7 @@ auto t1 = Clock::now();
         t.detach();
     } else {
         // Add to documents
+        LOG(DEBUG) << "Adding a document (" << documents.size() << ")" << endl;
         documents.push_back(doc.extract());
     }
 
@@ -467,30 +459,6 @@ void AgriDataCamera::AddTask(string hdf5file) {
     auto ret = _tasks.insert_one(document.view());
 }
 
-/**
- * Rotation
- *
- * Rotate the input image by an angle (the proper way!)
-
-Mat AgriDataCamera::Rotate(Mat input, int rotation) {
-    // Get rotation matrix for rotating the image around its center
-    cv::Point2f center(input.cols / 2.0, input.rows / 2.0);
-    cv::Mat rot = cv::getRotationMatrix2D(center, rotation, 1.0);
-
-    // Determine bounding rectangle
-    cv::Rect bbox = cv::RotatedRect(center, input.size(), rotation).boundingRect();
-
-    // Adjust transformation matrix
-    rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
-    rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
-
-    // Resultant
-    cv::Mat dst;
-    cv::warpAffine(input, dst, rot, bbox.size());
-
-    return dst;
-}
-**/
 
 float AgriDataCamera::_luminance(cv::Mat input) {
     cv::Mat grayMat;
@@ -572,7 +540,6 @@ void AgriDataCamera::Snap() {
                 CV_8UC3, (uint8_t *) image.GetBuffer());
 
         snap_img.copyTo(last_img);
-        //last_img = AgriDataCamera::Rotate(last_img);
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
                 ref(compression_params));
         t.detach();
