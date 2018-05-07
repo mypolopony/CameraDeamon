@@ -390,18 +390,17 @@ int main() {
                         reply["message"] = "Target Gray Value changed for " + received["camera"].get<std::string>() + " (" + to_string(received["value"].get<int>()) + ")";
                     }
 
-                } catch (const GenericException &e) {
+                    // LOG(INFO) << "Sending Response\n";
+                    zmq::message_t messageS(reply.dump().size());
+                    memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
+                    publisher.send(messageS);
+
+                }  catch (const GenericException &e) {
                     // Error block
-                    LOG(ERROR) << "An exception occurred.";
-                    LOG(ERROR) << e.GetDescription();
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
-                }
-
-                // LOG(INFO) << "Sending Response\n";
-                zmq::message_t messageS(reply.dump().size());
-                memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
-                publisher.send(messageS);
+                    LOG(FATAL) << "An exception occured: " << e.GetDescription();
+                 }
 
             }
         } catch (const GenericException &e) {

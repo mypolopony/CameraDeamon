@@ -381,7 +381,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         t.detach();
     } else {
         // Add to documents
-        LOG(DEBUG) << "Adding a document (" << documents.size() << ")" << endl;
         documents.push_back(doc.extract());
     }
 
