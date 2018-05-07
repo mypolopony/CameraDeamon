@@ -176,11 +176,11 @@ int main() {
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) < 1) {
-        LOG(WARNING) << "Not enough cameras present";
+        LOG(FATAL) << "Not enough cameras present -- Restarting";
     }
 
     // Camera Initialization
-    AgriDataCamera * cameras[1];
+    AgriDataCamera * cameras[devices.size()];
     try {
         for (size_t i = 0; i < devices.size(); ++i) {
             cameras[i] = new AgriDataCamera();
