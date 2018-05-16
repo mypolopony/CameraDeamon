@@ -235,6 +235,9 @@ void AgriDataCamera::Run() {
         StartGrabbing();
     }
 
+    // Color Balance
+    CEnumerationPtr selector = GetNodeMap().GetNode("BalanceRatioSelector");
+
     // Save configuration
     INodeMap &nodeMap = GetNodeMap();
     string config = save_prefix + "config.txt";
@@ -261,6 +264,14 @@ void AgriDataCamera::Run() {
                     } catch (...) { // GigE
                         fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
                     }
+
+                    // Color Balance
+                    selector->FromString("EnumEntry_BalanceRatioSelector_Red");
+                    fp.balance_red = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
+                    selector->FromString("BalanceRatioSelector_Green");
+                    fp.balance_green = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
+                    selector->FromString("BalanceRatioSelector_Blue");
+                    fp.balance_blue = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
 
                     // Image
                     fp.img_ptr = ptrGrabResult;
@@ -314,6 +325,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
+
+    // Color balance
+    doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
+    doc.append(bsoncxx::builder::basic::kvp("balance_green", fp.balance_green));
+    doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
