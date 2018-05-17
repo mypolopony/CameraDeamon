@@ -176,7 +176,6 @@ int main() {
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) < 1) {
-        LOG(WARNING) << "About to throw fatal error (no devices found)" << endl;
         LOG(FATAL) << "Not enough cameras present -- Restarting";
     }
 
@@ -400,13 +399,7 @@ int main() {
                     // Error block
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
-                    LOG(WARNING) << "An exception occured: " << e.GetDescription();
-                    
-                    // Send message as above 
-                    // TODO: Combine identical code
-                    zmq::message_t messageS(reply.dump().size());
-                    memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
-                    publisher.send(messageS);
+                    LOG(FATAL) << "An exception occured: " << e.GetDescription();
                  }
 
             }

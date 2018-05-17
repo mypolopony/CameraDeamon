@@ -67,7 +67,6 @@ private:
     struct FramePacket {
         int64_t time_now;
         float exposure_time;
-        float balance_red, balance_green, balance_blue;
         Pylon::CGrabResultPtr img_ptr;
     };
 
