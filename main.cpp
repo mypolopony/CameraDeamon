@@ -176,7 +176,7 @@ int main() {
     // Get all attached devices and exit application if no device is found.
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) < 1) {
-        LOG(FATAL) << "Not enough cameras present -- Restarting";
+        LOG(FATAL) << "Not enough cameras present -- Dying now";
     }
 
     // Camera Initialization
@@ -399,7 +399,7 @@ int main() {
                     // Error block
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
-                    LOG(FATAL) << "An exception occured: " << e.GetDescription();
+                    LOG(ERROR) << "An exception occured: " << e.GetDescription();
                  }
 
             }

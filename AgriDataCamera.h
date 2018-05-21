@@ -15,9 +15,6 @@
 #include <pylon/gige/BaslerGigEInstantCamera.h>
 #include <pylon/gige/BaslerGigEInstantCameraArray.h>
 #include <pylon/gige/_BaslerGigECameraParams.h>
-#include <pylon/usb/BaslerUsbInstantCamera.h>
-#include <pylon/usb/BaslerUsbInstantCameraArray.h>
-#include <pylon/usb/_BaslerUsbCameraParams.h>
 
 // GenApi
 #include <GenApi/GenApi.h>
@@ -41,7 +38,7 @@
 #include <mongocxx/instance.hpp>
 
 
-class AgriDataCamera : public Pylon::CInstantCamera
+class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
 {
 public:
     AgriDataCamera();

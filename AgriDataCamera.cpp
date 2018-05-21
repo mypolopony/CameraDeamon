@@ -65,6 +65,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 // Namespaces
 using namespace Basler_GigECameraParams;
+using namespace Basler_GigEStreamParams;
 using namespace Pylon;
 using namespace H5;
 using namespace std;
@@ -176,7 +177,12 @@ void AgriDataCamera::Initialize() {
             << endl;
     cout << "Serial Number : "
             << serialnumber << endl;
-    cout << "Frame Size  : " << width << 'x' << height << endl << endl;
+    cout << "Frame Size : " << width << 'x' << height << endl;
+    cout << "Max Buffer Size : " << GetStreamGrabberParams().Statistic_Total_Buffer_Count.GetValue() << endl;
+    cout << "Packet Size : " << GevSCPSPacketSize.GetValue() << endl;
+    cout << "Inter-packet Delay : " << GevSCPD.GetValue() << endl;
+    cout << "Packet Size : " << GevSCBWA.GetValue() << endl;
+    cout << "Max Throughput : " << GevSCDMT.GetValue() << endl;
 
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
@@ -653,6 +659,15 @@ json AgriDataCamera::GetStatus() {
         thread t(&AgriDataCamera::Luminance, this, oid, last_img);
         t.detach();
     }
+
+    // Extra bits
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count() << endl;
+    LOG(DEBUG) << "[" << serialnumber << "] Socket Buffer Size: " << GetStreamGrabberParams().SocketBufferSize() << endl;
+    LOG(DEBUG) << "[" << serialnumber << "] Buffer Underrun Count: " << GetStreamGrabberParams().Statistic_Buffer_Underrun_Count() << endl;
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count() << endl;
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Packet Count: " << GetStreamGrabberParams().Statistic_Failed_Packet_Count() << endl;
+    LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count() << endl; 
+
 
     return status;
 }
