@@ -99,7 +99,7 @@ AgriDataCamera::~AgriDataCamera() {
  */
 
 zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
-    std::LOG(INFO) << "Connecting to IMU server..." << s;
+    LOG(INFO) << "Connecting to IMU server...";
     zmq::socket_t * client = new zmq::socket_t(context, ZMQ_REQ);
     client->connect("tcp://localhost:4997");
 
@@ -165,7 +165,7 @@ void AgriDataCamera::Initialize() {
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Print camera device information.
-    LOG(INFO) << "Camera Device Information" << "========================="
+    LOG(INFO) << "Camera Device Information" << endl << "========================="
            ;
     LOG(INFO) << "Vendor : "
             << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
@@ -394,8 +394,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
             frames.insert_many(documents);
             documents.clear();
         }
-    } catch (exception const &exc) {
-        LOG(DEBUG) << "Exception caught " << exc.what();
+    } catch (...) {
+        LOG(DEBUG) << "Exception caught";
     }
 }
 
