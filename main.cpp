@@ -230,6 +230,7 @@ int main() {
             // proceed on smoothly
             try {
                 rec = client.recv(&messageR);
+                LOG(INFO) << "Is this really non-blocking?";
             } catch (zmq::error_t error) {
                 if (errno == EINTR) continue;
             }
