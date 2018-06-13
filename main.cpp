@@ -203,6 +203,8 @@ int main() {
     vector <string> tokens;
     zmq::message_t messageR;
 
+    cameras.StartGrabbing();
+
     while (true) {
         try {
 	    // Chill out
@@ -224,13 +226,12 @@ int main() {
                 break;
             }
 
-            // Non-blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
+            // Blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
             // throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are constantly
             // interrogating processes, they are interrupted very often. Use the catch to allow things to
             // proceed on smoothly
             try {
                 rec = client.recv(&messageR);
-                LOG(INFO) << "Is this really non-blocking?";
             } catch (zmq::error_t error) {
                 if (errno == EINTR) continue;
             }
