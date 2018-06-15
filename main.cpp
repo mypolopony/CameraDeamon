@@ -177,6 +177,8 @@ int main() {
     DeviceInfoList_t devices;
     if (tlFactory.EnumerateDevices(devices) < 1) {
         LOG(FATAL) << "Not enough cameras present -- Restarting";
+    } else {
+        LOG(INFO) << "Number of Devices found: " << devices.size();
     }
 
     // Camera Initialization

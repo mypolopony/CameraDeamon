@@ -65,6 +65,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 // Namespaces
 using namespace Basler_GigECameraParams;
+using namespace Basler_GigEStreamParams;
 using namespace Pylon;
 using namespace H5;
 using namespace std;
@@ -97,7 +98,7 @@ AgriDataCamera::~AgriDataCamera() {
  */
 
 zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
-    std::cout << "Connecting to IMU server..." << std::endl;
+    LOG(INFO) << "Connecting to IMU server...";
     zmq::socket_t * client = new zmq::socket_t(context, ZMQ_REQ);
     client->connect("tcp://localhost:4997");
 
@@ -127,28 +128,35 @@ void AgriDataCamera::Initialize() {
         StartGrabbing();
     }
 
-    // Print the model name of the
-    cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
+    // Print the camera identity
+    LOG(INFO) << "Initializing device " << GetDeviceInfo().GetModelName();
 
+    // Load config file
     try {
         string config = "/home/nvidia/CameraDeamon/config/"
                 + string(GetDeviceInfo().GetModelName()) + ".pfs";
-        cout << "Reading from configuration file: " + config;
-        cout << endl;
+        LOG(INFO) << "Reading from configuration file: " + config;
         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
 
     } catch (const GenericException &e) {
-        cerr << "An exception occurred." << endl << e.GetDescription() << endl;
+        LOG(FATAL) << "An exception occurred: " << e.GetDescription();
     }
 
-    // Set Interpacket Delay
-    try {    // (GigE only)
-        srand(time(NULL));
+    // [OPTIONAL] Override Interpacket Delay (GigE only)
+    try {
         CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
-        intFeature->SetValue((rand() % 12150) + 7150);
+
+    	if (false) {
+            srand(time(NULL));
+            intFeature->SetValue((rand() % 12150) + 7150);
+            LOG(INFO) << "Using Randomized Interpacket Delay (" << intFeature->GetValue() << ")";
+        } else {
+            LOG(INFO) << "Using Interpacket Delay from Config (" << intFeature->GetValue() << ")";
+        }
     } catch (...) {
-        LOG(WARNING) << "Skipping GevSCPD parameter" << endl;
+        LOG(WARNING) << "Skipping GevSCPD parameter";
     }
+    
 
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
@@ -163,20 +171,21 @@ void AgriDataCamera::Initialize() {
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Print camera device information.
-    cout << "Camera Device Information" << endl << "========================="
-            << endl;
-    cout << "Vendor : "
-            << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue()
-            << endl;
-    cout << "Model : "
-            << modelname
-            << endl;
-    cout << "Firmware version : "
-            << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue()
-            << endl;
-    cout << "Serial Number : "
-            << serialnumber << endl;
-    cout << "Frame Size  : " << width << 'x' << height << endl << endl;
+    LOG(INFO) << "Camera Device Information";
+    LOG(INFO) << "=========================";
+    LOG(INFO) << "Vendor : " 
+              << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
+    LOG(INFO) << "Model : "<< modelname;
+    LOG(INFO) << "Firmware version : "
+              << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue();
+    LOG(INFO) << "Serial Number : "
+              << serialnumber;
+    LOG(INFO) << "Frame Size  : " << width << 'x' << height;
+    LOG(INFO) << "Max Buffer Size : " << GetStreamGrabberParams().Statistic_Total_Buffer_Count.GetValue();
+    LOG(INFO) << "Packet Size : " << GevSCPSPacketSize.GetValue();
+    LOG(INFO) << "Inter-packet Delay : " << GevSCPD.GetValue();
+    LOG(INFO) << "Packet Size : " << GevSCBWA.GetValue();
+    LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
 
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
@@ -189,6 +198,7 @@ void AgriDataCamera::Initialize() {
     // Initialize MongoDB connection
     // The use of auto here is unfortunate, but it is apparently recommended
     // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
+    LOG(INFO) << "Connecting to MongoDB";
     db = conn["agdb"];
     frames = db["frame"];
 
@@ -204,6 +214,7 @@ void AgriDataCamera::Initialize() {
     compression_params.push_back(30);
     
     // Obtain box info
+    LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
@@ -213,6 +224,7 @@ void AgriDataCamera::Initialize() {
 
     // HDF5
     current_hdf5_file = "";
+    LOG(INFO) << "Initialization complete!";
 
 }
 
@@ -225,7 +237,7 @@ void AgriDataCamera::Run() {
     // Output parameters
     save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
             + serialnumber + "/";
-    LOG(INFO) << save_prefix << endl;
+    LOG(INFO) << save_prefix;
     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
@@ -269,12 +281,12 @@ void AgriDataCamera::Run() {
                     try {
                         HandleFrame(fp);
                     } catch (...) {
-                        LOG(WARNING) << "Frame slipped!" << endl;
+                        LOG(WARNING) << "Frame slipped!";
                     }
 
                 } else {
-                    cout << "Error: " << ptrGrabResult->GetErrorCode() << " "
-                            << ptrGrabResult->GetErrorDescription() << endl;
+                    LOG(INFO) << "Error: " << ptrGrabResult->GetErrorCode() << " "
+                            << ptrGrabResult->GetErrorDescription();
                 }
             } catch (const GenericException &e) {
                 LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
@@ -330,7 +342,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         }
         
         current_hdf5_file = hdf5file;
-        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file << endl;
+        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file;
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
 
@@ -363,7 +375,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     try {
         H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
     } catch (...) {
-        LOG(INFO) << "Frame dropped (likely end of recording)" << endl;
+        LOG(INFO) << "Frame dropped (likely end of recording)";
     }
     // Write to streaming image
     if (tick % T_LATEST == 0) {
@@ -653,6 +665,14 @@ json AgriDataCamera::GetStatus() {
         thread t(&AgriDataCamera::Luminance, this, oid, last_img);
         t.detach();
     }
+
+    // Extra bits
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Socket Buffer Size: " << GetStreamGrabberParams().SocketBufferSize();
+    LOG(DEBUG) << "[" << serialnumber << "] Buffer Underrun Count: " << GetStreamGrabberParams().Statistic_Buffer_Underrun_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Failed Packet Count: " << GetStreamGrabberParams().Statistic_Failed_Packet_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count();
 
     return status;
 }
