@@ -14,7 +14,7 @@ DigitalShift	0
 PixelFormat	BayerRG8
 ReverseX	0
 ReverseY	0
-TestImageSelector	Testimage2
+TestImageSelector	Off
 ColorTransformationSelector	RGBtoRGB
 LightSourceSelector	Daylight
 ColorTransformationSelector	RGBtoRGB
@@ -86,7 +86,7 @@ ExposureAuto	Off
 ExposureTimeRaw	34
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRateAbs	100
+AcquisitionFrameRateAbs	15
 LineSelector	Line1
 LineMode	Input
 LineSelector	Line2
