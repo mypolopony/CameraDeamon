@@ -74,6 +74,9 @@ private:
     int64_t width;
     int64_t height;
 
+    // Frame Rate
+    float framerate; 
+
     // Target dimensions
     int TARGET_HEIGHT = 960;
     int TARGET_WIDTH  = 600;
@@ -91,7 +94,6 @@ private:
 
     // Image converter
     Pylon::CImageFormatConverter fc;
-    Pylon::CImagePersistenceOptions persistenceOptions;
 
     // Output base
     std::string save_prefix;
@@ -101,11 +103,18 @@ private:
 
     // Timers
     const int T_LATEST = 20;            // Every second
-    const int T_MONGODB = 60*20;        // Every minute
+    const int T_MONGODB = 1200;         // ~ Every minute
     const int T_LUMINANCE = 10;         // Every half second
-    const int T_SAMPLE = 10;		// Every half second
-    int T_CALIBRATION = 0;              // First five minutes are calibration
+    const int T_SAMPLE = 10;		    // Every half second
+    int T_CALIBRATION = 0;              // First five minutes are calibration (0 is disabled)
     int tick;                           // Running counter
+
+    // Dynamic Framerate
+    const int LOW_FPS = 5;              // Probationary frame rate
+    const int RT_PROBATION = -1;        // Restricted period (this is a reverse timer, -1 is safe)
+    int PROBATION = 200;                // Counts down
+
+
 
     // Output Parameters
     uint8_t max_filesize = 3;

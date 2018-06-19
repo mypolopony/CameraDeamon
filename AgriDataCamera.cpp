@@ -143,7 +143,7 @@ void AgriDataCamera::Initialize() {
     }
     
     // Turn the Test Image off
-    //TestImageSelector.SetValue( TestImageSelector_Off );
+    // TestImageSelector.SetValue( TestImageSelector_Off );
 
     // [OPTIONAL] Override Interpacket Delay (GigE only)
     try {
@@ -173,6 +173,9 @@ void AgriDataCamera::Initialize() {
     }
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
+    // Frame Rate
+    framerate = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue()
+
     // Print camera device information.
     LOG(INFO) << "Camera Device Information";
     LOG(INFO) << "=========================";
@@ -189,6 +192,7 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Inter-packet Delay : " << GevSCPD.GetValue();
     LOG(INFO) << "Packet Size : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
+    LOG(INFO) << "Target Frame Rate : " << framerate;
 
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
@@ -199,8 +203,6 @@ void AgriDataCamera::Initialize() {
     fc.OutputPixelFormat = PixelType_BGR8packed;
 
     // Initialize MongoDB connection
-    // The use of auto here is unfortunate, but it is apparently recommended
-    // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
     LOG(INFO) << "Connecting to MongoDB";
     db = conn["agdb"];
     frames = db["frame"];
@@ -223,7 +225,6 @@ void AgriDataCamera::Initialize() {
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
-
 
     // HDF5
     current_hdf5_file = "";
@@ -286,8 +287,9 @@ void AgriDataCamera::Run() {
                     }
 
                 } else {
-                    LOG(INFO) << "Error: " << ptrGrabResult->GetErrorCode() << " "
+                    LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " "
                             << ptrGrabResult->GetErrorDescription();
+
                 }
             } catch (const GenericException &e) {
                 LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
@@ -378,6 +380,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     } catch (...) {
         LOG(INFO) << "Frame dropped (likely end of recording)";
     }
+
     // Write to streaming image
     if (tick % T_LATEST == 0) {
         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
@@ -396,6 +399,18 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         // Add to documents
         documents.push_back(doc.extract());
     }
+
+    // Dynamic frame rate adjustment
+    PROBATION--;
+    if (PROBATION > -1) {           // In the bonus
+        --PROBATION;
+    } else {                        // All OK
+        if (PROBATION == 0) {       // Transition (special case)
+          CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));    
+          fps->SetValue(HIGH_FPS);  
+          LOG(INFO) << "Returning to " << HIGH_FPS << " FPS";
+        }
+        PROBATION = -1;             // Back to normal
 
     // Send documents to database
     try {
@@ -638,18 +653,24 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
+        status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+        status["Probation"] = PROBATION;
+
     }
 
-    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
+    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
+            << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
             << "Recording" << (bool) status["Recording"].get<bool>()
             << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
             << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
+            << "Target Frame Rate" << status["Resulting Frame Rate"].get<float>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()
             << "Temperature" << (int) status["Temperature"].get<int>()
             << "Target Brightness" << (int) status["Target Brightness"].get<int>()
+            << "Probation" << (int) status["Probation"].get<int>()
             << bsoncxx::builder::stream::finalize;
 
     // Insert into the DB
@@ -674,6 +695,8 @@ json AgriDataCamera::GetStatus() {
     LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Failed Packet Count: " << GetStreamGrabberParams().Statistic_Failed_Packet_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Resend Request Count: " << GetStreamGrabberParams().Statistic_Resend_Request_Count();
+    LOG(DEBUG) << "[" << serialnumber << "] Resend Packet Count: " << GetStreamGrabberParams().Statistic_Resend_Packet_Count();
 
     return status;
 }
