@@ -41,7 +41,7 @@
 #include <mongocxx/instance.hpp>
 
 
-class AgriDataCamera : public Pylon::CInstantCamera
+class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
 {
 public:
     AgriDataCamera();

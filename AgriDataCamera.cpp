@@ -141,6 +141,9 @@ void AgriDataCamera::Initialize() {
     } catch (const GenericException &e) {
         LOG(FATAL) << "An exception occurred: " << e.GetDescription();
     }
+    
+    // Turn the Test Image off
+    //TestImageSelector.SetValue( TestImageSelector_Off );
 
     // [OPTIONAL] Override Interpacket Delay (GigE only)
     try {
@@ -237,7 +240,6 @@ void AgriDataCamera::Run() {
     // Output parameters
     save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
             + serialnumber + "/";
-    LOG(INFO) << save_prefix;
     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
@@ -250,8 +252,7 @@ void AgriDataCamera::Run() {
     // Save configuration
     INodeMap &nodeMap = GetNodeMap();
     string config = save_prefix + "config.txt";
-    CFeaturePersistence::Save(config.c_str(), &nodeMap);
-
+    // CFeaturePersistence::Save(config.c_str(), &nodeMap);
     // Initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {

@@ -136,7 +136,7 @@ static void printIntro() {
  */
 int main() {
     // Configure Logging
-    el::Configurations conf("camerastack.log");
+    el::Configurations conf("config/easylogging.conf");
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
 
     // Register signals
