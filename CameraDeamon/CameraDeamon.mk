@@ -47,7 +47,7 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/
 ## AR, CXX, CC, AS, CXXFLAGS and CFLAGS can be overriden using an environment variables
 ##
 AR       := /usr/bin/aarch64-linux-gnu-ar rcu
-CXX      := /usr/bin/aarch64-linux-gnu-g++ -DELPP_THREAD_SAFE -DELPP_FEATURE_CRASH_LOG
+CXX      := /usr/bin/aarch64-linux-gnu-g++
 CC       := /usr/bin/aarch64-linux-gnu-gcc
 H5CXX    := /usr/bin/h5c++
 CXXFLAGS :=  -pg -O0 -w -std=c++11 -Wall -Wunknown-pragmas -ggdb $(Preprocessors)

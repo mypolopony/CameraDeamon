@@ -74,9 +74,6 @@ private:
     int64_t width;
     int64_t height;
 
-    // Frame Rate
-    float framerate; 
-
     // Target dimensions
     int TARGET_HEIGHT = 960;
     int TARGET_WIDTH  = 600;
@@ -110,6 +107,7 @@ private:
     int tick;                           // Running counter
 
     // Dynamic Framerate
+    int HIGH_FPS;			// To be set on initialization (cannot be const)
     const int LOW_FPS = 5;              // Probationary frame rate
     const int RT_PROBATION = -1;        // Restricted period (this is a reverse timer, -1 is safe)
     int PROBATION = 200;                // Counts down

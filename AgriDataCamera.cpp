@@ -174,25 +174,22 @@ void AgriDataCamera::Initialize() {
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Frame Rate
-    framerate = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue()
-
+    HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+    
     // Print camera device information.
-    LOG(INFO) << "Camera Device Information";
+    LOG(INFO) << "\nCamera Device Information";
     LOG(INFO) << "=========================";
-    LOG(INFO) << "Vendor : " 
-              << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
-    LOG(INFO) << "Model : "<< modelname;
-    LOG(INFO) << "Firmware version : "
-              << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue();
-    LOG(INFO) << "Serial Number : "
-              << serialnumber;
+    LOG(INFO) << "Vendor : " << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
+    LOG(INFO) << "Model : " << modelname;
+    LOG(INFO) << "Firmware version : " << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue();
+    LOG(INFO) << "Serial Number : " << serialnumber;
     LOG(INFO) << "Frame Size  : " << width << 'x' << height;
     LOG(INFO) << "Max Buffer Size : " << GetStreamGrabberParams().Statistic_Total_Buffer_Count.GetValue();
     LOG(INFO) << "Packet Size : " << GevSCPSPacketSize.GetValue();
     LOG(INFO) << "Inter-packet Delay : " << GevSCPD.GetValue();
     LOG(INFO) << "Packet Size : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
-    LOG(INFO) << "Target Frame Rate : " << framerate;
+    LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
 
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
@@ -229,7 +226,6 @@ void AgriDataCamera::Initialize() {
     // HDF5
     current_hdf5_file = "";
     LOG(INFO) << "Initialization complete!";
-
 }
 
 /**
@@ -287,9 +283,10 @@ void AgriDataCamera::Run() {
                     }
 
                 } else {
-                    LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " "
-                            << ptrGrabResult->GetErrorDescription();
-
+                    LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+                    LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
+                     CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));
+                    fps->SetValue(LOW_FPS); 
                 }
             } catch (const GenericException &e) {
                 LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
@@ -311,6 +308,9 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
     tick++;
+
+    // Need the latest nodemap? Not sure whether or not this can / should be a private member
+    INodeMap &nodeMap = GetNodeMap();
 
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
@@ -411,7 +411,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
           LOG(INFO) << "Returning to " << HIGH_FPS << " FPS";
         }
         PROBATION = -1;             // Back to normal
-
+    }
+    
     // Send documents to database
     try {
         if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {

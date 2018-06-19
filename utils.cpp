@@ -16,8 +16,6 @@
 // Logging
 #include <easylogging++.h>
 
-INITIALIZE_EASYLOGGINGPP
-
 void SampleRedis() {
     redox::Redox rdx;
     std::string s;
