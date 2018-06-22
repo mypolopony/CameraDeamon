@@ -139,7 +139,7 @@ void AgriDataCamera::Initialize() {
         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
 
     } catch (const GenericException &e) {
-        LOG(FATAL) << "An exception occurred: " << e.GetDescription();
+        LOG(ERROR) << "An exception occurred: " << e.GetDescription();
     }
     
     // Turn the Test Image off
@@ -160,7 +160,6 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Skipping GevSCPD parameter";
     }
     
-
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
@@ -249,7 +248,8 @@ void AgriDataCamera::Run() {
     // Save configuration
     INodeMap &nodeMap = GetNodeMap();
     string config = save_prefix + "config.txt";
-    // CFeaturePersistence::Save(config.c_str(), &nodeMap);
+    CFeaturePersistence::Save(config.c_str(), &nodeMap);
+    
     // Initiate main loop with algorithm
     while (isRecording) {
         if (!isPaused) {
@@ -285,8 +285,14 @@ void AgriDataCamera::Run() {
                 } else {
                     LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
                     LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
-                     CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));
-                    fps->SetValue(LOW_FPS); 
+                    try {
+                        CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));
+                        LOG(DEBUG) << "Node grabbed";
+                        fps->SetValue(LOW_FPS); 
+                        LOG(DEBUG) << "Now set";
+                    } catch (...) {
+                        LOG(DEBUG) << "Passing on exception";
+                    }
                 }
             } catch (const GenericException &e) {
                 LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
