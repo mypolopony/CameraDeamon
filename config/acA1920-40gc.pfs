@@ -79,7 +79,7 @@ ExposureMode	Timed
 ExposureAuto	Continuous
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRateAbs	15
+AcquisitionFrameRateAbs	100
 LineSelector	Line1
 LineMode	Input
 LineSelector	Line2

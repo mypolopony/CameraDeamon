@@ -420,14 +420,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     }
     
     // Send documents to database
-    try {
-        if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
-            frames.insert_many(documents);
-            documents.clear();
-        }
-    } catch (exception const &exc) {
-        LOG(DEBUG) << "Exception caught " << exc.what() << "\n";
+    if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
+        LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
+        frames.insert_many(documents);
+        documents.clear();
     }
 }
 
