@@ -401,7 +401,7 @@ int main() {
                     // Error block
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
-                    LOG(FATAL) << "An exception occured: " << e.GetDescription();
+                    LOG(ERROR) << "An exception occured: " << e.GetDescription();
                  }
 
             }

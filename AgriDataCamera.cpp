@@ -394,18 +394,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         t.detach();
     }
 
-    // Check Luminance (and add to documents)
-    if (tick % T_LUMINANCE == 0) {
-        // We send to database first, then we can edit it later
-        auto ret = frames.insert_one(doc.view());
-        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
-        t.detach();
-    } else {
-        // Add to documents
-        documents.push_back(doc.extract());
-    }
-
     // Dynamic frame rate adjustment
     PROBATION--;
     if (PROBATION > -1) {           // In the bonus
