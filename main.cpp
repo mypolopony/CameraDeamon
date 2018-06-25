@@ -149,7 +149,7 @@ int main() {
     zmq::socket_t client(context, ZMQ_SUB);
     client.connect("tcp://127.0.0.1:4999");
 
-    // Publish on 4448
+    // Publish on 4998
     zmq::socket_t publisher(context, ZMQ_PUB);
     publisher.bind("tcp://*:4998");
     client.setsockopt(ZMQ_SUBSCRIBE, "", 0);
@@ -207,8 +207,9 @@ int main() {
 
     while (true) {
         try {
-	    // Chill out
+	        // Chill out
             usleep(150000); // 0.15 seconds?
+
             // Check for and handle signals
             if (sigint_flag) {
                 LOG(INFO) << "SIGINT Caught!";
@@ -227,13 +228,23 @@ int main() {
             }
 
             // Non-blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
-            // throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are constantly
-            // interrogating processes, they are interrupted very often. Use the catch to allow things to
+            // throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are
+            // constantly interrogating processes, they are interrupted very often. Use the catch to allow things to
             // proceed on smoothly
             try {
                 rec = client.recv(&messageR);
             } catch (zmq::error_t error) {
-                if (errno == EINTR) continue;
+                if (errno == EINTR) {
+                    LOG(WARNING) << "EINTR Signal Caught";
+                    continue;
+                } else {
+                    LOG(ERROR) << "Unknown Signal Caught";
+                    continue;
+                }
+            } catch(const std::exception &exc) {
+                LOG(ERROR) << "ZMQ Error:";
+                LOG(ERROR) << "Exception caught: " << exc.what();
+                continue;
             }
 
             // Good message
