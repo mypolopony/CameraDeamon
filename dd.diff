@@ -1,0 +1,536 @@
+diff --git a/AgriDataCamera.cpp b/AgriDataCamera.cpp
+index 3cce04f..757d623 100644
+--- a/AgriDataCamera.cpp
++++ b/AgriDataCamera.cpp
+@@ -65,7 +65,6 @@ typedef std::chrono::high_resolution_clock Clock;
+ 
+ // Namespaces
+ using namespace Basler_GigECameraParams;
+-using namespace Basler_GigEStreamParams;
+ using namespace Pylon;
+ using namespace H5;
+ using namespace std;
+@@ -98,7 +97,7 @@ AgriDataCamera::~AgriDataCamera() {
+  */
+ 
+ zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
+-    LOG(INFO) << "Connecting to IMU server...";
++    std::cout << "Connecting to IMU server..." << std::endl;
+     zmq::socket_t * client = new zmq::socket_t(context, ZMQ_REQ);
+     client->connect("tcp://localhost:4997");
+ 
+@@ -128,38 +127,29 @@ void AgriDataCamera::Initialize() {
+         StartGrabbing();
+     }
+ 
+-    // Print the camera identity
+-    LOG(INFO) << "Initializing device " << GetDeviceInfo().GetModelName();
++    // Print the model name of the
++    cout << "Initializing device " << GetDeviceInfo().GetModelName() << endl;
+ 
+-    // Load config file
+     try {
+         string config = "/home/nvidia/CameraDeamon/config/"
+                 + string(GetDeviceInfo().GetModelName()) + ".pfs";
+-        LOG(INFO) << "Reading from configuration file: " + config;
++        cout << "Reading from configuration file: " + config;
++        cout << endl;
+         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
+ 
+     } catch (const GenericException &e) {
+-        LOG(ERROR) << "An exception occurred: " << e.GetDescription();
++        cerr << "An exception occurred." << endl << e.GetDescription() << endl;
+     }
+-    
+-    // Turn the Test Image off
+-    // TestImageSelector.SetValue( TestImageSelector_Off );
+ 
+-    // [OPTIONAL] Override Interpacket Delay (GigE only)
+-    try {
++    // Set Interpacket Delay
++    try {    // (GigE only)
++        srand(time(NULL));
+         CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
+-
+-    	if (false) {
+-            srand(time(NULL));
+-            intFeature->SetValue((rand() % 12150) + 7150);
+-            LOG(INFO) << "Using Randomized Interpacket Delay (" << intFeature->GetValue() << ")";
+-        } else {
+-            LOG(INFO) << "Using Interpacket Delay from Config (" << intFeature->GetValue() << ")";
+-        }
++        intFeature->SetValue((rand() % 12150) + 7150);
+     } catch (...) {
+-        LOG(WARNING) << "Skipping GevSCPD parameter";
++        LOG(WARNING) << "Skipping GevSCPD parameter" << endl;
+     }
+-    
++
+     // Get Dimensions
+     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
+     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
+@@ -172,23 +162,21 @@ void AgriDataCamera::Initialize() {
+     }
+     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
+ 
+-    // Frame Rate
+-    HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+-    
+     // Print camera device information.
+-    LOG(INFO) << "\nCamera Device Information";
+-    LOG(INFO) << "=========================";
+-    LOG(INFO) << "Vendor : " << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
+-    LOG(INFO) << "Model : " << modelname;
+-    LOG(INFO) << "Firmware version : " << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue();
+-    LOG(INFO) << "Serial Number : " << serialnumber;
+-    LOG(INFO) << "Frame Size  : " << width << 'x' << height;
+-    LOG(INFO) << "Max Buffer Size : " << GetStreamGrabberParams().Statistic_Total_Buffer_Count.GetValue();
+-    LOG(INFO) << "Packet Size : " << GevSCPSPacketSize.GetValue();
+-    LOG(INFO) << "Inter-packet Delay : " << GevSCPD.GetValue();
+-    LOG(INFO) << "Packet Size : " << GevSCBWA.GetValue();
+-    LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
+-    LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
++    cout << "Camera Device Information" << endl << "========================="
++            << endl;
++    cout << "Vendor : "
++            << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue()
++            << endl;
++    cout << "Model : "
++            << modelname
++            << endl;
++    cout << "Firmware version : "
++            << CStringPtr(nodeMap.GetNode("DeviceFirmwareVersion"))->GetValue()
++            << endl;
++    cout << "Serial Number : "
++            << serialnumber << endl;
++    cout << "Frame Size  : " << width << 'x' << height << endl << endl;
+ 
+     // Create Mat image templates
+     cv_img = Mat(width, height, CV_8UC3);
+@@ -199,7 +187,8 @@ void AgriDataCamera::Initialize() {
+     fc.OutputPixelFormat = PixelType_BGR8packed;
+ 
+     // Initialize MongoDB connection
+-    LOG(INFO) << "Connecting to MongoDB";
++    // The use of auto here is unfortunate, but it is apparently recommended
++    // The type is actually N8mongocxx7v_noabi10collectionE or something crazy
+     db = conn["agdb"];
+     frames = db["frame"];
+ 
+@@ -215,16 +204,16 @@ void AgriDataCamera::Initialize() {
+     compression_params.push_back(30);
+     
+     // Obtain box info
+-    LOG(INFO) << "Obtaining Box Information";
+     mongocxx::collection box = db["box"];
+     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
+     string resultstring = bsoncxx::to_json(*maybe_result);
+     auto thisbox = json::parse(resultstring);
+     clientid = thisbox["clientid"];
+ 
++
+     // HDF5
+     current_hdf5_file = "";
+-    LOG(INFO) << "Initialization complete!";
++
+ }
+ 
+ /**
+@@ -236,6 +225,7 @@ void AgriDataCamera::Run() {
+     // Output parameters
+     save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
+             + serialnumber + "/";
++    LOG(INFO) << save_prefix << endl;
+     bool success = AGDUtils::mkdirp(save_prefix.c_str(),
+             S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+ 
+@@ -245,11 +235,14 @@ void AgriDataCamera::Run() {
+         StartGrabbing();
+     }
+ 
++    // Color Balance
++    CEnumerationPtr selector = GetNodeMap().GetNode("BalanceRatioSelector");
++
+     // Save configuration
+     INodeMap &nodeMap = GetNodeMap();
+     string config = save_prefix + "config.txt";
+     CFeaturePersistence::Save(config.c_str(), &nodeMap);
+-    
++
+     // Initiate main loop with algorithm
+     while (isRecording) {
+         if (!isPaused) {
+@@ -272,6 +265,14 @@ void AgriDataCamera::Run() {
+                         fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
+                     }
+ 
++                    // Color Balance
++                    selector->FromString("EnumEntry_BalanceRatioSelector_Red");
++                    fp.balance_red = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
++                    selector->FromString("BalanceRatioSelector_Green");
++                    fp.balance_green = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
++                    selector->FromString("BalanceRatioSelector_Blue");
++                    fp.balance_blue = (float) CFloatPtr(GetNodeMap().GetNode("BalanceRatio"))->GetValue();
++
+                     // Image
+                     fp.img_ptr = ptrGrabResult;
+ 
+@@ -279,20 +280,12 @@ void AgriDataCamera::Run() {
+                     try {
+                         HandleFrame(fp);
+                     } catch (...) {
+-                        LOG(WARNING) << "Frame slipped!";
++                        LOG(WARNING) << "Frame slipped!" << endl;
+                     }
+ 
+                 } else {
+-                    LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+-                    LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
+-                    try {
+-                        CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));
+-                        LOG(DEBUG) << "Node grabbed";
+-                        fps->SetValue(LOW_FPS); 
+-                        LOG(DEBUG) << "Now set";
+-                    } catch (...) {
+-                        LOG(DEBUG) << "Passing on exception";
+-                    }
++                    cout << "Error: " << ptrGrabResult->GetErrorCode() << " "
++                            << ptrGrabResult->GetErrorDescription() << endl;
+                 }
+             } catch (const GenericException &e) {
+                 LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
+@@ -315,9 +308,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+     long int start, end;
+     tick++;
+ 
+-    // Need the latest nodemap? Not sure whether or not this can / should be a private member
+-    INodeMap &nodeMap = GetNodeMap();
+-
+     // Docuemnt
+     auto doc = bsoncxx::builder::basic::document{};
+     doc.append(
+@@ -336,6 +326,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+     // Add Camera data
+     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
+ 
++    // Color balance
++    doc.append(bsoncxx::builder::basic::kvp("balance_red", fp.balance_red));
++    doc.append(bsoncxx::builder::basic::kvp("balance_green", fp.balance_green));
++    doc.append(bsoncxx::builder::basic::kvp("balance_blue", fp.balance_blue));
++
+     // Computer time and output directory
+     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
+     string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+@@ -351,7 +346,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+         }
+         
+         current_hdf5_file = hdf5file;
+-        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file;
++        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file << endl;
+         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+     }
+ 
+@@ -384,9 +379,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+     try {
+         H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+     } catch (...) {
+-        LOG(INFO) << "Frame dropped (likely end of recording)";
++        LOG(INFO) << "Frame dropped (likely end of recording)" << endl;
+     }
+-
+     // Write to streaming image
+     if (tick % T_LATEST == 0) {
+         thread t(&AgriDataCamera::writeLatestImage, this, last_img,
+@@ -394,24 +388,27 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+         t.detach();
+     }
+ 
+-    // Dynamic frame rate adjustment
+-    PROBATION--;
+-    if (PROBATION > -1) {           // In the bonus
+-        --PROBATION;
+-    } else {                        // All OK
+-        if (PROBATION == 0) {       // Transition (special case)
+-          CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));    
+-          fps->SetValue(HIGH_FPS);  
+-          LOG(INFO) << "Returning to " << HIGH_FPS << " FPS";
+-        }
+-        PROBATION = -1;             // Back to normal
++    // Check Luminance (and add to documents)
++    if (tick % T_LUMINANCE == 0) {
++        // We send to database first, then we can edit it later
++        auto ret = frames.insert_one(doc.view());
++        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
++        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
++        t.detach();
++    } else {
++        // Add to documents
++        documents.push_back(doc.extract());
+     }
+-    
++
+     // Send documents to database
+-    if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
+-        LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
+-        frames.insert_many(documents);
+-        documents.clear();
++    try {
++        if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
++            LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
++            frames.insert_many(documents);
++            documents.clear();
++        }
++    } catch (exception const &exc) {
++        LOG(DEBUG) << "Exception caught " << exc.what() << "\n";
+     }
+ }
+ 
+@@ -644,24 +641,18 @@ json AgriDataCamera::GetStatus() {
+         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
+         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
+-        status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+-        status["Probation"] = PROBATION;
+-
+     }
+ 
+-    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
+-            << "Serial Number" << (string) status["Serial Number"].get<string>()
++    bsoncxx::document::value document = bsoncxx::builder::stream::document{}  << "Serial Number" << (string) status["Serial Number"].get<string>()
+             << "Model Name" << (string) status["Model Name"].get<string>()
+             << "Recording" << (bool) status["Recording"].get<bool>()
+             << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
+             << "scanid" << (string) status["scanid"].get<string>()
+             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
+             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
+-            << "Target Frame Rate" << status["Resulting Frame Rate"].get<float>()
+             << "Current Gain" << (int) status["Current Gain"].get<int>()
+             << "Temperature" << (int) status["Temperature"].get<int>()
+             << "Target Brightness" << (int) status["Target Brightness"].get<int>()
+-            << "Probation" << (int) status["Probation"].get<int>()
+             << bsoncxx::builder::stream::finalize;
+ 
+     // Insert into the DB
+@@ -679,15 +670,5 @@ json AgriDataCamera::GetStatus() {
+         t.detach();
+     }
+ 
+-    // Extra bits
+-    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Socket Buffer Size: " << GetStreamGrabberParams().SocketBufferSize();
+-    LOG(DEBUG) << "[" << serialnumber << "] Buffer Underrun Count: " << GetStreamGrabberParams().Statistic_Buffer_Underrun_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Failed Packet Count: " << GetStreamGrabberParams().Statistic_Failed_Packet_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Resend Request Count: " << GetStreamGrabberParams().Statistic_Resend_Request_Count();
+-    LOG(DEBUG) << "[" << serialnumber << "] Resend Packet Count: " << GetStreamGrabberParams().Statistic_Resend_Packet_Count();
+-
+     return status;
+ }
+diff --git a/AgriDataCamera.h b/AgriDataCamera.h
+index 8f57d16..2ff9340 100644
+--- a/AgriDataCamera.h
++++ b/AgriDataCamera.h
+@@ -41,7 +41,7 @@
+ #include <mongocxx/instance.hpp>
+ 
+ 
+-class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
++class AgriDataCamera : public Pylon::CInstantCamera
+ {
+ public:
+     AgriDataCamera();
+@@ -67,6 +67,7 @@ private:
+     struct FramePacket {
+         int64_t time_now;
+         float exposure_time;
++        float balance_red, balance_green, balance_blue;
+         Pylon::CGrabResultPtr img_ptr;
+     };
+ 
+@@ -91,6 +92,7 @@ private:
+ 
+     // Image converter
+     Pylon::CImageFormatConverter fc;
++    Pylon::CImagePersistenceOptions persistenceOptions;
+ 
+     // Output base
+     std::string save_prefix;
+@@ -100,20 +102,12 @@ private:
+ 
+     // Timers
+     const int T_LATEST = 20;            // Every second
+-    const int T_MONGODB = 1200;         // ~ Every minute
++    const int T_MONGODB = 60*20;        // Every minute
+     const int T_LUMINANCE = 10;         // Every half second
+-    const int T_SAMPLE = 10;		    // Every half second
+-    int T_CALIBRATION = 0;              // First five minutes are calibration (0 is disabled)
++    const int T_SAMPLE = 10;		// Every half second
++    int T_CALIBRATION = 0;              // First five minutes are calibration
+     int tick;                           // Running counter
+ 
+-    // Dynamic Framerate
+-    int HIGH_FPS;			// To be set on initialization (cannot be const)
+-    const int LOW_FPS = 5;              // Probationary frame rate
+-    const int RT_PROBATION = -1;        // Restricted period (this is a reverse timer, -1 is safe)
+-    int PROBATION = 200;                // Counts down
+-
+-
+-
+     // Output Parameters
+     uint8_t max_filesize = 3;
+     std::string output_prefix;
+diff --git a/CameraDeamon/CameraDeamon b/CameraDeamon/CameraDeamon
+new file mode 100755
+index 0000000..d39b693
+Binary files /dev/null and b/CameraDeamon/CameraDeamon differ
+diff --git a/CameraDeamon/CameraDeamon.mk b/CameraDeamon/CameraDeamon.mk
+index 533845c..15e39fd 100644
+--- a/CameraDeamon/CameraDeamon.mk
++++ b/CameraDeamon/CameraDeamon.mk
+@@ -36,11 +36,11 @@ ObjectsFileList        :="CameraDeamon.txt"
+ PCHCompileFlags        :=
+ MakeDirCommand         :=mkdir -p
+ LinkOptions            :=  -pg -ggdb `pkg-config opencv --cflags --libs` `/opt/pylon5/bin/pylon-config --libs-rpath` `pkg-config --libs libmongocxx` /usr/lib/aarch64-linux-gnu/libz.so /usr/lib/aarch64-linux-gnu/libdl.so /usr/lib/aarch64-linux-gnu/libm.so
+-IncludePath            := $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include $(IncludeSwitch)/usr/local/include/bsoncxx/v_noabi $(IncludeSwitch)/usr/local/include/mongocxx/v_noabi $(IncludeSwitch)/home/nvidia/CameraDeamon/lib $(IncludeSwitch)/usr/include/opencv2 $(IncludeSwitch)/usr/include $(IncludeSwitch)/data/opencv_contrib/modules/xfeatures2d/include $(IncludeSwitch)/usr/include/hdf5/serial/
++IncludePath            := $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include $(IncludeSwitch)/usr/local/include/bsoncxx/v_noabi $(IncludeSwitch)/usr/local/include/mongocxx/v_noabi $(IncludeSwitch)/home/nvidia/CameraDeamon/lib $(IncludeSwitch)/usr/include/opencv2 $(IncludeSwitch)/usr/include $(IncludeSwitch)/data/opencv_contrib/modules/xfeatures2d/include $(IncludeSwitch)/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/include
+ IncludePCH             :=
+ RcIncludePath          :=
+-Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_system $(LibrarySwitch)boost_filesystem $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)profiler $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl $(LibrarySwitch)hdf5_cpp 
+-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 $(LibraryPathSwitch)/usr/local/lib64 $(LibraryPathSwitch)/usr/lib/aarch64-linux-gnu/hdf5/serial/
++Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_system $(LibrarySwitch)boost_filesystem $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)profiler $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl $(LibrarySwitch)hdf5_cpp $(LibrarySwitch)ev 
++LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 $(LibraryPathSwitch)/usr/local/lib64 $(LibraryPathSwitch)/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/lib
+ 
+ ##
+ ## Common variables
+diff --git a/cameradeamon.lock b/cameradeamon.lock
+deleted file mode 100644
+index 756833a..0000000
+--- a/cameradeamon.lock
++++ /dev/null
+@@ -1 +0,0 @@
+-2018-06-25_12-17
+\ No newline at end of file
+diff --git a/config/easylogging.conf b/config/easylogging.conf
+index 9b7a104..8ce4bdb 100644
+--- a/config/easylogging.conf
++++ b/config/easylogging.conf
+@@ -1,12 +1,15 @@
+ * GLOBAL:
+-   FORMAT               =  "%datetime{%d-%M-%Y-%H.%m.%s.%g}: [%level] (%file:%thread_name:%line) %msg"
+-   FILENAME             =  "/data/logs/camerastack.log"
++   FORMAT               =  "%datetime %msg"
++   FILENAME             =  "/tmp/logs/my.log"
+    ENABLED              =  true
+    TO_FILE              =  true
+    TO_STANDARD_OUTPUT   =  true
+    SUBSECOND_PRECISION  =  6
+    PERFORMANCE_TRACKING =  true
+-   MAX_LOG_FILE_SIZE    =  104857600  # 100 MB
++   MAX_LOG_FILE_SIZE    =  2097152 ## 2MB - Comment starts with two hashes (##)
++   LOG_FLUSH_THRESHOLD  =  100 ## Flush after every 100 logs
++* DEBUG:
++   FORMAT               = "%datetime{%d-%M-%Y-%H.%m.%s.%g}: [%level] (%file:%thread_name:%line) %msg"
+ 
+ ## Compile with
+-## -DELPP_THREAD_SAFE -DELPP_FEATURE_CRASH_LOG 
+\ No newline at end of file
++## -DELPP_THREAD_SAFE -DELPP_FEATURE_CRASH_LOG 
+diff --git a/main.cpp b/main.cpp
+index 6633b47..06e78d1 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -149,7 +149,7 @@ int main() {
+     zmq::socket_t client(context, ZMQ_SUB);
+     client.connect("tcp://127.0.0.1:4999");
+ 
+-    // Publish on 4998
++    // Publish on 4448
+     zmq::socket_t publisher(context, ZMQ_PUB);
+     publisher.bind("tcp://*:4998");
+     client.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+@@ -176,9 +176,8 @@ int main() {
+     // Get all attached devices and exit application if no device is found.
+     DeviceInfoList_t devices;
+     if (tlFactory.EnumerateDevices(devices) < 1) {
++        LOG(WARNING) << "About to throw fatal error (no devices found)" << endl;
+         LOG(FATAL) << "Not enough cameras present -- Restarting";
+-    } else {
+-        LOG(INFO) << "Number of Devices found: " << devices.size();
+     }
+ 
+     // Camera Initialization
+@@ -207,9 +206,8 @@ int main() {
+ 
+     while (true) {
+         try {
+-	        // Chill out
++	    // Chill out
+             usleep(150000); // 0.15 seconds?
+-
+             // Check for and handle signals
+             if (sigint_flag) {
+                 LOG(INFO) << "SIGINT Caught!";
+@@ -228,23 +226,13 @@ int main() {
+             }
+ 
+             // Non-blocking message handling. If a system call interrupts ZMQ while it is waiting, it will
+-            // throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are
+-            // constantly interrogating processes, they are interrupted very often. Use the catch to allow things to
++            // throw an error_t (error_t == 4, errno = EINTR) which would ordinarily cause a crash. Since profilers are constantly
++            // interrogating processes, they are interrupted very often. Use the catch to allow things to
+             // proceed on smoothly
+             try {
+                 rec = client.recv(&messageR);
+             } catch (zmq::error_t error) {
+-                if (errno == EINTR) {
+-                    LOG(WARNING) << "EINTR Signal Caught";
+-                    continue;
+-                } else {
+-                    LOG(ERROR) << "Unknown Signal Caught";
+-                    continue;
+-                }
+-            } catch(const std::exception &exc) {
+-                LOG(ERROR) << "ZMQ Error:";
+-                LOG(ERROR) << "Exception caught: " << exc.what();
+-                continue;
++                if (errno == EINTR) continue;
+             }
+ 
+             // Good message
+@@ -412,7 +400,13 @@ int main() {
+                     // Error block
+                     reply["status"] = "0";
+                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
+-                    LOG(ERROR) << "An exception occured: " << e.GetDescription();
++                    LOG(WARNING) << "An exception occured: " << e.GetDescription();
++                    
++                    // Send message as above 
++                    // TODO: Combine identical code
++                    zmq::message_t messageS(reply.dump().size());
++                    memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
++                    publisher.send(messageS);
+                  }
+ 
+             }
+diff --git a/run b/run
+deleted file mode 120000
+index 05b85bc..0000000
+--- a/run
++++ /dev/null
+@@ -1 +0,0 @@
+-CameraDeamon/Release/CameraDeamon
+\ No newline at end of file
+diff --git a/utils.cpp b/utils.cpp
+index 2a4d6b6..cbb098c 100644
+--- a/utils.cpp
++++ b/utils.cpp
+@@ -16,6 +16,8 @@
+ // Logging
+ #include <easylogging++.h>
+ 
++INITIALIZE_EASYLOGGINGPP
++
+ void SampleRedis() {
+     redox::Redox rdx;
+     std::string s;
