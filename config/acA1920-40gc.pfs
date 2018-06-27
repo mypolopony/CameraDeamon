@@ -85,8 +85,8 @@ ExposureMode	Timed
 ExposureAuto	Off
 ExposureTimeRaw	34
 ShutterMode	Global
-AcquisitionFrameRateEnable	0
-AcquisitionFrameRateAbs	100
+AcquisitionFrameRateEnable	1
+AcquisitionFrameRateAbs	15
 LineSelector	Line1
 LineMode	Input
 LineSelector	Line2
@@ -155,7 +155,7 @@ GevStreamChannelSelector	StreamChannel0
 GevSCPSPacketSize	1500
 GevStreamChannelSelector	StreamChannel0
 GevStreamChannelSelector	StreamChannel0
-GevSCPD	164
+GevSCPD	9000
 GevStreamChannelSelector	StreamChannel0
 GevStreamChannelSelector	StreamChannel0
 GevSCFTD	0
