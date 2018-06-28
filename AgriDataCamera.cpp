@@ -173,10 +173,11 @@ void AgriDataCamera::Initialize() {
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Frame Rate
-    HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+    // HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
+    HIGH_FPS = AcquisitionFrameRateAbs.GetValue();
     
     // Print camera device information.
-    LOG(INFO) << "\nCamera Device Information";
+    LOG(INFO) << "Camera Device Information";
     LOG(INFO) << "=========================";
     LOG(INFO) << "Vendor : " << CStringPtr(nodeMap.GetNode("DeviceVendorName"))->GetValue();
     LOG(INFO) << "Model : " << modelname;
@@ -286,12 +287,13 @@ void AgriDataCamera::Run() {
                     LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
                     LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
                     try {
-                        CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));
-                        LOG(DEBUG) << "Node grabbed";
-                        fps->SetValue(LOW_FPS); 
-                        LOG(DEBUG) << "Now set";
-                    } catch (...) {
-                        LOG(DEBUG) << "Passing on exception";
+			RT_PROBATION = PROBATION;
+			AcquisitionFrameRateEnable.SetValue(true);
+                        AcquisitionFrameRateAbs.SetValue(LOW_FPS);
+                        LOG(DEBUG) << "Changed Successfully";
+                        // fps->SetValue(LOW_FPS); 
+                    } catch (const GenericException &e) {
+                        LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
                     }
                 }
             } catch (const GenericException &e) {
@@ -395,18 +397,15 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     }
 
     // Dynamic frame rate adjustment
-    PROBATION--;
-    if (PROBATION > -1) {           // In the bonus
-        --PROBATION;
-    } else {                        // All OK
-        if (PROBATION == 0) {       // Transition (special case)
-          CIntegerPtr fps(nodeMap.GetNode("ResultingFrameRateAbs"));    
-          fps->SetValue(HIGH_FPS);  
-          LOG(INFO) << "Returning to " << HIGH_FPS << " FPS";
-        }
-        PROBATION = -1;             // Back to normal
+    RT_PROBATION--;
+    if (RT_PROBATION == 0) {       // Transition (special case)
+          AcquisitionFrameRateEnable.SetValue(true);
+          AcquisitionFrameRateAbs.SetValue(HIGH_FPS);  
+          LOG(DEBUG) << "Returning to " << HIGH_FPS << " FPS";
+    } else if (RT_PROBATION < -1) {         
+          RT_PROBATION=-1;        // Back to normal
     }
-    
+
     // Send documents to database
     if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
         LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
@@ -656,8 +655,9 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
-        status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
-        status["Probation"] = PROBATION;
+        // status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("AcquisitionFrameRateAbs"))->GetValue();
+	status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
+        status["Probation"] = RT_PROBATION;
 
     }
 
@@ -669,7 +669,7 @@ json AgriDataCamera::GetStatus() {
             << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
-            << "Target Frame Rate" << status["Resulting Frame Rate"].get<float>()
+            << "Target Frame Rate" << status["Target Frame Rate"].get<float>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()
             << "Temperature" << (int) status["Temperature"].get<int>()
             << "Target Brightness" << (int) status["Target Brightness"].get<int>()
