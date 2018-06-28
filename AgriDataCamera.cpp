@@ -596,18 +596,17 @@ int AgriDataCamera::Stop() {
     isRecording = false;
 
     try {
-        LOG(INFO) << "Dumping documents";
+        LOG(INFO) << "Dumping last " << documents.size() << " documents to Database";
         frames.insert_many(documents);
         documents.clear();
     } catch(...) {
-	// LOG(WARNING) << "Dumping failed: " << e.GetDescription(); 
-        LOG(WARNING) << "Dumping failed: ";
+        LOG(WARNING) << "Dumping failed";
     }
 
     try {
     	AddTask(current_hdf5_file);
     } catch(const GenericException &e) {
-        LOG(WARNING) << "Adding task failed: " << e.GetDescription();
+        LOG(WARNING) << "Adding task failed";
     }
 
     try {
