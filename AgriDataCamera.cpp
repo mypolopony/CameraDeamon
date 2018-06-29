@@ -594,14 +594,26 @@ int AgriDataCamera::Stop() {
     LOG(INFO) << "Recording Stopped";
     isRecording = false;
 
-    LOG(INFO) << "Dumping documents";
-    frames.insert_many(documents);
-    documents.clear();
+    try {
+        LOG(INFO) << "Dumping last " << documents.size() << " documents to Database";
+        frames.insert_many(documents);
+        documents.clear();
+    } catch(...) {
+        LOG(WARNING) << "Dumping failed";
+    }
 
-    AddTask(current_hdf5_file);
+    try {
+    	AddTask(current_hdf5_file);
+    } catch(const GenericException &e) {
+        LOG(WARNING) << "Adding task failed";
+    }
 
-    LOG(INFO) << "Closing active HDF5 file";
-    H5Fclose(hdf5_out);
+    try {
+        LOG(INFO) << "Closing active HDF5 file";
+        H5Fclose(hdf5_out);
+    } catch(const GenericException &e) {
+        LOG(WARNING) << "HDF5 file closing failed: " << e.GetDescription();
+    }
 
     LOG(INFO) << "*** Done ***";
     return 0;
