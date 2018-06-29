@@ -187,7 +187,7 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Max Buffer Size : " << GetStreamGrabberParams().Statistic_Total_Buffer_Count.GetValue();
     LOG(INFO) << "Packet Size : " << GevSCPSPacketSize.GetValue();
     LOG(INFO) << "Inter-packet Delay : " << GevSCPD.GetValue();
-    LOG(INFO) << "Packet Size : " << GevSCBWA.GetValue();
+    LOG(INFO) << "Bandwidth Assigned : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
     LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
 
