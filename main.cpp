@@ -340,7 +340,7 @@ int main() {
 
                             // This sleep (is / may be) necessary to allow the threads to finish
                             // and resources to be released
-                            usleep(2500000);
+                            // usleep(2500000);
 
                             for (size_t i = 0; i < devices.size(); ++i) {
                                 cameras[i]->Initialize();
