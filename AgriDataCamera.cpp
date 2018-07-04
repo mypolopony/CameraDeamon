@@ -149,7 +149,7 @@ void AgriDataCamera::Initialize() {
     try {
         CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
 
-    	if (false) {
+        if (false) {
             srand(time(NULL));
             intFeature->SetValue((rand() % 12150) + 7150);
             LOG(INFO) << "Using Randomized Interpacket Delay (" << intFeature->GetValue() << ")";
@@ -287,8 +287,8 @@ void AgriDataCamera::Run() {
                     LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
                     LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
                     try {
-			RT_PROBATION = PROBATION;
-			AcquisitionFrameRateEnable.SetValue(true);
+            RT_PROBATION = PROBATION;
+            AcquisitionFrameRateEnable.SetValue(true);
                         AcquisitionFrameRateAbs.SetValue(LOW_FPS);
                         LOG(DEBUG) << "Changed Successfully";
                         // fps->SetValue(LOW_FPS); 
@@ -404,6 +404,18 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
           LOG(DEBUG) << "Returning to " << HIGH_FPS << " FPS";
     } else if (RT_PROBATION < -1) {         
           RT_PROBATION=-1;        // Back to normal
+    }
+
+    // Check Luminance (and add to documents)
+    if (tick % T_LUMINANCE == 0) {
+        // We send to database first, then we can edit it later
+        auto ret = frames.insert_one(doc.view());
+        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
+        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
+        t.detach();
+    } else {
+        // Add to documents
+        documents.push_back(doc.extract());
     }
 
     // Send documents to database
@@ -603,7 +615,7 @@ int AgriDataCamera::Stop() {
     }
 
     try {
-    	AddTask(current_hdf5_file);
+        AddTask(current_hdf5_file);
     } catch(const GenericException &e) {
         LOG(WARNING) << "Adding task failed";
     }
@@ -656,7 +668,7 @@ json AgriDataCamera::GetStatus() {
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
         // status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("AcquisitionFrameRateAbs"))->GetValue();
-	status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
+    status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
         status["Probation"] = RT_PROBATION;
 
     }
