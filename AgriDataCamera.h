@@ -99,10 +99,10 @@ private:
     std::vector<int> compression_params;
 
     // Timers
-    const int T_LATEST = 20;            // Every second
-    const int T_MONGODB = 1200;         // ~ Every minute
-    const int T_LUMINANCE = 10;         // Every half second
-    const int T_SAMPLE = 10;		// Every half second
+    const int T_LATEST = 20;
+    const int T_MONGODB = 400; 
+    const int T_LUMINANCE = 10;
+    const int T_SAMPLE = 10;
     int T_CALIBRATION = 0;              // First five minutes are calibration (0 is disabled)
     int tick;                           // Running counter
 
