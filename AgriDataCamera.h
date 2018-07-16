@@ -32,6 +32,7 @@
 // Utilities
 #include "json.hpp"
 #include "zmq.hpp"
+#include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/array.hpp>
 #include <bsoncxx/builder/basic/kvp.hpp>
