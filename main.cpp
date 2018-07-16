@@ -18,6 +18,7 @@
 #include <GenApi/GenApi.h>
 
 // MongoDB & BSON
+#include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/array.hpp>
 #include <bsoncxx/builder/basic/kvp.hpp>
@@ -413,7 +414,11 @@ int main() {
                     reply["status"] = "0";
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
                     LOG(ERROR) << "An exception occured: " << e.GetDescription();
-                 }
+
+                    zmq::message_t messageS(reply.dump().size());
+                    memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
+                    publisher.send(messageS);
+                }
 
             }
         } catch (const GenericException &e) {
