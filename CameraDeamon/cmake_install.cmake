@@ -1,4 +1,4 @@
-# Install script for directory: /home/nvidia/CameraDeamon
+# Install script for directory: /data/CameraDeamon
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/nvidia/CameraDeamon/CameraDeamon/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/data/CameraDeamon/CameraDeamon/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

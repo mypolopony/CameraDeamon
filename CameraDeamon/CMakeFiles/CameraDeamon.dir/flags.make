@@ -6,7 +6,7 @@ CXX_FLAGS =
 
 CXX_DEFINES = -DOPENCV_TRAITS_ENABLE_DEPRECATED
 
-CXX_INCLUDES = -I/home/nvidia/CameraDeamon/CameraDeamon -I/home/nvidia/CameraDeamon/lib -I/usr/include/lib -I/opt/pylon5/include -I/usr/local/include/bsoncxx/v_noabi -I/usr/local/include/mongocxx/v_noabi -I/usr/local/include/bsoncxx/v_noabi/bsoncxx -I/usr/include/opencv2 -I/data/opencv_contrib/modules/xfeatures2d/include -I/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/include -isystem /usr/local/include -isystem /usr/local/include/opencv 
+CXX_INCLUDES = -I/data/CameraDeamon/CameraDeamon -I/data/CameraDeamon/lib -I/usr/include/lib -I/opt/pylon5/include -I/usr/local/include/bsoncxx/v_noabi -I/usr/local/include/mongocxx/v_noabi -I/usr/local/include/bsoncxx/v_noabi/bsoncxx -I/usr/include/opencv2 -I/data/opencv_contrib/modules/xfeatures2d/include -I/data/CMake-hdf5-1.10.1/HDF_Group/HDF5/1.10.1/include -isystem /usr/local/include -isystem /usr/local/include/opencv 
 
 # Custom flags: CMakeFiles/CameraDeamon.dir/main.cpp.o_FLAGS =  -pg -O0 -w -std=c++11 -Wall -Wunknown-pragmas -ggdb
 

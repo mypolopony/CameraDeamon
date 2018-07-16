@@ -77,7 +77,7 @@
         <IncludePath Value="/opt/pylon5/include"/>
         <IncludePath Value="/usr/local/include/bsoncxx/v_noabi"/>
         <IncludePath Value="/usr/local/include/mongocxx/v_noabi"/>
-        <IncludePath Value="/home/nvidia/CameraDeamon/lib"/>
+        <IncludePath Value="/data/CameraDeamon/lib"/>
         <IncludePath Value="/usr/include/opencv2"/>
         <IncludePath Value="/usr/include"/>
         <IncludePath Value="/data/opencv_contrib/modules/xfeatures2d/include"/>

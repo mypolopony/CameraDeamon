@@ -414,7 +414,7 @@ int main() {
                     reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
                     LOG(ERROR) << "An exception occured: " << e.GetDescription();
 
-                    mq::message_t messageS(reply.dump().size());
+                    zmq::message_t messageS(reply.dump().size());
                     memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
                     publisher.send(messageS);
                 }

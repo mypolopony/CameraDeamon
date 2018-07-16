@@ -133,7 +133,7 @@ void AgriDataCamera::Initialize() {
 
     // Load config file
     try {
-        string config = "/home/nvidia/CameraDeamon/config/"
+        string config = "/data/CameraDeamon/config/"
                 + string(GetDeviceInfo().GetModelName()) + ".pfs";
         LOG(INFO) << "Reading from configuration file: " + config;
         CFeaturePersistence::Load(config.c_str(), &nodeMap, true);
@@ -585,12 +585,12 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
 
     // Thumbnail
     imwrite(
-            "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
+            "/data/EmbeddedServer/images/" + serialnumber + '_'
             + "streaming_t.jpg", thumb, compression_params);
     // Full
     /*
     imwrite(
-            "/home/nvidia/EmbeddedServer/images/" + serialnumber + '_'
+            "/data/EmbeddedServer/images/" + serialnumber + '_'
             + "streaming.jpg", img, compression_params);
     */
 

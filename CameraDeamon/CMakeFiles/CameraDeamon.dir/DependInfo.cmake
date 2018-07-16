@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/nvidia/CameraDeamon/AGDUtils.cpp" "/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/AGDUtils.cpp.o"
-  "/home/nvidia/CameraDeamon/AgriDataCamera.cpp" "/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/AgriDataCamera.cpp.o"
-  "/home/nvidia/CameraDeamon/lib/easylogging++.cc" "/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/lib/easylogging++.cc.o"
-  "/home/nvidia/CameraDeamon/main.cpp" "/home/nvidia/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/main.cpp.o"
+  "/data/CameraDeamon/AGDUtils.cpp" "/data/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/AGDUtils.cpp.o"
+  "/data/CameraDeamon/AgriDataCamera.cpp" "/data/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/AgriDataCamera.cpp.o"
+  "/data/CameraDeamon/lib/easylogging++.cc" "/data/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/lib/easylogging++.cc.o"
+  "/data/CameraDeamon/main.cpp" "/data/CameraDeamon/CameraDeamon/CMakeFiles/CameraDeamon.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

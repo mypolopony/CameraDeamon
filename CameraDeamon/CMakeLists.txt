@@ -5,14 +5,14 @@ project(CameraDeamon)
 
 
 include_directories(
-    /home/nvidia/CameraDeamon/CameraDeamon/
-    /home/nvidia/CameraDeamon/CameraDeamon/lib
+    /data/CameraDeamon/CameraDeamon/
+    /data/CameraDeamon/CameraDeamon/lib
     /usr/include/lib
     /opt/pylon5/include
     /usr/local/include/bsoncxx/v_noabi
     /usr/local/include/mongocxx/v_noabi
     /usr/local/include/bsoncxx/v_noabi/bsoncxx/
-    /home/nvidia/CameraDeamon/lib
+    /data/CameraDeamon/lib
     /usr/include/opencv2
     /usr/include
     /data/opencv_contrib/modules/xfeatures2d/include
