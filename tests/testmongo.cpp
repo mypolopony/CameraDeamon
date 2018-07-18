@@ -33,7 +33,7 @@ int main() {
     // New Mongo Connection
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
-    mongocxx::collection _pretask = _db["pretask"];
+    mongocxx::collection _tasks = _db["tasks"];
     
     // Sort options (ascending)
     auto order = document{} << "priority" << 1 << finalize;
@@ -55,7 +55,7 @@ int main() {
     std::cout << bsoncxx::to_json(query.view()) << std::endl;
     
     // Result
-    bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretask.find_one(query.view(), opts);
+    bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one(query.view(), opts);
     cout << "Result: ";
     cout << bsoncxx::to_json(*val) << endl;
     
@@ -86,13 +86,13 @@ int main() {
     // New Mongo Connection
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
-    mongocxx::collection _pretask = _db["pretask"];
+    mongocxx::collection _tasks = _db["tasks"];
    
     // Get lowest priority that meets the criteria
     auto order = document{} << "priority" << -1 << finalize;
     auto opts = mongocxx::options::find{};
     opts.sort(order.view());
-    bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretask.find_one({}, opts);
+    bsoncxx::stdx::optional<bsoncxx::document::value> val = _tasks.find_one({}, opts);
 
     int priority = json::parse(bsoncxx::to_json(*val))["priority"];
     ++priority;
@@ -105,7 +105,7 @@ int main() {
             << finalize;
    
     // Insert
-    auto ret = _pretask.insert_one(document.view());
+    auto ret = _tasks.insert_one(document.view());
     cout << ret << endl;
 }
 */

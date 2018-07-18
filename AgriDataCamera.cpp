@@ -437,7 +437,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
     // New Mongo Connection
     mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
-    mongocxx::collection _pretasks = _db["pretasks"];
+    mongocxx::collection _pretask = _db["pretask"];
     mongocxx::collection _box = _db["box"];
     int priority;
 
@@ -460,7 +460,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
         auto order = bsoncxx::builder::stream::document{} << "priority" << -1 << bsoncxx::builder::stream::finalize;
         auto opts = mongocxx::options::find{};
         opts.sort(order.view());
-        bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretasks.find_one({}, opts);
+        bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretask.find_one({}, opts);
 
         if (val) {
             priority = json::parse(bsoncxx::to_json(*val))["priority"];
@@ -470,7 +470,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
             priority = 1;
         }
 
-        // Non-calibration pretasks also receive these fields
+        // Non-calibration pretask also receive these fields
         builder.append(bsoncxx::builder::basic::kvp("preprocess", 0));
         builder.append(bsoncxx::builder::basic::kvp("trunk_detection", 0));
         builder.append(bsoncxx::builder::basic::kvp("process", 0));
@@ -483,7 +483,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
 
     // Close and insert the document
     bsoncxx::document::value document = builder.extract();
-    auto ret = _pretasks.insert_one(document.view());
+    auto ret = _pretask.insert_one(document.view());
 }
 
 
