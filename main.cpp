@@ -137,8 +137,9 @@ static void printIntro() {
  */
 int main() {
     // Configure Logging
-    el::Configurations conf("/data/logs/cameradeamon.log");
-    el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
+    el::Configurations conf("config/easylogging.conf");
+    el::Loggers::reconfigureAllLoggers(conf);
+    // el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
 
     // Register signals
     signal(SIGINT, sigint_function);
@@ -422,7 +423,11 @@ int main() {
 
             }
         } catch (const GenericException &e) {
-            LOG(FATAL) << "Exception caught: " << e.GetDescription() << "\n";
+            LOG(ERROR) << "Exception caught: " << e.GetDescription() << "\n";
+
+            zmq::message_t messageS(reply.dump().size());
+            memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
+            publisher.send(messageS);
         }
     }
 
