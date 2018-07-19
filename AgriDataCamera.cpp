@@ -207,7 +207,6 @@ void AgriDataCamera::Initialize() {
 
     // Initial status
     isRecording = false;
-    isPaused = false;
 
     // Timer
     tick = 0;
@@ -703,6 +702,7 @@ json AgriDataCamera::GetStatus() {
     }
 
     // Extra bits
+    /*
     LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Socket Buffer Size: " << GetStreamGrabberParams().SocketBufferSize();
     LOG(DEBUG) << "[" << serialnumber << "] Buffer Underrun Count: " << GetStreamGrabberParams().Statistic_Buffer_Underrun_Count();
@@ -711,6 +711,7 @@ json AgriDataCamera::GetStatus() {
     LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Resend Request Count: " << GetStreamGrabberParams().Statistic_Resend_Request_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Resend Packet Count: " << GetStreamGrabberParams().Statistic_Resend_Packet_Count();
+    */
 
     return status;
 }
