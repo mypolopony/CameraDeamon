@@ -58,7 +58,6 @@ public:
 
     std::string scanid;
     std::string session_name;
-    bool isPaused;
     bool isRecording;
     bool calibration;
     std::string serialnumber;

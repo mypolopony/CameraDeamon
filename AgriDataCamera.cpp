@@ -254,55 +254,53 @@ void AgriDataCamera::Run() {
     
     // Initiate main loop with algorithm
     while (isRecording) {
-        if (!isPaused) {
-            // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-            RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-            try {
-                // Image grabbed successfully?
-                if (ptrGrabResult->GrabSucceeded()) {
-                    // Create Frame Packet
-                    FramePacket fp;
+        // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+        RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+        try {
+            // Image grabbed successfully?
+            if (ptrGrabResult->GrabSucceeded()) {
+                // Create Frame Packet
+                FramePacket fp;
 
-                    // Computer time
-                    fp.time_now = AGDUtils::grabMilliseconds();
-                    last_timestamp = fp.time_now;
+                // Computer time
+                fp.time_now = AGDUtils::grabMilliseconds();
+                last_timestamp = fp.time_now;
 
-                    // Exposure time
-                    try { // USB
-                        fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
-                    } catch (...) { // GigE
-                        fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
-                    }
-
-                    // Image
-                    fp.img_ptr = ptrGrabResult;
-
-                    // Process the frame
-                    try {
-                        HandleFrame(fp);
-                    } catch (...) {
-                        LOG(WARNING) << "Frame slipped!";
-                    }
-
-                } else {
-                    LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
-                    LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
-                    try {
-            RT_PROBATION = PROBATION;
-            AcquisitionFrameRateEnable.SetValue(true);
-                        AcquisitionFrameRateAbs.SetValue(LOW_FPS);
-                        LOG(DEBUG) << "Changed Successfully";
-                        // fps->SetValue(LOW_FPS); 
-                    } catch (const GenericException &e) {
-                        LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
-                    }
+                // Exposure time
+                try { // USB
+                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
+                } catch (...) { // GigE
+                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
                 }
-            } catch (const GenericException &e) {
-                LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
-                        + ptrGrabResult->GetErrorDescription() + "\n"
-                        + e.GetDescription();
-                isRecording = false;
+
+                // Image
+                fp.img_ptr = ptrGrabResult;
+
+                // Process the frame
+                try {
+                    HandleFrame(fp);
+                } catch (...) {
+                    LOG(WARNING) << "Frame slipped!";
+                }
+
+            } else {
+                LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+                LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
+                try {
+        RT_PROBATION = PROBATION;
+        AcquisitionFrameRateEnable.SetValue(true);
+                    AcquisitionFrameRateAbs.SetValue(LOW_FPS);
+                    LOG(DEBUG) << "Changed Successfully";
+                    // fps->SetValue(LOW_FPS); 
+                } catch (const GenericException &e) {
+                    LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
+                }
             }
+        } catch (const GenericException &e) {
+            LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
+                    + ptrGrabResult->GetErrorDescription() + "\n"
+                    + e.GetDescription();
+            isRecording = false;
         }
     }
 }
