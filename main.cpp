@@ -211,7 +211,8 @@ int main() {
     // Start the server
     // This is probably not the way to do this, more likely
     // it's recommended to use systemd dependencies
-    string cmd = "systemctl start server_logic"
+    LOG(INFO) << "Starting Embedded Server";
+    string cmd = "systemctl start server_logic";
     const char *command = cmd.c_str();
     system(command);
 
