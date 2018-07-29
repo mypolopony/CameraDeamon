@@ -211,11 +211,22 @@ int main() {
     // Start the server
     // This is probably not the way to do this, more likely
     // it's recommended to use systemd dependencies
-    LOG(INFO) << "Starting Embedded Server";
-    string cmd = "systemctl start server_logic";
-    const char *command = cmd.c_str();
+    const char *command;
+    string cmd;
+
+    LOG(INFO) << "(Re-)Starting Embedded Server";
+    cmd = "kill -9 `ps aux |grep gunicorn |grep server | awk '{ print $2 }'`";
+    command = cmd.c_str();
     system(command);
 
+    cmd = "systemctl start server_logic";
+    command = cmd.c_str();
+    system(command);
+
+    // Wait 45 seconds for server to start
+    usleep(45000000);
+
+    
     while (true) {
         try {
 	        // Chill out
