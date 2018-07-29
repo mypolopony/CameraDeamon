@@ -53,6 +53,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <bits/stdc++.h>
 
 // uncomment this if debugging
 #ifndef DEBUG
@@ -206,6 +207,13 @@ int main() {
     string sn;
     vector <string> tokens;
     zmq::message_t messageR;
+
+    // Start the server
+    // This is probably not the way to do this, more likely
+    // it's recommended to use systemd dependencies
+    string cmd = "systemctl start server_logic"
+    const char *command = cmd.c_str();
+    system(command);
 
     while (true) {
         try {
