@@ -16,7 +16,7 @@ env/
 
 # CodeLite
 *.workspace
-*.project
+
 .codelite/
 
 # Netbeans

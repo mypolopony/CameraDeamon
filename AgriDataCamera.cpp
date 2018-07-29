@@ -355,7 +355,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
 
-
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
 
