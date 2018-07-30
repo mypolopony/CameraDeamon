@@ -53,6 +53,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <bits/stdc++.h>
 
 // uncomment this if debugging
 #ifndef DEBUG
@@ -206,6 +207,18 @@ int main() {
     string sn;
     vector <string> tokens;
     zmq::message_t messageR;
+    string cmd;
+    const char *command;
+
+    // Kill any server if it exists
+    cmd = "kill -9 `ps aux |grep gunicorn |grep server | awk '{ print $2 }'`";
+    command = cmd.c_str();
+    system(command);
+
+    // Start server
+    cmd = "systemctl start server_logic";
+    command = cmd.c_str();
+    system(command);
 
     while (true) {
         try {
