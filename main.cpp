@@ -216,7 +216,7 @@ int main() {
     system(command);
 
     // Start server
-    cmd = "systemctl start server_logic";
+    cmd = "systemctl restart server_logic";
     command = cmd.c_str();
     system(command);
 
