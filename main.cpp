@@ -211,7 +211,7 @@ int main() {
     const char *command;
 
     // Kill any server if it exists
-    cmd = "kill -9 `ps aux |grep gunicorn |grep server | awk '{ print $2 }'`";
+    cmd = "pkill -9 gunicorn";
     command = cmd.c_str();
     system(command);
 
