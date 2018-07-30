@@ -210,12 +210,7 @@ int main() {
     string cmd;
     const char *command;
 
-    // Kill any server if it exists
-    cmd = "pkill -9 gunicorn";
-    command = cmd.c_str();
-    system(command);
-
-    // Start server
+    // (Re-)Start server
     cmd = "systemctl restart server_logic";
     command = cmd.c_str();
     system(command);
