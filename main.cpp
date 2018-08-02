@@ -215,7 +215,7 @@ int main() {
     string cmd;
 
     LOG(INFO) << "(Re-)Starting Embedded Server";
-    cmd = "kill -9 `ps aux |grep gunicorn |grep server | awk '{ print $2 }'`";
+    cmd = "pkill -9 gunicorn";
     command = cmd.c_str();
     system(command);
 
@@ -224,7 +224,7 @@ int main() {
     system(command);
 
     // Wait 45 seconds for server to start
-    usleep(45000000);
+    // usleep(45000000);
 
     
     while (true) {
