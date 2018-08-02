@@ -44,6 +44,7 @@
 
 class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
 {
+
 public:
     AgriDataCamera();
 
@@ -62,6 +63,7 @@ public:
     bool calibration;
     std::string serialnumber;
     std::string modelname;
+    std::string COLOR_FMT;
 
 private:
     struct FramePacket {
@@ -77,6 +79,9 @@ private:
     // Target dimensions
     int TARGET_HEIGHT = 960;
     int TARGET_WIDTH  = 600;
+
+    // Rotation
+    int rotation;
 
     // Mat image templates
     cv::Mat cv_img;

@@ -160,10 +160,33 @@ void AgriDataCamera::Initialize() {
     } catch (...) {
         LOG(WARNING) << "Skipping GevSCPD parameter";
     }
+
+    // Color Format
+    COLOR_FMT = "RGB";
     
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
+
+    // Box  Information
+    LOG(INFO) << "Obtaining Box Information";
+    mongocxx::collection box = db["box"];
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
+    string resultstring = bsoncxx::to_json(*maybe_result);
+    auto thisbox = json::parse(resultstring);
+    clientid = thisbox["clientid"];
+    try {
+        if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
+            rotation = -90;
+        } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
+            rotation = 90;
+        } else {
+            rotation = 0;
+        }
+    } catch (...) {
+        LOG(WARNING) << "Unable to determine camera orientation";
+        rotation = 0;
+    }
 
     // Identifier
     try { // USB
@@ -191,6 +214,8 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Bandwidth Assigned : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
     LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
+    LOG(INFO) << "Rotation required : " << rotation << " degrees";
+    LOG(INFO) << "Color format " << COLOR_FMT;
 
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
@@ -215,14 +240,6 @@ void AgriDataCamera::Initialize() {
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(30);
     
-    // Obtain box info
-    LOG(INFO) << "Obtaining Box Information";
-    mongocxx::collection box = db["box"];
-    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
-    string resultstring = bsoncxx::to_json(*maybe_result);
-    auto thisbox = json::parse(resultstring);
-    clientid = thisbox["clientid"];
-
     // HDF5
     current_hdf5_file = "";
     LOG(INFO) << "Initialization complete!";
@@ -338,7 +355,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
 
     // Computer time and output directory
     vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
-    string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+    string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + COLOR_FMT + ".hdf5";
     doc.append(bsoncxx::builder::basic::kvp("filename", hdf5file));
 
     // Should we open a new file?
@@ -353,6 +370,11 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         current_hdf5_file = hdf5file;
         LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file;
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+        // Add Metadata
+        string metadata = "meta";
+        H5LTset_attribute_string(hdf5_out, "meta", "COLOR_FMT", COLOR_FMT.c_str());
+        H5LTset_attribute_int(hdf5_out, "meta", "ROTATION", &rotation, sizeof(&rotation));
     }
 
 
@@ -366,10 +388,9 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
 
     // Color
-    cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
-
-    // Rotate (Expensive, 11ms)
-    // small_last_img = AgriDataCamera::Rotate(small_last_img);
+    if (COLOR_FMT.compare("RGB")) {
+        cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
+    }
 
     // Write JPEG
     // imwrite(string("/data/output/image/") + hms[0].c_str() + "_" + hms[1].c_str() +  to_string(fp.img_ptr->GetImageNumber()).c_str() + ".jpg", small_last_img);
