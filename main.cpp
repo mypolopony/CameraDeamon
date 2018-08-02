@@ -209,7 +209,7 @@ int main() {
 
     while (true) {
         try {
-	        // Chill out
+            // Chill out
             usleep(150000); // 0.15 seconds?
 
             // Nascent response
@@ -402,11 +402,11 @@ int main() {
                     publisher.send(messageS);
                 }
             }
-        } catch (const GenericException &e) {
-            LOG(ERROR) << "Exception caught: " << e.GetDescription() << "\n";
+        } catch (...) {
+            LOG(ERROR) << "Exception!";
             
             reply["status"] = "0";
-            reply["message"] = "Exception Processing Command: " + (string) e.GetDescription();
+            reply["message"] = "Exception!";
 
             zmq::message_t messageS(reply.dump().size());
             memcpy(messageS.data(), reply.dump().c_str(), reply.dump().size());
