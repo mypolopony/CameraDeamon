@@ -115,8 +115,14 @@ zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
  * Opens the camera and initializes it with some settings
  */
 void AgriDataCamera::Initialize() {
+    // Pylon Initialization
     PylonAutoInitTerm autoInitTerm;
     INodeMap &nodeMap = GetNodeMap();
+
+    // Initialize MongoDB connection
+    LOG(INFO) << "Connecting to MongoDB";
+    db = conn["agdb"];
+    frames = db["frame"];
 
     // Open camera object ahead of time
     // When stopping and restarting the camera, either one must Close() or otherwise
@@ -168,6 +174,15 @@ void AgriDataCamera::Initialize() {
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
 
+    // Identifier
+    try { // USB
+        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceSerialNumber"))->GetValue();
+    } catch (...) { // GigE
+        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceID"))->GetValue();
+    }
+    modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
+
+
     // Box  Information
     LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
@@ -175,6 +190,7 @@ void AgriDataCamera::Initialize() {
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
+    LOG(INFO) << thisbox;
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = -90;
@@ -187,14 +203,6 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Unable to determine camera orientation";
         rotation = 0;
     }
-
-    // Identifier
-    try { // USB
-        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceSerialNumber"))->GetValue();
-    } catch (...) { // GigE
-        serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceID"))->GetValue();
-    }
-    modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
     // Frame Rate
     // HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
@@ -224,11 +232,6 @@ void AgriDataCamera::Initialize() {
 
     // Define pixel output format (to match algorithm optimalization)
     fc.OutputPixelFormat = PixelType_BGR8packed;
-
-    // Initialize MongoDB connection
-    LOG(INFO) << "Connecting to MongoDB";
-    db = conn["agdb"];
-    frames = db["frame"];
 
     // Initial status
     isRecording = false;
@@ -372,9 +375,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
         // Add Metadata
-        string metadata = "meta";
-        H5LTset_attribute_string(hdf5_out, "meta", "COLOR_FMT", COLOR_FMT.c_str());
-        H5LTset_attribute_int(hdf5_out, "meta", "ROTATION", &rotation, sizeof(&rotation));
+        H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
+        H5LTset_attribute_int(hdf5_out, "/", "ROTATION", &rotation, sizeof(&rotation));
     }
 
 
@@ -723,7 +725,6 @@ json AgriDataCamera::GetStatus() {
     }
 
     /* Debugging
-
     LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Socket Buffer Size: " << GetStreamGrabberParams().SocketBufferSize();
     LOG(DEBUG) << "[" << serialnumber << "] Buffer Underrun Count: " << GetStreamGrabberParams().Statistic_Buffer_Underrun_Count();
@@ -732,7 +733,6 @@ json AgriDataCamera::GetStatus() {
     LOG(DEBUG) << "[" << serialnumber << "] Total Buffer Count: " << GetStreamGrabberParams().Statistic_Total_Buffer_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Resend Request Count: " << GetStreamGrabberParams().Statistic_Resend_Request_Count();
     LOG(DEBUG) << "[" << serialnumber << "] Resend Packet Count: " << GetStreamGrabberParams().Statistic_Resend_Packet_Count();
-    
     */
 
     return status;
