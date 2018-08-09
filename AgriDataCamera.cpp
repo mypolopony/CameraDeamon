@@ -375,8 +375,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
         // Add Metadata
+        string VERSION = "1.0";
         H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
-        H5LTset_attribute_int(hdf5_out, "/", "ROTATION", &rotation, sizeof(&rotation));
+        H5LTset_attribute_string(hdf5_out, "/"," VERSION", VERSION.c_str());
+        H5LTset_attribute_int(hdf5_out, "/", "ROTATION_NEEDED", &rotation,1);
     }
 
 
