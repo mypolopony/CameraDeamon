@@ -81,7 +81,7 @@ private:
     int TARGET_WIDTH  = 600;
 
     // Rotation
-    int rotation;
+    std::string rotation;
 
     // Mat image templates
     cv::Mat cv_img;

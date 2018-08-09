@@ -193,15 +193,15 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << thisbox;
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
-            rotation = -90;
+            rotation = "ROTATE_90_COUNTERCLOCKWISE";
         } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
-            rotation = 90;
+            rotation = "ROTATE_90_CLOCKWISE";
         } else {
-            rotation = 0;
+            rotation = "";
         }
     } catch (...) {
         LOG(WARNING) << "Unable to determine camera orientation";
-        rotation = 0;
+        rotation = "";
     }
 
     // Frame Rate
@@ -375,10 +375,10 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
         // Add Metadata
-        string VERSION = "1.0";
+        string VERSION = "1.2";
         H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
-        H5LTset_attribute_string(hdf5_out, "/"," VERSION", VERSION.c_str());
-        H5LTset_attribute_int(hdf5_out, "/", "ROTATION_NEEDED", &rotation,1);
+        H5LTset_attribute_string(hdf5_out, "/", "VERSION", VERSION.c_str());
+        H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
     }
 
 
