@@ -29,6 +29,9 @@
 // HDF5
 #include "H5Cpp.h"
 
+// Boost
+#include <boost/optional/optional_io.hpp>
+
 // Utilities
 #include "json.hpp"
 #include "zmq.hpp"
@@ -112,12 +115,10 @@ private:
     int tick;                           // Running counter
 
     // Dynamic Framerate
-    double HIGH_FPS;			// To be set on initialization (cannot be const)
-    const double LOW_FPS = 5;              // Probationary frame rate
+    double HIGH_FPS;                    // To be set on initialization (cannot be const)
+    const double LOW_FPS = 5;           // Probationary frame rate
     int RT_PROBATION = -1;              // Restricted period (this is a reverse timer, -1 is safe)
-    const int PROBATION = 50;          // Counts down
-
-
+    const int PROBATION = 50;           // Counts down
 
     // Output Parameters
     uint8_t max_filesize = 3;
@@ -138,6 +139,9 @@ private:
     // Timestamp (should go in status block)
     int64_t last_timestamp;
 
+    // Frame number (will monotonically increase)
+    int frame_number;
+
     // ZMQ
     zmq::context_t ctx_;
     zmq::socket_t * s_client_socket (zmq::context_t & context);
@@ -146,6 +150,8 @@ private:
     std::string clientid;
 
     // Methods
+    std::string padTo(int, size_t);
+    int GetFrameNumber(std::string);
     void Luminance(bsoncxx::oid, cv::Mat);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);

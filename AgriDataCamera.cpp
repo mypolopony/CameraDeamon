@@ -75,6 +75,7 @@ using namespace GenApi;
 using namespace std::chrono;
 using json = nlohmann::json;
 
+
 /**
  * Constructor
  */
@@ -85,11 +86,13 @@ conn{mongocxx::uri
 {
 }
 
+
 /**
  * Destructor
  */
 AgriDataCamera::~AgriDataCamera() {
 }
+
 
 /**
  * s_client_socket
@@ -97,7 +100,6 @@ AgriDataCamera::~AgriDataCamera() {
  * Helper function that returns a new configured socket
  * connected to the IMU server
  */
-
 zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
     LOG(INFO) << "Connecting to IMU server...";
     zmq::socket_t * client = new zmq::socket_t(context, ZMQ_REQ);
@@ -108,6 +110,7 @@ zmq::socket_t * AgriDataCamera::s_client_socket(zmq::context_t & context) {
     client->setsockopt(ZMQ_LINGER, &linger, sizeof (linger));
     return client;
 }
+
 
 /**
  * Initialize
@@ -183,14 +186,13 @@ void AgriDataCamera::Initialize() {
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
 
-    // Box  Information
+    // Box Information
     LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = json::parse(resultstring);
     clientid = thisbox["clientid"];
-    LOG(INFO) << thisbox;
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
             rotation = "ROTATE_90_COUNTERCLOCKWISE";
@@ -248,6 +250,53 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Initialization complete!";
 }
 
+
+/**
+ * padTo
+ *
+ * Takes an int and returns string representation, padded
+ * to num characters
+ */
+string AgriDataCamera::padTo(int intval, size_t num) {
+    string numstring = to_string(intval);
+    if (numstring.length() < num) {
+        numstring.insert(0, num - numstring.size(), '0');
+    }
+
+    return numstring;
+}
+
+
+/**
+ * GetFrameNumber
+ *
+ * Given a scanid, determine the next frame number. This will keep 
+ * frames within a scanid to be monotonically increasing.
+ */
+int AgriDataCamera::GetFrameNumber(string scanid) {
+    // Options
+    auto order = bsoncxx::builder::stream::document{} << "frame_number" << -1 << bsoncxx::builder::stream::finalize;
+    auto opts = mongocxx::options::find{};
+    opts.sort(order.view());
+
+    // Query
+    bsoncxx::stdx::optional<bsoncxx::document::value> val = frames.find_one(bsoncxx::builder::stream::document{} << "serialnumber" << serialnumber << "scanid" << scanid << bsoncxx::builder::stream::finalize, opts);
+
+    if (val) {
+        LOG(DEBUG) << "Obtaining Frame Number";
+        LOG(DEBUG) << bsoncxx::to_json(*val);
+        // Increment
+        frame_number = json::parse(bsoncxx::to_json(*val))["frame_number"];
+        LOG(DEBUG) << bsoncxx::to_json(*val);
+        LOG(DEBUG) << "Last number found: " << frame_number;;
+        return frame_number++;
+    } else {
+        // Or start
+        return 1;
+    }
+}
+
+
 /**
  * Run
  *
@@ -255,10 +304,11 @@ void AgriDataCamera::Initialize() {
  */
 void AgriDataCamera::Run() {
     // Output parameters
-    save_prefix = "/data/output/" + clientid + "/" + scanid + "/"
-            + serialnumber + "/";
-    bool success = AGDUtils::mkdirp(save_prefix.c_str(),
-            S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    save_prefix = "/data/output/" + clientid + "/" + scanid + "/" + serialnumber + "/";
+    bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    // Get current frame number
+    frame_number = GetFrameNumber(scanid);
 
     // Set recording to true and start grabbing
     isRecording = true;
@@ -306,8 +356,8 @@ void AgriDataCamera::Run() {
                 LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
                 LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
                 try {
-        RT_PROBATION = PROBATION;
-        AcquisitionFrameRateEnable.SetValue(true);
+                    RT_PROBATION = PROBATION;
+                    AcquisitionFrameRateEnable.SetValue(true);
                     AcquisitionFrameRateAbs.SetValue(LOW_FPS);
                     LOG(DEBUG) << "Changed Successfully";
                     // fps->SetValue(LOW_FPS); 
@@ -323,6 +373,7 @@ void AgriDataCamera::Run() {
         }
     }
 }
+
 
 /**
  * HandleFrame
@@ -349,9 +400,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     camera_time << fp.img_ptr->GetTimeStamp();
     doc.append(bsoncxx::builder::basic::kvp("camera_time", (string) camera_time.str()));
     doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
-    doc.append(
-            bsoncxx::builder::basic::kvp("frame_number",
-            fp.img_ptr->GetImageNumber()));
+    doc.append(bsoncxx::builder::basic::kvp("frame_number", frame_number));
 
     // Add Camera data
     doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
@@ -396,9 +445,6 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
         cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
     }
 
-    // Write JPEG
-    // imwrite(string("/data/output/image/") + hms[0].c_str() + "_" + hms[1].c_str() +  to_string(fp.img_ptr->GetImageNumber()).c_str() + ".jpg", small_last_img);
-
     // Encode to JPG Buffer
     vector<uint8_t> outbuffer;
     static const vector<int> ENCODE_PARAMS = {};
@@ -407,7 +453,8 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     // Create HDF5 Dataset
     hsize_t buffersize = outbuffer.size();
     try {
-        H5LTmake_dataset(hdf5_out, to_string(fp.img_ptr->GetImageNumber()).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+        H5LTmake_dataset(hdf5_out, padTo(frame_number, (size_t) 6).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+        frame_number++;
     } catch (...) {
         LOG(INFO) << "Frame dropped (likely end of recording)";
     }
@@ -449,15 +496,15 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     }
 }
 
+
 /**
  * AddTask
  *
  * Create a task entry in the database for an HDF5 file
  */
-
 void AgriDataCamera::AddTask(string hdf5file) {
     // New Mongo Connection
-    mongocxx::client _conn{mongocxx::uri{ "mongodb://localhost:27017"}};
+    mongocxx::client _conn{mongocxx::uri{"mongodb://localhost:27017"}};
     mongocxx::database _db = _conn["agdb"];
     mongocxx::collection _pretask = _db["pretask"];
     mongocxx::collection _box = _db["box"];
@@ -525,11 +572,11 @@ float AgriDataCamera::_luminance(cv::Mat input) {
     return Totalintensity / (grayMat.rows * grayMat.cols);
 }
 
+
 /**
  * Luminance
  *
- * Add luminance to an existing db entry (i.e. during scanning) l
- *
+ * Add luminance to an existing db entry (i.e. during scanning)
  */
 void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
     // As per http://mongodb.github.io/mongo-cxx-driver/mongocxx-v3/thread-safety/
@@ -553,6 +600,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
     }
 }
 
+
 /**
  * Snap
  *
@@ -560,9 +608,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
  * image location.
  *
  * Consider making this json instead of void to return success
- *
  */
-
 void AgriDataCamera::Snap() {
     // this !isRecording criterion is enforced because I don't know what the camera's
     // behavior is to ask for one frame while another (continuous) grabbing process is
@@ -595,6 +641,7 @@ void AgriDataCamera::Snap() {
     }
 }
 
+
 /**
  * writeLatestImage
  *
@@ -619,13 +666,13 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
 
 }
 
+
 /**
  * Stop
  *
  * Upon receiving a stop message, set the isRecording flag
  */
 int AgriDataCamera::Stop() {
-
     LOG(INFO) << "Recording Stopped";
     isRecording = false;
 
@@ -653,6 +700,7 @@ int AgriDataCamera::Stop() {
     LOG(INFO) << "*** Done ***";
     return 0;
 }
+
 
 /**
  * GetStatus
@@ -690,7 +738,6 @@ json AgriDataCamera::GetStatus() {
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
-        // status["Target Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("AcquisitionFrameRateAbs"))->GetValue();
     status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
         status["Probation"] = RT_PROBATION;
 
