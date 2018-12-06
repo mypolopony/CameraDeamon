@@ -70,6 +70,7 @@ using namespace cv;
 using namespace GenApi;
 using namespace std;
 using json = nlohmann::json;
+using bsoncxx::stdx::string_view;
 
 
 // Shared recording boolean
@@ -268,6 +269,24 @@ int main() {
                 received = json::parse(receivedstring);
 
                 try {
+
+                    // Onesnap
+                    if (received["action"] == "onesnap") {
+                        if (isRecording) {
+                            reply["message"] = "Already Recording";
+                        } else {
+                            mongocxx::collection task = db["task"];
+
+                            string taskid = received["taskid"];
+                            bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
+                                << "_id" << bsoncxx::oid(taskid.c_str())
+                                << bsoncxx::builder::stream::finalize);
+                            string resultstring = bsoncxx::to_json(*maybe_result);
+
+                            auto thistask = json::parse(resultstring);
+                            cout << thistask["serialnumber"];
+                        }
+                    }
 
                     // Start
                     if (received["action"] == "start") {
