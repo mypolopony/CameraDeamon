@@ -735,12 +735,14 @@ json AgriDataCamera::GetStatus() {
     } catch (...) { // GigE
         status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("GainRaw"))->GetValue(); // Gotcha!
         status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue();
+        status["Red Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Red"))->GetValue();
+        status["Green Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Blue"))->GetValue();
+        status["Blue Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Green"))->GetValue();
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
-    status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
+        status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
         status["Probation"] = RT_PROBATION;
-
     }
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
