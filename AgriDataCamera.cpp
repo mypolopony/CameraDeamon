@@ -73,7 +73,6 @@ using namespace std;
 using namespace cv;
 using namespace GenApi;
 using namespace std::chrono;
-using json = nlohmann::json;
 
 
 /**
@@ -170,9 +169,6 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Skipping GevSCPD parameter";
     }
 
-    // Color Format
-    COLOR_FMT = "RGB";
-    
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
@@ -185,29 +181,21 @@ void AgriDataCamera::Initialize() {
     }
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
-
-    // Box Information
+    // Box / Camera Information
     LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
-    auto thisbox = json::parse(resultstring);
+    auto thisbox = nlohmann::json::parse(resultstring);
     clientid = thisbox["clientid"];
-    try {
-        if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
-            rotation = "ROTATE_90_COUNTERCLOCKWISE";
-        } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
-            rotation = "ROTATE_90_CLOCKWISE";
-        } else {
-            rotation = "";
-        }
-    } catch (...) {
-        LOG(WARNING) << "Unable to determine camera orientation";
-        rotation = "";
-    }
+
+    // Rotation
+    rotation = "ROTATE_0";
+
+    // Color Format
+    COLOR_FMT = "RGB";
 
     // Frame Rate
-    // HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
     HIGH_FPS = AcquisitionFrameRateAbs.GetValue();
     
     // Print camera device information.
@@ -224,7 +212,7 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Bandwidth Assigned : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
     LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
-    LOG(INFO) << "Rotation required : " << rotation << " degrees";
+    LOG(INFO) << "Rotation required : " << rotation;
     LOG(INFO) << "Color format " << COLOR_FMT;
 
     // Create Mat image templates
@@ -280,13 +268,16 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
     opts.sort(order.view());
 
     // Query
-    bsoncxx::stdx::optional<bsoncxx::document::value> val = frames.find_one(bsoncxx::builder::stream::document{} << "serialnumber" << serialnumber << "scanid" << scanid << bsoncxx::builder::stream::finalize, opts);
+    bsoncxx::stdx::optional<bsoncxx::document::value> val = frames.find_one(bsoncxx::builder::stream::document{} 
+        << "serialnumber" << serialnumber 
+        << "scanid" << scanid 
+        << bsoncxx::builder::stream::finalize, opts);
 
     if (val) {
         LOG(DEBUG) << "Obtaining Frame Number";
         LOG(DEBUG) << bsoncxx::to_json(*val);
         // Increment
-        frame_number = json::parse(bsoncxx::to_json(*val))["frame_number"];
+        frame_number = nlohmann::json::parse(bsoncxx::to_json(*val))["frame_number"];
         LOG(DEBUG) << bsoncxx::to_json(*val);
         LOG(DEBUG) << "Last number found: " << frame_number;;
         return frame_number++;
@@ -298,10 +289,79 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
 
 
 /**
+ * Oneshot
+ *
+ * Grab and detect one image
+ */
+void AgriDataCamera::Oneshot(nlohmann::json task) {
+    // Output parameters
+    string session_name = task["session_name"];
+    save_prefix = "/data/output/" + task["session_name"] + "/" + serialnumber + "/";
+
+    // Set recording to true and start grabbing
+    isRecording = true;
+    if (!IsGrabbing()) {
+        StartGrabbing();
+    }
+
+    // Save configuration
+    INodeMap &nodeMap = GetNodeMap();
+    string config = save_prefix + "config.txt";
+    CFeaturePersistence::Save(config.c_str(), &nodeMap);
+
+    // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+    RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+    try {
+        // Image grabbed successfully?
+        if (ptrGrabResult->GrabSucceeded()) {
+            // Create Frame Packet
+            FramePacket fp;
+
+            // Computer time
+            fp.time_now = AGDUtils::grabMilliseconds();
+            last_timestamp = fp.time_now;
+
+            // Image
+            fp.img_ptr = ptrGrabResult;
+
+            // Metadata
+            fp.task = task;
+
+            // Process the frame
+            try {
+                HandleOneFrame(fp);
+            } catch (...) {
+                LOG(WARNING) << "Frame slipped!";
+            }
+
+        } else {
+            LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+            LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
+            try {
+                RT_PROBATION = PROBATION;
+                AcquisitionFrameRateEnable.SetValue(true);
+                AcquisitionFrameRateAbs.SetValue(LOW_FPS);
+                LOG(DEBUG) << "Changed Successfully";
+            } catch (const GenericException &e) {
+                LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
+            }
+        }
+    } catch (const GenericException &e) {
+        LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
+                + ptrGrabResult->GetErrorDescription() + "\n"
+                + e.GetDescription();
+        isRecording = false;
+    }
+    return;
+}
+
+/**
  * Run
  *
  * Main loop
  */
+
+/*
 void AgriDataCamera::Run() {
     // Output parameters
     save_prefix = "/data/output/" + clientid + "/" + scanid + "/" + serialnumber + "/";
@@ -335,12 +395,15 @@ void AgriDataCamera::Run() {
                 fp.time_now = AGDUtils::grabMilliseconds();
                 last_timestamp = fp.time_now;
 
-                // Exposure time
+                // Image 
                 try { // USB
                     fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
                 } catch (...) { // GigE
                     fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
                 }
+
+                // Mode
+                fp.mode = "oneshot";
 
                 // Image
                 fp.img_ptr = ptrGrabResult;
@@ -373,6 +436,12 @@ void AgriDataCamera::Run() {
         }
     }
 }
+*/
+
+void AgriDataCamera::Run() {
+    // Currently deprecated
+    return;
+}
 
 
 /**
@@ -380,56 +449,18 @@ void AgriDataCamera::Run() {
  *
  * Receive latest frame
  */
-void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     double dif;
     struct timeval tp;
     long int start, end;
-    tick++;
 
-    // Need the latest nodemap? Not sure whether or not this can / should be a private member
-    INodeMap &nodeMap = GetNodeMap();
-
-    // Docuemnt
-    auto doc = bsoncxx::builder::basic::document{};
-    doc.append(
-            bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
-    doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
+    // Grab the task
+    mongocxx::collection task = db["task"];
+    string taskid = fp.task["taskid"];
 
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
-    doc.append(bsoncxx::builder::basic::kvp("camera_time", (string) camera_time.str()));
-    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
-    doc.append(bsoncxx::builder::basic::kvp("frame_number", frame_number));
-
-    // Add Camera data
-    doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
-
-    // Computer time and output directory
-    vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
-    string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + COLOR_FMT + ".hdf5";
-    doc.append(bsoncxx::builder::basic::kvp("filename", hdf5file));
-
-    // Should we open a new file?
-    if (hdf5file.compare(current_hdf5_file) != 0) {
-
-        // Close the previous file (if it is a thing)
-        if (current_hdf5_file.compare("") != 0) {
-            H5Fclose(hdf5_out);
-            AddTask(current_hdf5_file);
-        }
-        
-        current_hdf5_file = hdf5file;
-        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file;
-        hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
-        // Add Metadata
-        string VERSION = "1.2";
-        H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
-        H5LTset_attribute_string(hdf5_out, "/", "VERSION", VERSION.c_str());
-        H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
-    }
-
 
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
@@ -450,21 +481,33 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
 
-    // Create HDF5 Dataset
-    hsize_t buffersize = outbuffer.size();
-    try {
-        H5LTmake_dataset(hdf5_out, padTo(frame_number, (size_t) 6).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-        frame_number++;
-    } catch (...) {
-        LOG(INFO) << "Frame dropped (likely end of recording)";
-    }
+    // Write to image
+    string outname = "/data/EmbeddedServer/images/oneshot_" + serialnumber + ".jpg";
+    imwrite(outname, last_img);
 
-    // Write to streaming image
-    if (tick % T_LATEST == 0) {
-        thread t(&AgriDataCamera::writeLatestImage, this, last_img,
-                ref(compression_params));
-        t.detach();
-    }
+    // Conversion of status from nlohmann to bsoncxx
+    // nlohmann::json status = GetStatus();
+    // string camerainfo = status.dump();
+
+    // Final update
+    /*
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.update_one(bsoncxx::builder::stream::document{}
+        << "_id" << bsoncxx::oid(taskid.c_str())
+        << bsoncxx::builder::stream::finalize
+        << bsoncxx::builder::stream::document{}
+            << "$set" << bsoncxx::builder::stream::open_document 
+                << "image" << outname
+        << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize);
+    */
+
+    bsoncxx::builder::basic::document camerainfo{};
+    camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
+
+    task.update_one(
+            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
+            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
+                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("image", outname)))));
 
     // Dynamic frame rate adjustment
     RT_PROBATION--;
@@ -476,24 +519,7 @@ void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
           RT_PROBATION=-1;        // Back to normal
     }
 
-    // Check Luminance (and add to documents)
-    if (tick % T_LUMINANCE == 0) {
-        // We send to database first, then we can edit it later
-        auto ret = frames.insert_one(doc.view());
-        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
-        t.detach();
-    } else {
-        // Add to documents
-        documents.push_back(doc.extract());
-    }
-
-    // Send documents to database
-    if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-        LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
-        frames.insert_many(documents);
-        documents.clear();
-    }
+    return;
 }
 
 
@@ -532,7 +558,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
         bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretask.find_one({}, opts);
 
         if (val) {
-            priority = json::parse(bsoncxx::to_json(*val))["priority"];
+            priority = nlohmann::json::parse(bsoncxx::to_json(*val))["priority"];
             ++priority;
         } else {
             // Special case (first task in the database)
@@ -707,8 +733,8 @@ int AgriDataCamera::Stop() {
  *
  * Respond to the heartbeat the data about the camera
  */
-json AgriDataCamera::GetStatus() {
-    json status;
+nlohmann::json AgriDataCamera::GetStatus() {
+    nlohmann::json status;
     INodeMap &nodeMap = GetNodeMap();
 
     status["Serial Number"] = serialnumber;
@@ -735,12 +761,14 @@ json AgriDataCamera::GetStatus() {
     } catch (...) { // GigE
         status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("GainRaw"))->GetValue(); // Gotcha!
         status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue();
+        status["Red Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Red"))->GetValue();
+        status["Green Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Blue"))->GetValue();
+        status["Blue Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Green"))->GetValue();
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
-    status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
+        status["Target Frame Rate"] = AcquisitionFrameRateAbs.GetValue();
         status["Probation"] = RT_PROBATION;
-
     }
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
@@ -750,6 +778,9 @@ json AgriDataCamera::GetStatus() {
             << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
             << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
+            << "Red Balance" << (int) status["Red Balance"].get<float>()
+            << "Green Balance" << (int) status["Red Balance"].get<float>()
+            << "Blue Balance" << (int) status["Red Balance"].get<float>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
             << "Target Frame Rate" << status["Target Frame Rate"].get<float>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()

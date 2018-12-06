@@ -39,7 +39,7 @@ LinkOptions            :=  -pg -ggdb `pkg-config opencv --cflags --libs` `/opt/p
 IncludePath            := $(IncludeSwitch)../lib $(IncludeSwitch)/usr/include/lib $(IncludeSwitch)/opt/pylon5/include $(IncludeSwitch)/usr/local/include/bsoncxx/v_noabi $(IncludeSwitch)/usr/local/include/mongocxx/v_noabi $(IncludeSwitch)/data/CameraDeamon/lib $(IncludeSwitch)/usr/include/opencv2 $(IncludeSwitch)/usr/include $(IncludeSwitch)/data/opencv_contrib/modules/xfeatures2d/include $(IncludeSwitch)/usr/include/hdf5/serial/
 IncludePCH             :=
 RcIncludePath          :=
-Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)GCBase_gcc_v3_0_Basler_pylon_v5_0 $(LibrarySwitch)boost_system $(LibrarySwitch)boost_filesystem $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)profiler $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl $(LibrarySwitch)hdf5_cpp 
+Libs                   := $(LibrarySwitch)pylonbase $(LibrarySwitch)pylonutility $(LibrarySwitch)GenApi_gcc_v3_1_Basler_pylon_v5_1 $(LibrarySwitch)GCBase_gcc_v3_1_Basler_pylon_v5_1 $(LibrarySwitch)boost_system $(LibrarySwitch)boost_filesystem $(LibrarySwitch)boost_python $(LibrarySwitch)zmq $(LibrarySwitch)pthread $(LibrarySwitch)hdf5 $(LibrarySwitch)hdf5_hl $(LibrarySwitch)hdf5_cpp 
 LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/opt/pylon5/lib64 $(LibraryPathSwitch)/usr/local/lib64 $(LibraryPathSwitch)/usr/lib/aarch64-linux-gnu/hdf5/serial/
 
 ##
