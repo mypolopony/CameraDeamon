@@ -298,6 +298,15 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
 
 
 /**
+ * Oneshot
+ *
+ * Grab and detect one image
+ */
+void AgriDataCamera::Oneshot(json task) {
+    return;
+}
+
+/**
  * Run
  *
  * Main loop

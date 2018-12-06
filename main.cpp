@@ -270,21 +270,29 @@ int main() {
 
                 try {
 
-                    // Onesnap
-                    if (received["action"] == "onesnap") {
+                    // Oneshot
+                    if (received["action"] == "oneshot") {
                         if (isRecording) {
                             reply["message"] = "Already Recording";
                         } else {
                             mongocxx::collection task = db["task"];
 
+                            // If we have the task fed in directly to the CameraDeamon, we will eventually
+                            // have to look it up to update it anyway. So best to look it up first by _id
                             string taskid = received["taskid"];
                             bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
                                 << "_id" << bsoncxx::oid(taskid.c_str())
                                 << bsoncxx::builder::stream::finalize);
                             string resultstring = bsoncxx::to_json(*maybe_result);
+                            json thistask = json::parse(resultstring);
 
-                            auto thistask = json::parse(resultstring);
-                            cout << thistask["serialnumber"];
+                            // Oneshot is assumed to have a target serial number
+                            for (size_t i = 0; i < devices.size(); ++i) {
+                                if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
+                                    thread t(&AgriDataCamera::Oneshot, cameras[i], thistask);
+                                    t.detach();
+                                }
+                            }
                         }
                     }
 

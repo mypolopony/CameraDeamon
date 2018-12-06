@@ -53,6 +53,7 @@ public:
 
     void Initialize();
     void Run();
+    void Oneshot(nlohmann::json);
     int Stop();
     void Snap();
     float _luminance(cv::Mat);
