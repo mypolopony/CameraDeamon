@@ -309,7 +309,6 @@ void AgriDataCamera::Oneshot(nlohmann::json task) {
     string session_name = task["session_name"];
     save_prefix = "/data/output/" + task["session_name"] + "/" + serialnumber + "/";
 
-    /*
     // Set recording to true and start grabbing
     isRecording = true;
     if (!IsGrabbing()) {
@@ -321,56 +320,49 @@ void AgriDataCamera::Oneshot(nlohmann::json task) {
     string config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
-        // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-        RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-        try {
-            // Image grabbed successfully?
-            if (ptrGrabResult->GrabSucceeded()) {
-                // Create Frame Packet
-                FramePacket fp;
+    // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
+    RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+    try {
+        // Image grabbed successfully?
+        if (ptrGrabResult->GrabSucceeded()) {
+            // Create Frame Packet
+            FramePacket fp;
 
-                // Computer time
-                fp.time_now = AGDUtils::grabMilliseconds();
-                last_timestamp = fp.time_now;
+            // Computer time
+            fp.time_now = AGDUtils::grabMilliseconds();
+            last_timestamp = fp.time_now;
 
-                // Exposure time
-                try { // USB
-                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
-                } catch (...) { // GigE
-                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
-                }
+            // Image
+            fp.img_ptr = ptrGrabResult;
 
-                // Image
-                fp.img_ptr = ptrGrabResult;
+            // Metadata
+            fp.task = task;
 
-                // Process the frame
-                try {
-                    HandleFrame(fp);
-                } catch (...) {
-                    LOG(WARNING) << "Frame slipped!";
-                }
-
-            } else {
-                LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
-                LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
-                try {
-                    RT_PROBATION = PROBATION;
-                    AcquisitionFrameRateEnable.SetValue(true);
-                    AcquisitionFrameRateAbs.SetValue(LOW_FPS);
-                    LOG(DEBUG) << "Changed Successfully";
-                    // fps->SetValue(LOW_FPS); 
-                } catch (const GenericException &e) {
-                    LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
-                }
+            // Process the frame
+            try {
+                HandleOneFrame(fp);
+            } catch (...) {
+                LOG(WARNING) << "Frame slipped!";
             }
-        } catch (const GenericException &e) {
-            LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
-                    + ptrGrabResult->GetErrorDescription() + "\n"
-                    + e.GetDescription();
-            isRecording = false;
+
+        } else {
+            LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
+            LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
+            try {
+                RT_PROBATION = PROBATION;
+                AcquisitionFrameRateEnable.SetValue(true);
+                AcquisitionFrameRateAbs.SetValue(LOW_FPS);
+                LOG(DEBUG) << "Changed Successfully";
+            } catch (const GenericException &e) {
+                LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
+            }
         }
+    } catch (const GenericException &e) {
+        LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
+                + ptrGrabResult->GetErrorDescription() + "\n"
+                + e.GetDescription();
+        isRecording = false;
     }
-    */
     return;
 }
 
@@ -379,6 +371,8 @@ void AgriDataCamera::Oneshot(nlohmann::json task) {
  *
  * Main loop
  */
+
+/*
 void AgriDataCamera::Run() {
     // Output parameters
     save_prefix = "/data/output/" + clientid + "/" + scanid + "/" + serialnumber + "/";
@@ -412,12 +406,15 @@ void AgriDataCamera::Run() {
                 fp.time_now = AGDUtils::grabMilliseconds();
                 last_timestamp = fp.time_now;
 
-                // Exposure time
+                // Image 
                 try { // USB
                     fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
                 } catch (...) { // GigE
                     fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
                 }
+
+                // Mode
+                fp.mode = "oneshot";
 
                 // Image
                 fp.img_ptr = ptrGrabResult;
@@ -450,6 +447,12 @@ void AgriDataCamera::Run() {
         }
     }
 }
+*/
+
+void AgriDataCamera::Run() {
+    // Currently deprecated
+    return;
+}
 
 
 /**
@@ -457,14 +460,10 @@ void AgriDataCamera::Run() {
  *
  * Receive latest frame
  */
-void AgriDataCamera::HandleFrame(AgriDataCamera::FramePacket fp) {
+void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     double dif;
     struct timeval tp;
     long int start, end;
-    tick++;
-
-    // Need the latest nodemap? Not sure whether or not this can / should be a private member
-    INodeMap &nodeMap = GetNodeMap();
 
     // Docuemnt
     auto doc = bsoncxx::builder::basic::document{};
@@ -829,6 +828,9 @@ nlohmann::json AgriDataCamera::GetStatus() {
             << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
             << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
+            << "Red Balance" << (int) status["Red Balance"].get<float>()
+            << "Green Balance" << (int) status["Red Balance"].get<float>()
+            << "Blue Balance" << (int) status["Red Balance"].get<float>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
             << "Target Frame Rate" << status["Target Frame Rate"].get<float>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()

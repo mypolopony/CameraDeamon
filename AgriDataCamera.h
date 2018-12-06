@@ -80,6 +80,7 @@ private:
     struct FramePacket {
         int64_t time_now;
         float exposure_time;
+        nlohmann::json task;
         Pylon::CGrabResultPtr img_ptr;
     };
 
@@ -163,6 +164,7 @@ private:
     void Luminance(bsoncxx::oid, cv::Mat);
     void writeHeaders();
     void HandleFrame(AgriDataCamera::FramePacket);
+    void HandleOneFrame(AgriDataCamera::FramePacket);
     void writeLatestImage(cv::Mat, std::vector<int>);
     void AddTask(std::string);
 };
