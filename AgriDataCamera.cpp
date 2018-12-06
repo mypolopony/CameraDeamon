@@ -741,15 +741,7 @@ nlohmann::json AgriDataCamera::GetStatus() {
     status["Model Name"] = modelname;
     status["Recording"] = isRecording;
 
-    // Something funny here, occasionally the ptrGrabResult is not available
-    // even though the camera is grabbing?
-    if (isRecording) {
-        status["Timestamp"] = last_timestamp;
-        status["scanid"] = scanid;
-    } else {
-        status["Timestamp"] = 0;
-        status["scanid"] = "Not Recording";
-    }
+    status["Timestamp"] = AGDUtils::grabMilliseconds();
 
     // Here is the main divergence between GigE and USB Cameras; the nodemap is not standard
     try { // USB
@@ -761,9 +753,12 @@ nlohmann::json AgriDataCamera::GetStatus() {
     } catch (...) { // GigE
         status["Current Gain"] = (int) CIntegerPtr(nodeMap.GetNode("GainRaw"))->GetValue(); // Gotcha!
         status["Exposure Time"] = (float) CFloatPtr(nodeMap.GetNode("ExposureTimeAbs"))->GetValue();
-        status["Red Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Red"))->GetValue();
-        status["Green Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Blue"))->GetValue();
-        status["Blue Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioSelector_Green"))->GetValue();
+        BalanceRatioSelector.SetValue(BalanceRatioSelectorEnums::BalanceRatioSelector_Red);
+        status["Red Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioAbs"))->GetValue();
+        BalanceRatioSelector.SetValue(BalanceRatioSelectorEnums::BalanceRatioSelector_Blue);
+        status["Blue Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioAbs"))->GetValue();
+        BalanceRatioSelector.SetValue(BalanceRatioSelectorEnums::BalanceRatioSelector_Green);
+        status["Green Balance"] = (float) CFloatPtr(nodeMap.GetNode("BalanceRatioAbs"))->GetValue();
         status["Resulting Frame Rate"] = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
         status["Temperature"] = (float) CFloatPtr(nodeMap.GetNode("TemperatureAbs"))->GetValue();
         status["Target Brightness"] = (int) CIntegerPtr(nodeMap.GetNode("AutoTargetValue"))->GetValue();
@@ -771,16 +766,30 @@ nlohmann::json AgriDataCamera::GetStatus() {
         status["Probation"] = RT_PROBATION;
     }
 
+    LOG(DEBUG) << "Serial Number" << (string) status["Serial Number"].get<string>();
+    LOG(DEBUG) << "Model Name" << (string) status["Model Name"].get<string>();
+    LOG(DEBUG) << "Recording" << (bool) status["Recording"].get<bool>();
+    LOG(DEBUG) << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>();
+    LOG(DEBUG) << "Exposure Time" << (int) status["Exposure Time"].get<int>();
+    LOG(DEBUG) << "Red Balance" << status["Red Balance"].get<float>();
+    LOG(DEBUG) << "Green Balance" << status["Green Balance"].get<float>();
+    LOG(DEBUG) << "Blue Balance" << status["Blue Balance"].get<float>();
+    LOG(DEBUG) << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>();
+    LOG(DEBUG) << "Target Frame Rate" << status["Target Frame Rate"].get<float>();
+    LOG(DEBUG) << "Current Gain" << (int) status["Current Gain"].get<int>();
+    LOG(DEBUG) << "Temperature" << (int) status["Temperature"].get<int>();
+    LOG(DEBUG) << "Target Brightness" << (int) status["Target Brightness"].get<int>();
+    LOG(DEBUG) << "Probation" << (int) status["Probation"].get<int>();
+
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
             << "Serial Number" << (string) status["Serial Number"].get<string>()
             << "Model Name" << (string) status["Model Name"].get<string>()
             << "Recording" << (bool) status["Recording"].get<bool>()
             << "Timestamp" << (int64_t) status["Timestamp"].get<int64_t>()
-            << "scanid" << (string) status["scanid"].get<string>()
             << "Exposure Time" << (int) status["Exposure Time"].get<int>()
-            << "Red Balance" << (int) status["Red Balance"].get<float>()
-            << "Green Balance" << (int) status["Red Balance"].get<float>()
-            << "Blue Balance" << (int) status["Red Balance"].get<float>()
+            << "Red Balance" << status["Red Balance"].get<float>()
+            << "Green Balance" << status["Green Balance"].get<float>()
+            << "Blue Balance" << status["Blue Balance"].get<float>()
             << "Resulting Frame Rate" << (int) status["Resulting Frame Rate"].get<int>()
             << "Target Frame Rate" << status["Target Frame Rate"].get<float>()
             << "Current Gain" << (int) status["Current Gain"].get<int>()
