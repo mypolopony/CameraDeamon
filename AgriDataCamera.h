@@ -39,10 +39,17 @@
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/array.hpp>
 #include <bsoncxx/builder/basic/kvp.hpp>
-#include <bsoncxx/json.hpp>
 #include <bsoncxx/types.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
+
+// This is discouraged, as it brings the namespace in the global scope
+// but for some reason, there is perhaps a name conflict, without it,
+// i.e. just using void Oneshot(nlohmann::json) does not work:
+//      ../lib/json.hpp:870:9: error: static assertion failed: could not find from_json() method in T's namespace
+// But there is only ony cpp file and it also explicitly uses this namespace
+// as well, so it should be OK.
+using json = nlohmann::json;
 
 
 class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
@@ -53,7 +60,7 @@ public:
 
     void Initialize();
     void Run();
-    void Oneshot(nlohmann::json);
+    void Oneshot(json);
     int Stop();
     void Snap();
     float _luminance(cv::Mat);
