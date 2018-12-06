@@ -73,7 +73,6 @@ using namespace std;
 using namespace cv;
 using namespace GenApi;
 using namespace std::chrono;
-using json = nlohmann::json;
 
 
 /**
@@ -191,7 +190,7 @@ void AgriDataCamera::Initialize() {
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
-    auto thisbox = json::parse(resultstring);
+    auto thisbox = nlohmann::json::parse(resultstring);
     clientid = thisbox["clientid"];
     try {
         if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
@@ -289,7 +288,7 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
         LOG(DEBUG) << "Obtaining Frame Number";
         LOG(DEBUG) << bsoncxx::to_json(*val);
         // Increment
-        frame_number = json::parse(bsoncxx::to_json(*val))["frame_number"];
+        frame_number = nlohmann::json::parse(bsoncxx::to_json(*val))["frame_number"];
         LOG(DEBUG) << bsoncxx::to_json(*val);
         LOG(DEBUG) << "Last number found: " << frame_number;;
         return frame_number++;
@@ -305,16 +304,12 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
  *
  * Grab and detect one image
  */
-void AgriDataCamera::Oneshot(json task) {
-    /*
+void AgriDataCamera::Oneshot(nlohmann::json task) {
     // Output parameters
     string session_name = task["session_name"];
     save_prefix = "/data/output/" + task["session_name"] + "/" + serialnumber + "/";
+
     /*
-
-    // Get current frame number
-    frame_number = GetFrameNumber(scanid);
-
     // Set recording to true and start grabbing
     isRecording = true;
     if (!IsGrabbing()) {
@@ -325,9 +320,7 @@ void AgriDataCamera::Oneshot(json task) {
     INodeMap &nodeMap = GetNodeMap();
     string config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
-    
-    // Initiate main loop with algorithm
-    while (isRecording) {
+
         // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
         RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
         try {
@@ -616,7 +609,7 @@ void AgriDataCamera::AddTask(string hdf5file) {
         bsoncxx::stdx::optional<bsoncxx::document::value> val = _pretask.find_one({}, opts);
 
         if (val) {
-            priority = json::parse(bsoncxx::to_json(*val))["priority"];
+            priority = nlohmann::json::parse(bsoncxx::to_json(*val))["priority"];
             ++priority;
         } else {
             // Special case (first task in the database)
@@ -791,8 +784,8 @@ int AgriDataCamera::Stop() {
  *
  * Respond to the heartbeat the data about the camera
  */
-json AgriDataCamera::GetStatus() {
-    json status;
+nlohmann::json AgriDataCamera::GetStatus() {
+    nlohmann::json status;
     INodeMap &nodeMap = GetNodeMap();
 
     status["Serial Number"] = serialnumber;

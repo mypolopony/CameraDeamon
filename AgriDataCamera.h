@@ -49,7 +49,7 @@
 //      ../lib/json.hpp:870:9: error: static assertion failed: could not find from_json() method in T's namespace
 // But there is only ony cpp file and it also explicitly uses this namespace
 // as well, so it should be OK.
-using json = nlohmann::json;
+// using json = nlohmann::json;
 
 
 class AgriDataCamera : public Pylon::CBaslerGigEInstantCamera
@@ -60,7 +60,7 @@ public:
 
     void Initialize();
     void Run();
-    void Oneshot(json);
+    void Oneshot(nlohmann::json);
     int Stop();
     void Snap();
     float _luminance(cv::Mat);
