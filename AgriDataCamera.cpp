@@ -169,9 +169,6 @@ void AgriDataCamera::Initialize() {
         LOG(WARNING) << "Skipping GevSCPD parameter";
     }
 
-    // Color Format
-    COLOR_FMT = "RGB";
-    
     // Get Dimensions
     width = (int) CIntegerPtr(nodeMap.GetNode("Width"))->GetValue();
     height = (int) CIntegerPtr(nodeMap.GetNode("Height"))->GetValue();
@@ -184,29 +181,21 @@ void AgriDataCamera::Initialize() {
     }
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
 
-
-    // Box Information
+    // Box / Camera Information
     LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
     bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = nlohmann::json::parse(resultstring);
     clientid = thisbox["clientid"];
-    try {
-        if (thisbox["cameras"][serialnumber].get<string>().compare("Left")) {
-            rotation = "ROTATE_90_COUNTERCLOCKWISE";
-        } else if (thisbox["cameras"][serialnumber].get<string>().compare("Right")) {
-            rotation = "ROTATE_90_CLOCKWISE";
-        } else {
-            rotation = "";
-        }
-    } catch (...) {
-        LOG(WARNING) << "Unable to determine camera orientation";
-        rotation = "";
-    }
+
+    // Rotation
+    rotation = "ROTATE_0";
+
+    // Color Format
+    COLOR_FMT = "RGB";
 
     // Frame Rate
-    // HIGH_FPS = (float) CFloatPtr(nodeMap.GetNode("ResultingFrameRateAbs"))->GetValue();
     HIGH_FPS = AcquisitionFrameRateAbs.GetValue();
     
     // Print camera device information.
@@ -223,7 +212,7 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Bandwidth Assigned : " << GevSCBWA.GetValue();
     LOG(INFO) << "Max Throughput : " << GevSCDMT.GetValue();
     LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
-    LOG(INFO) << "Rotation required : " << rotation << " degrees";
+    LOG(INFO) << "Rotation required : " << rotation;
     LOG(INFO) << "Color format " << COLOR_FMT;
 
     // Create Mat image templates
@@ -465,47 +454,13 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
 
-    // Docuemnt
-    auto doc = bsoncxx::builder::basic::document{};
-    doc.append(
-            bsoncxx::builder::basic::kvp("serialnumber", serialnumber));
-    doc.append(bsoncxx::builder::basic::kvp("scanid", scanid));
+    // Grab the task
+    mongocxx::collection task = db["task"];
+    string taskid = fp.task["taskid"];
 
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
-    doc.append(bsoncxx::builder::basic::kvp("camera_time", (string) camera_time.str()));
-    doc.append(bsoncxx::builder::basic::kvp("timestamp", fp.time_now));
-    doc.append(bsoncxx::builder::basic::kvp("frame_number", frame_number));
-
-    // Add Camera data
-    doc.append(bsoncxx::builder::basic::kvp("exposure_time", fp.exposure_time));
-
-    // Computer time and output directory
-    vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
-    string hdf5file = scanid + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + COLOR_FMT + ".hdf5";
-    doc.append(bsoncxx::builder::basic::kvp("filename", hdf5file));
-
-    // Should we open a new file?
-    if (hdf5file.compare(current_hdf5_file) != 0) {
-
-        // Close the previous file (if it is a thing)
-        if (current_hdf5_file.compare("") != 0) {
-            H5Fclose(hdf5_out);
-            AddTask(current_hdf5_file);
-        }
-        
-        current_hdf5_file = hdf5file;
-        LOG(INFO) << "HDF5 File: " << save_prefix + current_hdf5_file;
-        hdf5_out = H5Fcreate((save_prefix + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
-        // Add Metadata
-        string VERSION = "1.2";
-        H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
-        H5LTset_attribute_string(hdf5_out, "/", "VERSION", VERSION.c_str());
-        H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
-    }
-
 
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
@@ -526,21 +481,33 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
 
-    // Create HDF5 Dataset
-    hsize_t buffersize = outbuffer.size();
-    try {
-        H5LTmake_dataset(hdf5_out, padTo(frame_number, (size_t) 6).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-        frame_number++;
-    } catch (...) {
-        LOG(INFO) << "Frame dropped (likely end of recording)";
-    }
+    // Write to image
+    string outname = "/data/EmbeddedServer/images/oneshot_" + serialnumber + ".jpg";
+    imwrite(outname, last_img);
 
-    // Write to streaming image
-    if (tick % T_LATEST == 0) {
-        thread t(&AgriDataCamera::writeLatestImage, this, last_img,
-                ref(compression_params));
-        t.detach();
-    }
+    // Conversion of status from nlohmann to bsoncxx
+    // nlohmann::json status = GetStatus();
+    // string camerainfo = status.dump();
+
+    // Final update
+    /*
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.update_one(bsoncxx::builder::stream::document{}
+        << "_id" << bsoncxx::oid(taskid.c_str())
+        << bsoncxx::builder::stream::finalize
+        << bsoncxx::builder::stream::document{}
+            << "$set" << bsoncxx::builder::stream::open_document 
+                << "image" << outname
+        << bsoncxx::builder::stream::close_document
+        << bsoncxx::builder::stream::finalize);
+    */
+
+    bsoncxx::builder::basic::document camerainfo{};
+    camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
+
+    task.update_one(
+            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
+            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
+                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("image", outname)))));
 
     // Dynamic frame rate adjustment
     RT_PROBATION--;
@@ -552,24 +519,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
           RT_PROBATION=-1;        // Back to normal
     }
 
-    // Check Luminance (and add to documents)
-    if (tick % T_LUMINANCE == 0) {
-        // We send to database first, then we can edit it later
-        auto ret = frames.insert_one(doc.view());
-        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, small_last_img);
-        t.detach();
-    } else {
-        // Add to documents
-        documents.push_back(doc.extract());
-    }
-
-    // Send documents to database
-    if ((tick % T_MONGODB == 0) && (documents.size() > 0)) {
-        LOG(DEBUG) << "Sending " << documents.size() << " documents to Database";
-        frames.insert_many(documents);
-        documents.clear();
-    }
+    return;
 }
 
 

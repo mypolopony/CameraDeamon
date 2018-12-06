@@ -276,7 +276,7 @@ int main() {
                         } else {
                             mongocxx::collection task = db["task"];
 
-                            // If we have the task fed in directly to the CameraDeamon, we will eventually
+                            // Even if we have the task fed in directly to the CameraDeamon, we will eventually
                             // have to look it up to update it anyway. So best to look it up first by _id
                             string taskid = received["taskid"];
                             bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
