@@ -408,6 +408,26 @@ int main() {
                         }
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
                     }
+
+                    // Auto Gain
+                    else if (received["action"] == "autogain") {
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("GainAuto"))->SetValue(GainAuto_Once);
+                            }
+                        }
+                        reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
+                    }
+
+                    // Auto Exposure
+                    else if (received["action"] == "autoexposure") {
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("ExposureAuto"))->SetValue(ExposureAuto_Once);
+                            }
+                        }
+                        reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
+                    }
                     
                     // Luminance
                     else if (received["action"] == "luminance") {
