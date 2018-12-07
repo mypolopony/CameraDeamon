@@ -296,7 +296,8 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
 void AgriDataCamera::Oneshot(nlohmann::json task) {
     // Output parameters
     string session_name = task["session_name"];
-    save_prefix = "/data/output/" + task["session_name"] + "/" + serialnumber + "/";
+    save_prefix = "/data/output/plenty/" + task["session_name"] + "/" + serialnumber + "/raw/";
+    bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Set recording to true and start grabbing
     isRecording = true;
@@ -454,19 +455,14 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
 
-    LOG(DEBUG) << "Handle Frame";
-
     // Grab the task
+    LOG(DEBUG) << "HERE";
     mongocxx::collection task = db["task"];
-    string taskid = fp.task["taskid"];
-
-    LOG(DEBUG) << "TaskID Ok";
+    string taskid = fp.task["_id"]["$oid"];
 
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
-
-    LOG(DEBUG) << "TimestampOK";
 
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
@@ -476,7 +472,6 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     // Resize
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
-    LOG(DEBUG) << "ResizeOK";
 
     // Color
     if (COLOR_FMT.compare("RGB")) {
@@ -488,11 +483,13 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
 
-    LOG(DEBUG) << "JPG OK";
 
     // Write to image
-    string outname = "/data/EmbeddedServer/images/oneshot_" + serialnumber + ".jpg";
+    string outname = save_prefix + "oneshot_" + serialnumber + ".jpg";
     imwrite(outname, last_img);
+    LOG(DEBUG) << "Image written";
+    LOG(DEBUG) << outname;
+
 
     // Conversion of status from nlohmann to bsoncxx
     // nlohmann::json status = GetStatus();
@@ -510,13 +507,16 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         << bsoncxx::builder::stream::finalize);
     */
 
+    LOG(DEBUG) << "Creating DOcument";
     bsoncxx::builder::basic::document camerainfo{};
     camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
 
+    LOG(DEBUG) << "Updating";
     task.update_one(
             bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
             bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
                 bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("image", outname)))));
+    LOG(DEBUG) << "Done updating";
 
     // Dynamic frame rate adjustment
     RT_PROBATION--;

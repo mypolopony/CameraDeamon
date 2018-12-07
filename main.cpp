@@ -289,9 +289,8 @@ int main() {
                             // Oneshot is assumed to have a target serial number
                             for (size_t i = 0; i < devices.size(); ++i) {
                                 if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-
-                                    thread t(&AgriDataCamera::Oneshot, cameras[i], thistask);
-                                    t.detach();
+                                    // Blocking call
+                                    cameras[i]->Oneshot(thistask);
                                 }
                             }
                         }
