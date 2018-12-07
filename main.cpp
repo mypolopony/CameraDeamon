@@ -211,9 +211,9 @@ int main() {
     const char *command;
 
     // (Re-)Start server
-    cmd = "systemctl restart server_logic";
-    command = cmd.c_str();
-    system(command);
+    // cmd = "systemctl restart server_logic";
+    // command = cmd.c_str();
+    // system(command);
 
     while (true) {
         try {
@@ -265,6 +265,7 @@ int main() {
             // Good message
             if (rec) {
                 receivedstring = string(static_cast<char *> (messageR.data()), messageR.size());
+                LOG(WARNING) << receivedstring;
                 received = json::parse(receivedstring);
 
                 try {
@@ -288,7 +289,8 @@ int main() {
                             // Oneshot is assumed to have a target serial number
                             for (size_t i = 0; i < devices.size(); ++i) {
                                 if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-                                    thread t(&AgriDataCamera::Oneshot, cameras[i], received);
+
+                                    thread t(&AgriDataCamera::Oneshot, cameras[i], thistask);
                                     t.detach();
                                 }
                             }
@@ -348,8 +350,7 @@ int main() {
                                     bsoncxx::builder::stream::document{}
                             << "$set" <<
                             bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64{AGDUtils::grabMilliseconds()}
-                            <<
-                            bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
+                            << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
 
                             // Stop cameras
                             for (size_t i = 0; i < devices.size(); ++i) {

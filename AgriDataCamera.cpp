@@ -454,13 +454,19 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
 
+    LOG(DEBUG) << "Handle Frame";
+
     // Grab the task
     mongocxx::collection task = db["task"];
     string taskid = fp.task["taskid"];
 
+    LOG(DEBUG) << "TaskID Ok";
+
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
+
+    LOG(DEBUG) << "TimestampOK";
 
     // Convert to BGR8Packed CPylonImage
     fc.Convert(image, fp.img_ptr);
@@ -470,6 +476,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     // Resize
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
+    LOG(DEBUG) << "ResizeOK";
 
     // Color
     if (COLOR_FMT.compare("RGB")) {
@@ -480,6 +487,8 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     vector<uint8_t> outbuffer;
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
+
+    LOG(DEBUG) << "JPG OK";
 
     // Write to image
     string outname = "/data/EmbeddedServer/images/oneshot_" + serialnumber + ".jpg";
