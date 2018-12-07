@@ -296,7 +296,7 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
 void AgriDataCamera::Oneshot(nlohmann::json task) {
     // Output parameters
     string session_name = task["session_name"];
-    save_prefix = "/data/output/plenty/" + task["session_name"] + "/" + serialnumber + "/raw/";
+    save_prefix = "/data/output/plenty/" + task["session_name"] + "/raw/";
     bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Set recording to true and start grabbing

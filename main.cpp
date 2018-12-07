@@ -403,6 +403,7 @@ int main() {
                     else if (received["action"] == "whitebalance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+                                LOG(INFO) << "Found Camera";
                                 GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
                             }
                         }
