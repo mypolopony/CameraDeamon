@@ -403,8 +403,7 @@ int main() {
                     else if (received["action"] == "whitebalance") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-                                LOG(INFO) << "Found Camera";
-                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("BalanceWhiteAuto"))->SetValue(BalanceWhiteAuto_Once);
+                                cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
                             }
                         }
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
@@ -414,7 +413,7 @@ int main() {
                     else if (received["action"] == "autogain") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("GainAuto"))->SetValue(GainAuto_Once);
+                                cameras[i]->GainAuto.SetValue(GainAuto_Once);
                             }
                         }
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
@@ -424,7 +423,7 @@ int main() {
                     else if (received["action"] == "autoexposure") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
-                                GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("ExposureAuto"))->SetValue(ExposureAuto_Once);
+                                cameras[i]->ExposureAuto.SetValue(ExposureAuto_Once);
                             }
                         }
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
