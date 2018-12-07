@@ -123,7 +123,7 @@ void AgriDataCamera::Initialize() {
 
     // Initialize MongoDB connection
     LOG(INFO) << "Connecting to MongoDB";
-    db = conn["agdb"];
+    db = conn["plenty"];
     frames = db["frame"];
 
     // Open camera object ahead of time
@@ -540,7 +540,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 void AgriDataCamera::AddTask(string hdf5file) {
     // New Mongo Connection
     mongocxx::client _conn{mongocxx::uri{"mongodb://localhost:27017"}};
-    mongocxx::database _db = _conn["agdb"];
+    mongocxx::database _db = _conn["plenty"];
     mongocxx::collection _pretask = _db["pretask"];
     mongocxx::collection _box = _db["box"];
     int priority;
@@ -618,7 +618,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
     // "don't even bother sharing clients. Just give each thread its own"
     mongocxx::client _conn{mongocxx::uri
         { MONGODB_HOST}};
-    mongocxx::database _db = _conn["agdb"];
+    mongocxx::database _db = _conn["plenty"];
     mongocxx::collection _frames = _db["frame"];
 
     float avgLum = _luminance(input);

@@ -166,7 +166,7 @@ int main() {
     mongocxx::instance inst{};
     mongocxx::client conn{mongocxx::uri
         {"mongodb://localhost:27017"}};
-    mongocxx::database db = conn["agdb"];
+    mongocxx::database db = conn["plenty"];
     mongocxx::collection scans = db["scan"];
 
     // Initialize Pylon (required for any future Pylon fuctions)
