@@ -372,7 +372,7 @@ int main() {
                     else if (received["action"] == "status") {
                         for (size_t i = 0; i < devices.size(); ++i) {
                             status = cameras[i]->GetStatus();
-                            sn = status["Serial Number"];
+                            sn = status["serial_number"];
                             reply["message"][sn] = status;
                         }
                     }
