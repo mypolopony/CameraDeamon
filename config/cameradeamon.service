@@ -1,0 +1,18 @@
+[Unit]
+Description=Basler Camera Deamon
+PartOf=camerastack.service
+After=camerastack.service
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=30
+User=nvidia
+Group=nvidia
+
+WorkingDirectory=/data/CameraDeamon
+ExecStartPre=/bin/sleep 2
+ExecStart=/data/CameraDeamon/CameraDeamon/Release/CameraDeamon
+
+[Install]
+WantedBy=camerastack.service
