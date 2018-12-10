@@ -197,6 +197,10 @@ void AgriDataCamera::Initialize() {
 
     // Frame Rate
     HIGH_FPS = AcquisitionFrameRateAbs.GetValue();
+
+    // AVI Output
+    Size frameSize(static_cast<int>(width), static_cast<int>(height));
+    oVideoWriter.open("/tmp/video.avi", CV_FOURCC('H','2','6','4'), 20, frameSize, true); 
     
     // Print camera device information.
     LOG(INFO) << "Camera Device Information";
@@ -455,40 +459,64 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     struct timeval tp;
     long int start, end;
 
+    clock_t clockstart;
+    double duration;
+
     // Grab the task
-    LOG(DEBUG) << "HERE";
+    clockstart = clock();
     mongocxx::collection task = db["task"];
     string taskid = fp.task["_id"]["$oid"];
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Task grab: " << duration << "ms";
 
     // Basler time and frame
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
 
     // Convert to BGR8Packed CPylonImage
+    clockstart = clock();
     fc.Convert(image, fp.img_ptr);
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Native Bayer to BGR8packed: " << duration << "ms";
 
     // To OpenCV Mat
+    clockstart = clock();
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "To OpenCV Mat: " << duration << "ms";
 
     // Resize
+    clockstart = clock();
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Resize: " << duration << "ms";
 
     // Color
-    if (COLOR_FMT.compare("RGB")) {
-        cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
-    }
+    clockstart = clock();
+    cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Color conversion: " << duration << "ms";
+
+    // Write to AVI
+    clockstart = clock();
+    oVideoWriter.write(small_last_img);
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Write to AVI: " << duration << "ms";
 
     // Encode to JPG Buffer
+    clockstart = clock();
     vector<uint8_t> outbuffer;
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
-
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "JPEG Encode: " << duration << "ms";
 
     // Write to image
+    clockstart = clock();
     string outname = save_prefix + "oneshot_" + serialnumber + ".jpg";
     imwrite(outname, last_img);
-    LOG(DEBUG) << "Image written";
-    LOG(DEBUG) << outname;
+    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+    LOG(INFO) << "Image write: " << duration << "ms";
 
 
     // Conversion of status from nlohmann to bsoncxx
@@ -507,7 +535,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         << bsoncxx::builder::stream::finalize);
     */
 
-    LOG(DEBUG) << "Creating DOcument";
+    LOG(DEBUG) << "Creating Document";
     bsoncxx::builder::basic::document camerainfo{};
     camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
 

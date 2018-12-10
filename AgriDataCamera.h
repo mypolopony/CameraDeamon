@@ -115,6 +115,9 @@ private:
     // Image compression
     std::vector<int> compression_params;
 
+    // Video output
+    cv::VideoWriter oVideoWriter;
+
     // Timers
     const int T_LATEST = 20;
     const int T_MONGODB = 400; 
