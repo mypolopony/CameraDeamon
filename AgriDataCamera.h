@@ -61,7 +61,7 @@ public:
     void Initialize();
     void Start(nlohmann::json);
     int Stop();
-    void Snap();
+    void snapCycle();
     float _luminance(cv::Mat);
     nlohmann::json GetStatus();
 

@@ -191,6 +191,10 @@ int main() {
             cameras[i] = new AgriDataCamera();
             cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
             cameras[i]->Initialize();
+
+            // Start Snapping
+            thread t(&AgriDataCamera::snapCycle, cameras[i]);
+            t.detach();
         }
     } catch (const GenericException &e) {
         LOG(ERROR) << "Camera Initialization Failed";
@@ -359,7 +363,7 @@ int main() {
                     // Snap
                     else if (received["action"] == "snap") {
                         for (size_t i = 0; i < devices.size(); ++i) {
-                            cameras[i]->Snap();
+                            // cameras[i]->Snap();
                         }
                         reply["message"] = "Snapshot Taken";
                     }

@@ -133,6 +133,7 @@ void AgriDataCamera::Initialize() {
         Open();
     }
 
+    // Start grabbing immediately, though not recording
     if (!IsGrabbing()) {
         StartGrabbing();
     }
@@ -305,9 +306,6 @@ void AgriDataCamera::Start(nlohmann::json task) {
 
     // Set recording to true and start grabbing
     isRecording = true;
-    if (!IsGrabbing()) {
-        StartGrabbing();
-    }
 
     // Save configuration
     INodeMap &nodeMap = GetNodeMap();
@@ -598,35 +596,29 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
  *
  * Consider making this json instead of void to return success
  */
-void AgriDataCamera::Snap() {
-    // this !isRecording criterion is enforced because I don't know what the camera's
-    // behavior is to ask for one frame while another (continuous) grabbing process is
-    // ongoing, and really I don't think there should be a need for such feature.
-    if (!isRecording) {
-        CPylonImage image;
-        Mat snap_img = Mat(width, height, CV_8UC3);
-        CGrabResultPtr ptrGrabResult;
+void AgriDataCamera::snapCycle() {
+    while (true) {
+        try {
+            CPylonImage image;
+            Mat snap_img = Mat(width, height, CV_8UC3);
+            CGrabResultPtr ptrGrabResult;
 
-        // There might be a reason to allow the camera to take a few shots first to
-        // allow any auto adjustments to take place.
-        uint32_t c_countOfImagesToGrab = 21;
-
-        if (!IsGrabbing()) {
-            StartGrabbing();
-        }
-
-        for (size_t i = 0; i < c_countOfImagesToGrab; ++i) {
             RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+            
+            fc.Convert(image, ptrGrabResult);
+            snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
+                    CV_8UC3, (uint8_t *) image.GetBuffer());
+
+            snap_img.copyTo(last_img);
+            writeLatestImage(last_img, compression_params);
+
+            // Sleep for 500ms 
+            // This is actually not the output interval, as it depends on
+            // timing of the above write (usually ~100ms)
+            usleep(400000);
+        } catch (...) {
+            LOG(WARNING) << "Frame slipped from snapCycle!";
         }
-
-        fc.Convert(image, ptrGrabResult);
-        snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
-                CV_8UC3, (uint8_t *) image.GetBuffer());
-
-        snap_img.copyTo(last_img);
-        thread t(&AgriDataCamera::writeLatestImage, this, last_img,
-                ref(compression_params));
-        t.detach();
     }
 }
 
@@ -643,16 +635,8 @@ void AgriDataCamera::writeLatestImage(Mat img, vector<int> compression_params) {
     resize(img, thumb, Size(), 0.3, 0.3);
 
     // Thumbnail
-    imwrite(
-            "/data/EmbeddedServer/images/" + serialnumber + '_'
+    imwrite("/data/EmbeddedServer/images/" + serialnumber + '_'
             + "streaming_t.jpg", thumb, compression_params);
-    // Full
-    /*
-    imwrite(
-            "/data/EmbeddedServer/images/" + serialnumber + '_'
-            + "streaming.jpg", img, compression_params);
-    */
-
 }
 
 
@@ -764,18 +748,6 @@ nlohmann::json AgriDataCamera::GetStatus() {
 
     // Insert into the DB
     auto ret = frames.insert_one(document.view());
-
-    // Lazily add luminance (bit of delay here, but checking luminance is done via DB by clients that want it)
-    if (!isRecording) {
-        // Grab an image for luminance calculation (this will set last_image
-        // . . . so the call to Luminance doesn't need it as an argument
-        AgriDataCamera::Snap();
-
-        // Add the luminance value
-        bsoncxx::oid oid = ret->inserted_id().get_oid().value;
-        thread t(&AgriDataCamera::Luminance, this, oid, last_img);
-        t.detach();
-    }
 
     /* Debugging
     LOG(DEBUG) << "[" << serialnumber << "] Failed Buffer Count: " << GetStreamGrabberParams().Statistic_Failed_Buffer_Count();
