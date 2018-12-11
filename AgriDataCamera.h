@@ -59,8 +59,7 @@ public:
     AgriDataCamera();
 
     void Initialize();
-    void Run();
-    void Oneshot(nlohmann::json);
+    void Start(nlohmann::json);
     int Stop();
     void Snap();
     float _luminance(cv::Mat);

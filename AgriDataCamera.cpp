@@ -293,11 +293,11 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
 
 
 /**
- * Oneshot
+ * Start
  *
- * Grab and detect one image
+ * Grab one or more images
  */
-void AgriDataCamera::Oneshot(nlohmann::json task) {
+void AgriDataCamera::Start(nlohmann::json task) {
     // Output parameters
     string session_name = task["session_name"];
     save_prefix = "/data/output/plenty/" + task["session_name"] + "/raw/";
@@ -314,79 +314,6 @@ void AgriDataCamera::Oneshot(nlohmann::json task) {
     string config = save_prefix + "config.txt";
     CFeaturePersistence::Save(config.c_str(), &nodeMap);
 
-    // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-    RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
-    try {
-        // Image grabbed successfully?
-        if (ptrGrabResult->GrabSucceeded()) {
-            // Create Frame Packet
-            FramePacket fp;
-
-            // Computer time
-            fp.time_now = AGDUtils::grabMilliseconds();
-            last_timestamp = fp.time_now;
-
-            // Image
-            fp.img_ptr = ptrGrabResult;
-
-            // Metadata
-            fp.task = task;
-
-            // Process the frame
-            try {
-                HandleOneFrame(fp);
-            } catch (...) {
-                LOG(WARNING) << "Frame slipped!";
-            }
-
-        } else {
-            LOG(ERROR) << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription();
-            LOG(WARNING) << serialnumber << " is stressed! Slowing down to " << LOW_FPS;
-            try {
-                RT_PROBATION = PROBATION;
-                AcquisitionFrameRateEnable.SetValue(true);
-                AcquisitionFrameRateAbs.SetValue(LOW_FPS);
-                LOG(DEBUG) << "Changed Successfully";
-            } catch (const GenericException &e) {
-                LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
-            }
-        }
-    } catch (const GenericException &e) {
-        LOG(ERROR) << ptrGrabResult->GetErrorCode() + "\n"
-                + ptrGrabResult->GetErrorDescription() + "\n"
-                + e.GetDescription();
-        isRecording = false;
-    }
-    return;
-}
-
-/**
- * Run
- *
- * Main loop
- */
-
-/*
-void AgriDataCamera::Run() {
-    // Output parameters
-    save_prefix = "/data/output/" + clientid + "/" + scanid + "/" + serialnumber + "/";
-    bool success = AGDUtils::mkdirp(save_prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
-    // Get current frame number
-    frame_number = GetFrameNumber(scanid);
-
-    // Set recording to true and start grabbing
-    isRecording = true;
-    if (!IsGrabbing()) {
-        StartGrabbing();
-    }
-
-    // Save configuration
-    INodeMap &nodeMap = GetNodeMap();
-    string config = save_prefix + "config.txt";
-    CFeaturePersistence::Save(config.c_str(), &nodeMap);
-    
-    // Initiate main loop with algorithm
     while (isRecording) {
         // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
         RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
@@ -400,24 +327,23 @@ void AgriDataCamera::Run() {
                 fp.time_now = AGDUtils::grabMilliseconds();
                 last_timestamp = fp.time_now;
 
-                // Image 
-                try { // USB
-                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTime"))->GetValue();
-                } catch (...) { // GigE
-                    fp.exposure_time = (float) CFloatPtr(GetNodeMap().GetNode("ExposureTimeAbs"))->GetValue();
-                }
-
-                // Mode
-                fp.mode = "oneshot";
-
                 // Image
                 fp.img_ptr = ptrGrabResult;
 
+                // Metadata
+                fp.task = task;
+
                 // Process the frame
                 try {
-                    HandleFrame(fp);
+                    HandleOneFrame(fp);
                 } catch (...) {
                     LOG(WARNING) << "Frame slipped!";
+                }
+
+                // Oneshot only?
+                string mode = fp.task["mode"];
+                if (mode.compare("oneshot") == 0) {
+                    isRecording = false;
                 }
 
             } else {
@@ -428,7 +354,6 @@ void AgriDataCamera::Run() {
                     AcquisitionFrameRateEnable.SetValue(true);
                     AcquisitionFrameRateAbs.SetValue(LOW_FPS);
                     LOG(DEBUG) << "Changed Successfully";
-                    // fps->SetValue(LOW_FPS); 
                 } catch (const GenericException &e) {
                     LOG(DEBUG) << "Passing on exception: " << e.GetDescription();
                 }
@@ -440,17 +365,11 @@ void AgriDataCamera::Run() {
             isRecording = false;
         }
     }
-}
-*/
-
-void AgriDataCamera::Run() {
-    // Currently deprecated
     return;
 }
 
-
 /**
- * HandleFrame
+ * HandleOneFrame
  *
  * Receive latest frame
  */
@@ -497,26 +416,44 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
     LOG(INFO) << "Color conversion: " << duration << "ms";
 
-    // Write to AVI
-    clockstart = clock();
-    oVideoWriter.write(small_last_img);
-    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "Write to AVI: " << duration << "ms";
+    // Output
+    string outname; 
 
-    // Encode to JPG Buffer
-    clockstart = clock();
-    vector<uint8_t> outbuffer;
-    static const vector<int> ENCODE_PARAMS = {};
-    imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
-    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "JPEG Encode: " << duration << "ms";
+    // Output to either JPG or AVI
+    string mode = fp.task["mode"];
+    if (mode.compare("oneshot") == 0) {
+        // Encode to JPG Buffer
+        clockstart = clock();
+        vector<uint8_t> outbuffer;
+        static const vector<int> ENCODE_PARAMS = {};
+        imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
+        duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+        LOG(INFO) << "JPEG Encode: " << duration << "ms";
 
-    // Write to image
-    clockstart = clock();
-    string outname = save_prefix + "oneshot_" + serialnumber + ".jpg";
-    imwrite(outname, last_img);
-    duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "Image write: " << duration << "ms";
+        // Write to image
+        clockstart = clock();
+        string outname = save_prefix + "oneshot_" + serialnumber + ".jpg";
+        imwrite(outname, last_img);
+        duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+        LOG(INFO) << "Image write: " << duration << "ms";
+
+        LOG(DEBUG) << "Creating Document";
+        bsoncxx::builder::basic::document camerainfo{};
+        camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
+
+        LOG(DEBUG) << "Updating";
+        task.update_one(
+                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
+                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
+                    bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("image", outname)))));
+        LOG(DEBUG) << "Done updating";
+    } else {
+        // Write to AVI
+        clockstart = clock();
+        oVideoWriter.write(small_last_img);
+        duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+        LOG(INFO) << "Write to AVI: " << duration << "ms";
+    }
 
 
     // Conversion of status from nlohmann to bsoncxx
@@ -534,17 +471,6 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         << bsoncxx::builder::stream::close_document
         << bsoncxx::builder::stream::finalize);
     */
-
-    LOG(DEBUG) << "Creating Document";
-    bsoncxx::builder::basic::document camerainfo{};
-    camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
-
-    LOG(DEBUG) << "Updating";
-    task.update_one(
-            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
-            bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
-                bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("image", outname)))));
-    LOG(DEBUG) << "Done updating";
 
     // Dynamic frame rate adjustment
     RT_PROBATION--;
