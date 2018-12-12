@@ -618,7 +618,7 @@ void AgriDataCamera::snapCycle() {
             Mat snap_img = Mat(width, height, CV_8UC3);
             CGrabResultPtr ptrGrabResult;
 
-            RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+            RetrieveResult(50000, ptrGrabResult, TimeoutHandling_ThrowException);
             
             fc.Convert(image, ptrGrabResult);
             snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
@@ -631,8 +631,11 @@ void AgriDataCamera::snapCycle() {
             // This is actually not the output interval, as it depends on
             // timing of the above write (usually ~100ms)
             usleep(400000);
-        } catch (...) {
-            LOG(WARNING) << "Frame slipped from snapCycle!";
+        } catch (const GenericException &e) {
+            LOG(WARNING) << "Frame slipped from snapCycle:";
+            // LOG(WARNING) << ptrGrabResult->GetErrorCode();
+            // LOG(WARNING) << ptrGrabResult->GetErrorDescription();
+            LOG(WARNING) << e.GetDescription();
         }
     }
 }
