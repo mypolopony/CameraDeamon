@@ -60,6 +60,7 @@ public:
 
     void Initialize();
     void Start(nlohmann::json);
+    void SaveConfiguration(std::string);
     int Stop();
     void snapCycle();
     float _luminance(cv::Mat);

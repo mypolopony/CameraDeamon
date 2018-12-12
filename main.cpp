@@ -420,6 +420,18 @@ int main() {
                         }
                         reply["message"] = "White Balance set for camera " + received["camera"].get<std::string>();
                     }
+
+                    // Save configuration
+                    else if (received["action"] == "saveconfig") {
+                        for (size_t i = 0; i < devices.size(); ++i) {
+                            if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
+                                string outfile = "/data/CameraDeamon/config/acA1920-40gc.pfs";
+                                thread t(&AgriDataCamera::SaveConfiguration, cameras[i], outfile);
+                                t.detach();
+                            }
+                        }
+                        reply["message"] = "Configuration will be saved for camera " + received["camera"].get<std::string>();
+                    }
                     
                     // Luminance
                     else if (received["action"] == "luminance") {

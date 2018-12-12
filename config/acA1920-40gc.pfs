@@ -84,7 +84,7 @@ TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureMode	Timed
 ExposureAuto	Off
-ExposureTimeRaw	884
+ExposureTimeRaw	356
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
 AcquisitionFrameRateAbs	14.9999

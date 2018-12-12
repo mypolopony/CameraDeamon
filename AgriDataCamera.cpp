@@ -42,6 +42,7 @@
 #include <ratio>
 #include <condition_variable>
 #include <ctime>
+#include <unistd.h>
 
 // Logging
 #include "easylogging++.h"
@@ -292,6 +293,19 @@ int AgriDataCamera::GetFrameNumber(string scanid) {
     }
 }
 
+/**
+ * saveConfiguration
+ *
+ * Save camera configuration to designated file
+ */
+void AgriDataCamera::SaveConfiguration(string outfile) {
+    // Wait five seconds for the camera to settle
+    sleep(5);
+
+    // Grab config and save
+    INodeMap &nodeMap = GetNodeMap();
+    CFeaturePersistence::Save(outfile.c_str(), &nodeMap);
+}
 
 /**
  * Start
@@ -308,9 +322,10 @@ void AgriDataCamera::Start(nlohmann::json task) {
     isRecording = true;
 
     // Save configuration
-    INodeMap &nodeMap = GetNodeMap();
-    string config = save_prefix + "config.txt";
-    CFeaturePersistence::Save(config.c_str(), &nodeMap);
+    string outfile = save_prefix + "config.txt";
+    thread t(&AgriDataCamera::SaveConfiguration, this, outfile);
+    t.detach();
+    
 
     while (isRecording) {
         // Wait for an image and then retrieve it. A timeout of 5000 ms is used.
