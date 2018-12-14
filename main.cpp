@@ -274,12 +274,10 @@ int main() {
                 try {
                     // Start
                     if (received["action"] == "start") {
-                        LOG(WARNING) << "RECEIVED START";
                         if (isRecording) {
                             LOG(WARNING) << "IS RECORDING";
                             reply["message"] = "Already Recording";
                         } else {
-                            LOG(WARNING) << "IS NOT RECORDING";
                             mongocxx::collection task = db["task"];
 
                             // Even if we have the task fed in directly to the CameraDeamon, we will eventually
