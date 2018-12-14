@@ -16,7 +16,6 @@
 #include <iostream>
 #include <chrono>
 
-
 // Include files to use openCV
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
@@ -150,6 +149,22 @@ namespace AGDUtils {
             tokens.push_back(item);
         }
         return tokens;
+    }
+
+
+    /**
+     * readableTimestamp
+     *
+     * Return the current time in nice string format
+     */
+    string readableTimestamp() {
+        time_t     now = time(0);
+        struct tm  tstruct;
+        char       buf[80];
+        tstruct = *localtime(&now);
+
+        strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S", &tstruct);
+        return buf;
     }
 
     /**

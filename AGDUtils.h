@@ -36,6 +36,7 @@ extern "C" {
 namespace AGDUtils {
     bool mkdirp(const char* path, mode_t mode);
     std::vector <std::string> split(const std::string &s, char delim);
+    std::string readableTimestamp();
     std::string grabTime(std::string format);
     int64_t grabSeconds();
     int64_t grabMilliseconds();

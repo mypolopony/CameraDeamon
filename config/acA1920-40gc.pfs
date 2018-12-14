@@ -19,11 +19,11 @@ LightSourceSelector	Daylight
 ColorTransformationSelector	RGBtoRGB
 BalanceWhiteAuto	Off
 BalanceRatioSelector	Red
-BalanceRatioRaw	129
+BalanceRatioRaw	130
 BalanceRatioSelector	Green
 BalanceRatioRaw	64
 BalanceRatioSelector	Blue
-BalanceRatioRaw	124
+BalanceRatioRaw	123
 BalanceRatioSelector	Green
 ColorTransformationMatrixFactorRaw	65536
 ColorAdjustmentEnable	1
@@ -80,7 +80,7 @@ TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureMode	Timed
 ExposureAuto	Off
-ExposureTimeRaw	322
+ExposureTimeRaw	348
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
 AcquisitionFrameRateAbs	14.9999

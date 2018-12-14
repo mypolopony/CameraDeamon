@@ -186,7 +186,7 @@ void AgriDataCamera::Initialize() {
     // Box / Camera Information
     LOG(INFO) << "Obtaining Box Information";
     mongocxx::collection box = db["box"];
-    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{}<< bsoncxx::builder::stream::finalize);
+    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{} << bsoncxx::builder::stream::finalize);
     string resultstring = bsoncxx::to_json(*maybe_result);
     auto thisbox = nlohmann::json::parse(resultstring);
     clientid = thisbox["clientid"];
@@ -455,6 +455,10 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         camerainfo.append(bsoncxx::builder::basic::kvp("image", outname));
 
         LOG(DEBUG) << "Updating";
+        task.find_one(bsoncxx::builder::stream::document{} << "_id"
+                        << taskid 
+                        << bsoncxx::builder::stream::finalize);
+
         task.update_one(
                 bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("_id", taskid)),
                 bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("$set", 
@@ -627,16 +631,17 @@ void AgriDataCamera::snapCycle() {
             snap_img.copyTo(last_img);
             writeLatestImage(last_img, compression_params);
 
-            // Sleep for 500ms 
-            // This is actually not the output interval, as it depends on
-            // timing of the above write (usually ~100ms)
-            usleep(400000);
         } catch (const GenericException &e) {
             LOG(WARNING) << "Frame slipped from snapCycle:";
             // LOG(WARNING) << ptrGrabResult->GetErrorCode();
             // LOG(WARNING) << ptrGrabResult->GetErrorDescription();
             LOG(WARNING) << e.GetDescription();
         }
+
+        // Sleep for 500ms 
+        // This is actually not the output interval, as it depends on
+        // timing of the above write (usually ~100ms)
+        usleep(400000);
     }
 }
 
