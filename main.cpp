@@ -185,21 +185,25 @@ int main() {
     }
 
     // Camera Initialization
-    AgriDataCamera * cameras[devices.size()];
-    try {
-        for (size_t i = 0; i < devices.size(); ++i) {
-            cameras[i] = new AgriDataCamera();
-            cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
-            cameras[i]->Initialize();
+    // AgriDataCamera * cameras[devices.size()];
+    AgriDataCamera * cameras[1];
+    bool success = false;
+    for (size_t i = 0; i < devices.size(); ++i) {
+        if (!success) {
+            try {
+                cameras[i] = new AgriDataCamera();
+                cameras[i]->Attach(tlFactory.CreateDevice(devices[i]));
+                cameras[i]->Initialize();
 
-            // Start Snapping
-            thread t(&AgriDataCamera::snapCycle, cameras[i]);
-            t.detach();
+                // Start Snapping
+                thread t(&AgriDataCamera::snapCycle, cameras[i]);
+                t.detach();
+                success = true;
+            } catch (const GenericException &e) {
+                LOG(WARNING) << "Camera Initialization Failed";
+                LOG(WARNING) << "Exception caught: " << e.what();
+            }
         }
-    } catch (const GenericException &e) {
-        LOG(ERROR) << "Camera Initialization Failed";
-        LOG(ERROR) << "Exception caught: " << e.what();
-    } catch (...) {
     }
 
     // Initialize variables
