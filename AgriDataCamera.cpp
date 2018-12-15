@@ -737,20 +737,22 @@ nlohmann::json AgriDataCamera::GetStatus() {
     }
 
 
-    LOG(DEBUG) << "Serial Number" << (string) status["serial_number"].get<string>();
-    LOG(DEBUG) << "Model Name" << (string) status["model_name"].get<string>();
-    LOG(DEBUG) << "Recording" << (bool) status["recording"].get<bool>();
-    LOG(DEBUG) << "Timestamp" << (int64_t) status["timestamp"].get<int64_t>();
-    LOG(DEBUG) << "Exposure Time" << (int) status["exposure_time"].get<int>();
-    LOG(DEBUG) << "Red Balance" << status["red_balance"].get<float>();
-    LOG(DEBUG) << "Green Balance" << status["green_balance"].get<float>();
-    LOG(DEBUG) << "Blue Balance" << status["blue_balance"].get<float>();
-    LOG(DEBUG) << "Resulting Frame Rate" << (int) status["resulting_frame_rate"].get<int>();
-    LOG(DEBUG) << "Target Frame Rate" << status["target_frame_rate"].get<float>();
-    LOG(DEBUG) << "Current Gain" << (int) status["current_gain"].get<int>();
-    LOG(DEBUG) << "Temperature" << (int) status["temperature"].get<int>();
-    LOG(DEBUG) << "Target Brightness" << (int) status["target_brightness"].get<int>();
-    LOG(DEBUG) << "Probation" << (int) status["probation"].get<int>();
+    /*
+    LOG(DEBUG) << "Serial Number: " << (string) status["serial_number"].get<string>();
+    LOG(DEBUG) << "Model Name: " << (string) status["model_name"].get<string>();
+    LOG(DEBUG) << "Recording: " << (bool) status["recording"].get<bool>();
+    LOG(DEBUG) << "Timestamp: " << (int64_t) status["timestamp"].get<int64_t>();
+    LOG(DEBUG) << "Exposure Time: " << (int) status["exposure_time"].get<int>();
+    LOG(DEBUG) << "Red Balance: " << status["red_balance"].get<float>();
+    LOG(DEBUG) << "Green Balance: " << status["green_balance"].get<float>();
+    LOG(DEBUG) << "Blue Balance: " << status["blue_balance"].get<float>();
+    LOG(DEBUG) << "Resulting Frame Rate: " << (int) status["resulting_frame_rate"].get<int>();
+    LOG(DEBUG) << "Target Frame Rate: " << status["target_frame_rate"].get<float>();
+    LOG(DEBUG) << "Current Gain: " << (int) status["current_gain"].get<int>();
+    LOG(DEBUG) << "Temperature: " << (int) status["temperature"].get<int>();
+    LOG(DEBUG) << "Target Brightness: " << (int) status["target_brightness"].get<int>();
+    LOG(DEBUG) << "Probation: " << (int) status["probation"].get<int>();
+    */
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
             << "Serial Number" << (string) status["serial_number"].get<string>()

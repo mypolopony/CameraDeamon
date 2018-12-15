@@ -181,14 +181,14 @@ int main() {
     if (tlFactory.EnumerateDevices(devices) < 1) {
         LOG(FATAL) << "Not enough cameras present -- Restarting";
     } else {
-        LOG(INFO) << "Number of Devices found: " << devices.size();
+        LOG(INFO) << "Number of Devices found: " << 1;
     }
 
     // Camera Initialization
     // AgriDataCamera * cameras[devices.size()];
     AgriDataCamera * cameras[1];
     bool success = false;
-    for (size_t i = 0; i < devices.size(); ++i) {
+    for (size_t i = 0; i < 1; ++i) {
         if (!success) {
             try {
                 cameras[i] = new AgriDataCamera();
@@ -240,7 +240,7 @@ int main() {
                 publisher.close();
 
                 LOG(INFO) << "Arresting Cameras";
-                for (size_t i = 0; i < devices.size(); ++i) {
+                for (size_t i = 0; i < 1; ++i) {
                     cameras[i]->Close();
                 }
 
@@ -272,7 +272,7 @@ int main() {
             // Good message
             if (rec) {
                 receivedstring = string(static_cast<char *> (messageR.data()), messageR.size());
-                LOG(WARNING) << receivedstring;
+                LOG(INFO) << receivedstring;
                 received = json::parse(receivedstring);
 
                 try {
@@ -301,7 +301,7 @@ int main() {
                             if (mode.compare("oneshot") == 0) {
                                 LOG(WARNING) << "Doing a oneshot";
                                 // Oneshot is assumed to have a target serial number
-                                for (size_t i = 0; i < devices.size(); ++i) {
+                                for (size_t i = 0; i < 1; ++i) {
                                     if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
                                         LOG(WARNING) << "Found camera";
                                         // Blocking call
@@ -311,7 +311,7 @@ int main() {
                             } else {
                                 LOG(WARNING) << "Doing continuous";
                                 // Continuous recording, all cameras
-                                for (size_t i = 0; i < devices.size(); ++i) {
+                                for (size_t i = 0; i < 1; ++i) {
                                     thread t(&AgriDataCamera::Start, cameras[i], thistask);
                                     t.detach();
                                 }
@@ -339,7 +339,7 @@ int main() {
                             << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
 
                             // Stop cameras
-                            for (size_t i = 0; i < devices.size(); ++i) {
+                            for (size_t i = 0; i < 1; ++i) {
                                 cameras[i]->Stop();
                             }
 
@@ -347,7 +347,7 @@ int main() {
                             // and resources to be released
                             // usleep(2500000);
 
-                            for (size_t i = 0; i < devices.size(); ++i) {
+                            for (size_t i = 0; i < 1; ++i) {
                                 cameras[i]->Initialize();
                             }
                             isRecording = false;
@@ -357,7 +357,7 @@ int main() {
                     
                     // Status
                     else if (received["action"] == "status") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             status = cameras[i]->GetStatus();
                             sn = status["serial_number"];
                             reply["message"][sn] = status;
@@ -366,7 +366,7 @@ int main() {
                     
                     // Snap
                     else if (received["action"] == "snap") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             // cameras[i]->Snap();
                         }
                         reply["message"] = "Snapshot Taken";
@@ -375,7 +375,7 @@ int main() {
                     // Identify
                     else if (received["action"] == "identify") {
                         vector <string> ids;
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             ids.push_back((string) cameras[i]->serialnumber);
                         }
                         reply["cameras"] = ids;
@@ -383,7 +383,7 @@ int main() {
                     
                     // Auto Function ROI
                     else if (received["action"] == "autoaoi") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
                                 if (received["value"] == 1) {
                                     GenApi::CEnumerationPtr(cameras[i]->GetNodeMap().GetNode("AutoFunctionAOISelector"))->SetIntValue(AutoFunctionAOISelector_AOI1);
@@ -397,7 +397,7 @@ int main() {
                     
                     // White Balance
                     else if (received["action"] == "whitebalance") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
                                 cameras[i]->BalanceWhiteAuto.SetValue(BalanceWhiteAuto_Once);
                             }
@@ -407,7 +407,7 @@ int main() {
 
                     // Auto Gain
                     else if (received["action"] == "autogain") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
                                 cameras[i]->GainAuto.SetValue(GainAuto_Once);
                             }
@@ -417,7 +417,7 @@ int main() {
 
                     // Auto Exposure
                     else if (received["action"] == "autoexposure") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
                                 cameras[i]->ExposureAuto.SetValue(ExposureAuto_Once);
                             }
@@ -427,7 +427,7 @@ int main() {
 
                     // Save configuration
                     else if (received["action"] == "saveconfig") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare(received["camera"].get<std::string>()) == 0) {
                                 string outfile = "/data/CameraDeamon/config/acA1920-40gc.pfs";
                                 thread t(&AgriDataCamera::SaveConfiguration, cameras[i], outfile);
@@ -439,7 +439,7 @@ int main() {
                     
                     // Luminance
                     else if (received["action"] == "luminance") {
-                        for (size_t i = 0; i < devices.size(); ++i) {
+                        for (size_t i = 0; i < 1; ++i) {
                             if (received["camera"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
                                 GenApi::CIntegerPtr(cameras[i]->GetNodeMap().GetNode("AutoTargetValue"))->SetValue(received["value"].get<int>());
                             }
