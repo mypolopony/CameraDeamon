@@ -164,7 +164,7 @@ namespace AGDUtils {
         tstruct = *localtime(&now);
 
         strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S", &tstruct);
-        return buf;
+        return string(buf);
     }
 
     /**
