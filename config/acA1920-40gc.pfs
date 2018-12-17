@@ -2,9 +2,6 @@
 # GenApi persistence file (version 3.1.0)
 # Device = Basler::GigECamera -- Basler generic GigEVision camera interface -- Device version = 3.8.0 -- Product GUID = 1F3C6A72-7842-4edd-9130-E2E90A2058BA -- Product version GUID = 58DE9B3A-2AF6-4903-AF1B-B50F99099DDF
 GainAuto	Off
-GainSelector	All
-GainRaw	239
-GainSelector	All
 BlackLevelSelector	All
 BlackLevelRaw	0
 BlackLevelSelector	All
@@ -19,11 +16,11 @@ LightSourceSelector	Daylight
 ColorTransformationSelector	RGBtoRGB
 BalanceWhiteAuto	Off
 BalanceRatioSelector	Red
-BalanceRatioRaw	132
+BalanceRatioRaw	113
 BalanceRatioSelector	Green
 BalanceRatioRaw	64
 BalanceRatioSelector	Blue
-BalanceRatioRaw	119
+BalanceRatioRaw	132
 BalanceRatioSelector	Green
 ColorTransformationMatrixFactorRaw	65536
 ColorAdjustmentEnable	1
@@ -79,7 +76,7 @@ TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureMode	Timed
 ExposureAuto	Off
-ExposureTimeRaw	50000
+ExposureTimeRaw	321
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
 AcquisitionFrameRateAbs	5
@@ -165,7 +162,7 @@ BalanceWhiteAdjustmentDampingRaw	1000
 AutoGainRawLowerLimit	0
 AutoGainRawUpperLimit	239
 AutoExposureTimeAbsLowerLimit	76
-AutoExposureTimeAbsUpperLimit	50000
+AutoExposureTimeAbsUpperLimit	800
 AutoFunctionProfile	GainMinimum
 AutoFunctionAOISelector	AOI1
 AutoFunctionAOIWidth	426
