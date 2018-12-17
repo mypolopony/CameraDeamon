@@ -160,7 +160,7 @@ AutoTargetValue	128
 GrayValueAdjustmentDampingRaw	700
 BalanceWhiteAdjustmentDampingRaw	1000
 AutoGainRawLowerLimit	0
-AutoGainRawUpperLimit	239
+AutoGainRawUpperLimit	1
 AutoExposureTimeAbsLowerLimit	76
 AutoExposureTimeAbsUpperLimit	800
 AutoFunctionProfile	GainMinimum
