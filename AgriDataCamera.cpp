@@ -445,7 +445,10 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
         // Write to image
         clockstart = clock();
-        string outname = save_prefix + "oneshot_" + serialnumber + ".jpg";
+        LOG(INFO) << "FILE:";
+        LOG(INFO) << fp.task["_files"][0];
+        outname = fp.task["_files"][0];
+        LOG(INFO) << "About to write: " << outname;
         imwrite(outname, last_img);
         duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
         LOG(INFO) << "Image write: " << duration << "ms";

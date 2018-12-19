@@ -279,16 +279,14 @@ int main() {
                     // Start
                     if (received["action"] == "start") {
                         if (isRecording) {
-                            LOG(WARNING) << "IS RECORDING";
                             reply["message"] = "Already Recording";
                         } else {
+                            // Task collection
                             mongocxx::collection task = db["task"];
 
                             // Even if we have the task fed in directly to the CameraDeamon, we will eventually
                             // have to look it up to update it anyway. So best to look it up first by _id
                             string taskid = received["taskid"];
-                            LOG(WARNING) << taskid;
-
                             bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
                                 << "_id" << bsoncxx::oid(taskid.c_str())
                                 << bsoncxx::builder::stream::finalize);
@@ -296,19 +294,19 @@ int main() {
                             json thistask = json::parse(resultstring);
                             string mode = thistask["mode"];
 
+                            // Oneshot mode (assumed to have a target serial number)
                             if (mode.compare("oneshot") == 0) {
-                                LOG(WARNING) << "Doing a oneshot";
-                                // Oneshot is assumed to have a target serial number
+                                LOG(INFO) << "One shot @ " << thistask["serialnumber"];
                                 for (size_t i = 0; i < 1; ++i) {
+                                    // This conditional possibly not required depending on desired outcome / restriction on cameras found, etc
                                     if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
-                                        LOG(WARNING) << "Found camera";
                                         // Blocking call
                                         cameras[i]->Start(thistask);
                                     }        
                                 }
+                            // Video mode (all cameras)
                             } else {
-                                LOG(WARNING) << "Doing continuous";
-                                // Continuous recording, all cameras
+                                LOG(INFO) << "Continuous recording";
                                 for (size_t i = 0; i < 1; ++i) {
                                     thread t(&AgriDataCamera::Start, cameras[i], thistask);
                                     t.detach();
