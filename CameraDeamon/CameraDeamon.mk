@@ -50,7 +50,7 @@ AR       := /usr/bin/aarch64-linux-gnu-ar rcu
 CXX      := /usr/bin/aarch64-linux-gnu-g++
 CC       := /usr/bin/aarch64-linux-gnu-gcc
 H5CXX    := /usr/bin/h5c++
-CXXFLAGS :=  -pg -O0 -w -std=c++11 -Wall -Wunknown-pragmas -ggdb $(Preprocessors)
+CXXFLAGS :=  -pg -O0 -w -std=c++14 -Wall -Wunknown-pragmas -ggdb $(Preprocessors)
 CFLAGS   :=  -pg -O0 -O2 -Wall $(Preprocessors)
 ASFLAGS  :=
 AS       := /usr/bin/aarch64-linux-gnu-as
