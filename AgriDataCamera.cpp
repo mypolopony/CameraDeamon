@@ -519,7 +519,10 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         // Create HDF5 Dataset
         hsize_t buffersize = outbuffer.size();
         try {
+            clockstart = clock();
             H5LTmake_dataset(hdf5_out, padTo(frame_number, (size_t) 6).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+            duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+            LOG(INFO) << "Write to HDF5: " << duration << "ms";
             frame_number++;
         } catch (...) {
             LOG(INFO) << "Frame dropped from HDF5 creation";
@@ -671,7 +674,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
  * Consider making this json instead of void to return success
  */
 void AgriDataCamera::snapCycle() {
-    while (false) {
+    while (true) {
         try {
             CPylonImage image;
             Mat snap_img = Mat(width, height, CV_8UC3);
