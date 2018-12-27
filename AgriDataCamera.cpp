@@ -156,6 +156,10 @@ void AgriDataCamera::Initialize() {
     // Turn the Test Image off
     // TestImageSelector.SetValue( TestImageSelector_Off );
 
+    // Grab Strategy (can be used to prefer realtime vs. minimizing packet loss)
+    CIntegerPtr strategy(nodeMap.GetNode("GrabStrategy"));
+    strategy->SetValue(GrabStrategy_LatestImageOnly);
+
     // [OPTIONAL] Override Interpacket Delay (GigE only)
     try {
         CIntegerPtr intFeature(nodeMap.GetNode("GevSCPD"));
@@ -182,14 +186,6 @@ void AgriDataCamera::Initialize() {
         serialnumber = (string) CStringPtr(nodeMap.GetNode("DeviceID"))->GetValue();
     }
     modelname = (string) CStringPtr(nodeMap.GetNode("DeviceModelName"))->GetValue();
-
-    // Box / Camera Information
-    LOG(INFO) << "Obtaining Box Information";
-    mongocxx::collection box = db["box"];
-    bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = box.find_one(bsoncxx::builder::stream::document{} << bsoncxx::builder::stream::finalize);
-    string resultstring = bsoncxx::to_json(*maybe_result);
-    auto thisbox = nlohmann::json::parse(resultstring);
-    clientid = thisbox["clientid"];
 
     // Rotation
     rotation = "ROTATE_0";
