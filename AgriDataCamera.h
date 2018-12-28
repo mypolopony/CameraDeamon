@@ -80,7 +80,7 @@ private:
     struct FramePacket {
         int64_t time_now;
         float exposure_time;
-        nlohmann::json task;
+        nlohmann::json session;
         Pylon::CGrabResultPtr img_ptr;
     };
 
@@ -118,6 +118,9 @@ private:
     // Video output
     cv::VideoWriter oVideoWriter;
 
+    // Task & Session information
+    std::string mode;
+
     // Timers
     const int T_LATEST = 20;
     const int T_MONGODB = 400; 
@@ -128,7 +131,7 @@ private:
 
     // Dynamic Framerate
     double HIGH_FPS;                    // To be set on initialization (cannot be const)
-    const double LOW_FPS = 5;           // Probationary frame rate
+    const double LOW_FPS = 4;           // Probationary frame rate
     int RT_PROBATION = -1;              // Restricted period (this is a reverse timer, -1 is safe)
     const int PROBATION = 50;           // Counts down
 
@@ -146,6 +149,7 @@ private:
     mongocxx::client conn;
     mongocxx::database db;
     mongocxx::collection frames;
+    mongocxx::collection sessions;
     std::vector<bsoncxx::v_noabi::document::value> documents;
 
     // Timestamp (should go in status block)

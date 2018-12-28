@@ -79,7 +79,7 @@ ExposureAuto	Off
 ExposureTimeRaw	321
 ShutterMode	Global
 AcquisitionFrameRateEnable	1
-AcquisitionFrameRateAbs	5
+AcquisitionFrameRateAbs	15
 LineSelector	Line1
 LineMode	Input
 LineSelector	Line2
