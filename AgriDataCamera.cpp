@@ -334,7 +334,7 @@ void AgriDataCamera::Start(nlohmann::json session) {
     isRecording = true;
 
     // Save configuration
-    string outfile = save_prefix + "raw/" + "config.txt";
+    string outfile = rawdir + "config.txt";
     thread t(&AgriDataCamera::SaveConfiguration, this, outfile);
     t.detach();
 
@@ -343,11 +343,8 @@ void AgriDataCamera::Start(nlohmann::json session) {
     
     while (isRecording) {
         try {
-            LOG(WARNING) << "Graduations";
             // Wait for an image and then retrieve it
-            RetrieveResult(50000, ptrGrabResult, TimeoutHandling_ThrowException);
-
-            LOG(WARNING) << "Serving in Iraq";
+            RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
 
             // Image grabbed successfully?
             if (ptrGrabResult->GrabSucceeded()) {
@@ -367,7 +364,6 @@ void AgriDataCamera::Start(nlohmann::json session) {
                 // Process the frame
                 try {
                     HandleOneFrame(fp);
-                    LOG(INFO) << "HandleOneFrame done";
                 } catch (...) {
                     LOG(WARNING) << "Frame slipped!";
                 }
@@ -376,7 +372,6 @@ void AgriDataCamera::Start(nlohmann::json session) {
                 if (mode.compare("oneshot") == 0) {
                     isRecording = false;
                 }
-                LOG(INFO) << "Air Force";
 
             }
             /* else {
@@ -426,25 +421,25 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     clockstart = clock();
     fc.Convert(image, fp.img_ptr);
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "Native Bayer to BGR8packed: " << duration << "ms";
+    // LOG(INFO) << "Native Bayer to BGR8packed: " << duration << "ms";
 
     // To OpenCV Mat
     clockstart = clock();
     last_img = Mat(fp.img_ptr->GetHeight(), fp.img_ptr->GetWidth(), CV_8UC3, (uint8_t *) image.GetBuffer());
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "To OpenCV Mat: " << duration << "ms";
+    // LOG(INFO) << "To OpenCV Mat: " << duration << "ms";
 
     // Resize
     clockstart = clock();
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "Resize: " << duration << "ms";
+    // LOG(INFO) << "Resize: " << duration << "ms";
 
     // Color
     clockstart = clock();
     cvtColor(small_last_img, small_last_img, CV_BGR2RGB);
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "Color conversion: " << duration << "ms";
+    // LOG(INFO) << "Color conversion: " << duration << "ms";
 
     // Output
     string outname;
@@ -455,22 +450,24 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     static const vector<int> ENCODE_PARAMS = {};
     imencode(".jpg", small_last_img, outbuffer, ENCODE_PARAMS);
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-    LOG(INFO) << "JPEG Encode: " << duration << "ms";
+    // LOG(INFO) << "JPEG Encode: " << duration << "ms";
+
+    // Output file / time
+    vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
 
     // Output to either JPG, AVI or HDF5
     if (mode.compare("oneshot") == 0) {
+        string outname = fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+
         // Write to image
-        clockstart = clock();
-        //LOG(INFO) << "FILE:";
-        //LOG(INFO) << fp.task["_files"][0];
-        outname = fp.session["_files"][0];
         //LOG(INFO) << "About to write: " << outname;
+        clockstart = clock();
         imwrite(outname, last_img);
         duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
         //LOG(INFO) << "Image write: " << duration << "ms";
 
         //LOG(DEBUG) << "Creating Document";
-        AddTask(outname);
+        AddTask(fp.session["session_name"] + "/raw/" + outname);
 
     } else if (mode.compare("avi") == 0) {
         // Write to AVI
@@ -481,9 +478,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     } else if (mode.compare("hdf5") == 0) {
         // Write to HDF5
-        vector<string> hms = AGDUtils::split(AGDUtils::grabTime("%H:%M:%S"), ':');
         string hdf5file = fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
-        LOG(INFO) << "About to write HDF5 file: " << hdf5file;
         
         // Should we open a new file?
         if (hdf5file.compare(current_hdf5_file) != 0) {
@@ -492,7 +487,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             if (current_hdf5_file.compare("") != 0) {
                 LOG(INFO) << "Closing old HDF5 file";
                 H5Fclose(hdf5_out);
-                AddTask(fp.session["session_name"] + 'raw/' + current_hdf5_file);
+                AddTask(fp.session["session_name"] + "/raw/" + current_hdf5_file);
             }
 
             current_hdf5_file = hdf5file;
@@ -515,7 +510,13 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             LOG(INFO) << "Frame dropped from HDF5 creation";
         }
         duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-        LOG(INFO) << "Wrote frame " << frame_number << ": " << duration << "ms";
+        // LOG(INFO) << "Wrote frame " << frame_number << ": " << duration << "ms";
+
+        // Output streaming image (2x per second)
+        if (frame_number % (int) (HIGH_FPS / 2) == 0) {
+            writeLatestImage(small_last_img, compression_params);
+        }
+
     }
 
     /*
@@ -610,7 +611,7 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
 
 
 /**
- * Snap
+ * snapCycle
  *
  * Snap will take one photo, in isolation, and save it to the standard steaming
  * image location.
@@ -618,26 +619,28 @@ void AgriDataCamera::Luminance(bsoncxx::oid id, cv::Mat input) {
  * Consider making this json instead of void to return success
  */
 void AgriDataCamera::snapCycle() {
-    while (!isRecording) {
-        try {
-            CPylonImage image;
-            Mat snap_img = Mat(width, height, CV_8UC3);
-            CGrabResultPtr ptrGrabResult;
+    while (true) {
+        if (!isRecording) {
+            try {
+                CPylonImage image;
+                Mat snap_img = Mat(width, height, CV_8UC3);
+                CGrabResultPtr ptrGrabResult;
 
-            RetrieveResult(50000, ptrGrabResult, TimeoutHandling_ThrowException);
-            
-            fc.Convert(image, ptrGrabResult);
-            snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
-                    CV_8UC3, (uint8_t *) image.GetBuffer());
+                RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+                
+                fc.Convert(image, ptrGrabResult);
+                snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
+                        CV_8UC3, (uint8_t *) image.GetBuffer());
 
-            snap_img.copyTo(last_img);
-            writeLatestImage(last_img, compression_params);
+                snap_img.copyTo(last_img);
+                writeLatestImage(last_img, compression_params);
 
-        } catch (const GenericException &e) {
-            LOG(WARNING) << "Frame slipped from snapCycle:";
-            // LOG(WARNING) << ptrGrabResult->GetErrorCode();
-            // LOG(WARNING) << ptrGrabResult->GetErrorDescription();
-            LOG(WARNING) << e.GetDescription();
+            } catch (const GenericException &e) {
+                LOG(WARNING) << "Frame slipped from snapCycle:";
+                // LOG(WARNING) << ptrGrabResult->GetErrorCode();
+                // LOG(WARNING) << ptrGrabResult->GetErrorDescription();
+                LOG(WARNING) << e.GetDescription();
+            }
         }
 
         // Sleep for 500ms 
@@ -674,33 +677,28 @@ int AgriDataCamera::Stop() {
     LOG(INFO) << "Recording Stopped";
     isRecording = false;
 
-    try {
-        LOG(INFO) << "Dumping last " << documents.size() << " documents to Database";
-        frames.insert_many(documents);
-        documents.clear();
-    } catch(...) {
-        LOG(WARNING) << "Dumping failed";
-    }
+    if (mode.compare("avi") == 0) {
+        // Close AVI
+        try {
+            LOG(INFO) << "Closing active AVI file";
+            oVideoWriter.release();
+        } catch(const GenericException &e) {
+            LOG(WARNING) << "Closing file failed";
+        }
+    } else if (mode.compare("hdf5") == 0) {
+        // Close HDF5
+        try {
+            AddTask(current_hdf5_file);
+        } catch(const GenericException &e) {
+            LOG(WARNING) << "Adding task failed";
+        }
 
-    // Close AVI
-    try {
-        LOG(INFO) << "Closing active AVI file";
-        oVideoWriter.release();
-    } catch(const GenericException &e) {
-        LOG(WARNING) << "Closing file failed";
-    }
-
-    try {
-        AddTask(current_hdf5_file);
-    } catch(const GenericException &e) {
-        LOG(WARNING) << "Adding task failed";
-    }
-
-    try {
-        LOG(INFO) << "Closing active HDF5 file";
-        H5Fclose(hdf5_out);
-    } catch(const GenericException &e) {
-        LOG(WARNING) << "HDF5 file closing failed: " << e.GetDescription();
+        try {
+            LOG(INFO) << "Closing active HDF5 file";
+            H5Fclose(hdf5_out);
+        } catch(const GenericException &e) {
+            LOG(WARNING) << "HDF5 file closing failed: " << e.GetDescription();
+        }
     }
 
     LOG(INFO) << "*** Done ***";
@@ -720,6 +718,7 @@ nlohmann::json AgriDataCamera::GetStatus() {
     status["serial_number"] = serialnumber;
     status["model_name"] = modelname;
     status["recording"] = isRecording;
+    status["session_name"] = session_name;
 
     status["timestamp"] = AGDUtils::grabMilliseconds();
 
@@ -765,6 +764,7 @@ nlohmann::json AgriDataCamera::GetStatus() {
     */
 
     bsoncxx::document::value document = bsoncxx::builder::stream::document{}  
+            << "Session Name" << session_name
             << "Serial Number" << (string) status["serial_number"].get<string>()
             << "Model Name" << (string) status["model_name"].get<string>()
             << "Recording" << (bool) status["recording"].get<bool>()
