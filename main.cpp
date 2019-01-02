@@ -281,22 +281,22 @@ int main() {
                         if (isRecording) {
                             reply["message"] = "Already Recording";
                         } else {
-                            // Task collection
-                            mongocxx::collection task = db["task"];
-
-                            // Even if we have the task fed in directly to the CameraDeamon, we will eventually
-                            // have to look it up to update it anyway. So best to look it up first by _id
-                            string taskid = received["taskid"];
-                            bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
-                                << "_id" << bsoncxx::oid(taskid.c_str())
-                                << bsoncxx::builder::stream::finalize);
-                            string resultstring = bsoncxx::to_json(*maybe_result);
-                            json thistask = json::parse(resultstring);
-                            string mode = thistask["mode"];
+                            string mode = received["mode"];
 
                             // Oneshot mode (assumed to have a target serial number)
                             if (mode.compare("oneshot") == 0) {
-                                LOG(INFO) << "One shot @ " << thistask["serialnumber"];
+                                // Task collection
+                                mongocxx::collection task = db["task"];
+
+                                // Even if we have the task fed in directly to the CameraDeamon, we will eventually
+                                // have to look it up to update it anyway. So best to look it up first by _id
+                                string taskid = received["taskid"];
+                                bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = task.find_one(bsoncxx::builder::stream::document{}
+                                    << "_id" << bsoncxx::oid(taskid.c_str())
+                                    << bsoncxx::builder::stream::finalize);
+                                string resultstring = bsoncxx::to_json(*maybe_result);
+                                json thistask = json::parse(resultstring);
+
                                 for (size_t i = 0; i < 1; ++i) {
                                     // This conditional possibly not required depending on desired outcome / restriction on cameras found, etc
                                     if (thistask["serialnumber"].get<std::string>().compare((string) cameras[i]->serialnumber) == 0) {
@@ -307,8 +307,23 @@ int main() {
                             // Video mode (all cameras)
                             } else {
                                 LOG(INFO) << "Continuous recording";
+
+                                // Session collection
+                                mongocxx::collection session = db["session"];
+
+                                // Even if we have the session fed in directly to the CameraDeamon, we will eventually
+                                // have to look it up to update it anyway. So best to look it up first by _id
+                                string sessionid = received["sessionid"];
+                                bsoncxx::stdx::optional<bsoncxx::document::value> maybe_result = session.find_one(bsoncxx::builder::stream::document{}
+                                    << "_id" << bsoncxx::oid(sessionid.c_str())
+                                    << bsoncxx::builder::stream::finalize);
+                                string resultstring = bsoncxx::to_json(*maybe_result);
+                                json thissession = json::parse(resultstring);
+                                string mode = thissession["mode"];
+
+
                                 for (size_t i = 0; i < 1; ++i) {
-                                    thread t(&AgriDataCamera::Start, cameras[i], thistask);
+                                    thread t(&AgriDataCamera::Start, cameras[i], thissession);
                                     t.detach();
                                 }
                                 isRecording = true;
@@ -324,11 +339,11 @@ int main() {
                         } else {
                             // Get scanind from the first camera and close out the db entry
                             json status = cameras[0]->GetStatus();
-                            string id = status["scanid"];
+                            string session_name = status["session_name"];
 
                             // Using the stream here since it's so popular
                             scans.update_one(bsoncxx::builder::stream::document{}
-                            << "scanid" << id << bsoncxx::builder::stream::finalize,
+                            << "session_name" << session_name << bsoncxx::builder::stream::finalize,
                                     bsoncxx::builder::stream::document{}
                             << "$set" <<
                             bsoncxx::builder::stream::open_document << "end" << bsoncxx::types::b_int64{AGDUtils::grabMilliseconds()}
