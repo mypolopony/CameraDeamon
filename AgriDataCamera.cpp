@@ -469,9 +469,19 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
         LOG(INFO) << "Image write: " << duration << "ms";
 
-    LOG(DEBUG) << "Creating Document";
-        AddTask(fp.session["session_name"] + "/raw/" + outname);
-
+        // NOTE: By this point, fp.session["session_name"] and session_name are equivalent
+        LOG(DEBUG) << "Updating Document";
+        string filestub = fp.session["session_name"] + "/raw/" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+        mongocxx::client _conn{mongocxx::uri{"mongodb://localhost:27017"}};
+        mongocxx::database _db = _conn["plenty"];
+        mongocxx::collection _task = _db["task"];
+        _task.update_one(bsoncxx::builder::stream::document{}
+            << "session_name" << session_name << bsoncxx::builder::stream::finalize,
+                    bsoncxx::builder::stream::document{}
+            << "$set" << bsoncxx::builder::stream::open_document 
+                << "files" << bsoncxx::builder::stream::open_array
+                    <<  filestub
+                    << bsoncxx::builder::stream::close_array << bsoncxx::builder::stream::close_document << bsoncxx::builder::stream::finalize);
     } else if (mode.compare("avi") == 0) {
         // Write to AVI
         clockstart = clock();
