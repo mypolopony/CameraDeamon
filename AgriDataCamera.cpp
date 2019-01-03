@@ -504,7 +504,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             }
 
             current_hdf5_file = hdf5file;
-            hdf5_out = H5Fcreate((save_prefix + fp.session["session_name"] + "/raw/" + current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+            hdf5_out = H5Fcreate((current_hdf5_file).c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
             // Add Metadata
             string VERSION = "3.0.0";
