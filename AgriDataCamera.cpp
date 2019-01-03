@@ -215,6 +215,9 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Rotation required : " << rotation;
     LOG(INFO) << "Color format " << COLOR_FMT;
 
+    // Base directory
+    save_prefix = "/data/output/plenty/";
+
     // Create Mat image templates
     cv_img = Mat(width, height, CV_8UC3);
     last_img = Mat(width, height, CV_8UC3);
@@ -314,7 +317,6 @@ void AgriDataCamera::Start(nlohmann::json session) {
                                 << bsoncxx::builder::stream::finalize);
 
     // Create output directory
-    save_prefix = "/data/output/plenty/";
     string rawdir = save_prefix + session["session_name"] + "/raw/";
     LOG(INFO) << "Making directory: " << rawdir;
     bool success = AGDUtils::mkdirp(rawdir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -457,7 +459,8 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     // Output to either JPG, AVI or HDF5
     if (mode.compare("oneshot") == 0) {
-        string outname = save_prefix + fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+        LOG(INFO) << "Session name: " << fp.session["session_name"];
+        string outname = save_prefix + fp.session["session_name"] + "/raw/" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
 
         // Write to image
         LOG(INFO) << "About to write: " << outname;
