@@ -460,13 +460,13 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         string outname = fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
 
         // Write to image
-        //LOG(INFO) << "About to write: " << outname;
+        LOG(INFO) << "About to write: " << outname;
         clockstart = clock();
         imwrite(outname, last_img);
         duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-        //LOG(INFO) << "Image write: " << duration << "ms";
+        LOG(INFO) << "Image write: " << duration << "ms";
 
-        //LOG(DEBUG) << "Creating Document";
+    LOG(DEBUG) << "Creating Document";
         AddTask(fp.session["session_name"] + "/raw/" + outname);
 
     } else if (mode.compare("avi") == 0) {
@@ -478,7 +478,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     } else if (mode.compare("hdf5") == 0) {
         // Write to HDF5
-        string hdf5file = fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+        string hdf5file = save_prefix + fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
         
         // Should we open a new file?
         if (hdf5file.compare(current_hdf5_file) != 0) {
