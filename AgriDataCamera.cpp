@@ -457,7 +457,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     // Output to either JPG, AVI or HDF5
     if (mode.compare("oneshot") == 0) {
-        string outname = fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+        string outname = save_prefix + fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
 
         // Write to image
         LOG(INFO) << "About to write: " << outname;
