@@ -491,7 +491,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     } else if (mode.compare("hdf5") == 0) {
         // Write to HDF5
-        string hdf5file = save_prefix + fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+        string hdf5file = save_prefix + session_name + "/raw/" + session_name + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
         
         // Should we open a new file?
         if (hdf5file.compare(current_hdf5_file) != 0) {
@@ -517,7 +517,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         clockstart = clock();
         hsize_t buffersize = outbuffer.size();
         try {
-            H5LTmake_dataset(hdf5_out, padTo(frame_number, (size_t) 6).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+            H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
             frame_number++;
         } catch (...) {
             LOG(INFO) << "Frame dropped from HDF5 creation";
