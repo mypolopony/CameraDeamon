@@ -89,8 +89,8 @@ private:
     int64_t height;
 
     // Target dimensions
-    int TARGET_HEIGHT = 960;
-    int TARGET_WIDTH  = 600;
+    int TARGET_HEIGHT = 1920;
+    int TARGET_WIDTH  = 1200;
 
     // Rotation
     std::string rotation;
