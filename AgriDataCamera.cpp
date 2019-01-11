@@ -460,7 +460,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     // Output to either JPG, AVI or HDF5
     if (mode.compare("oneshot") == 0) {
         LOG(INFO) << "Session name: " << fp.session["session_name"];
-        string outname = save_prefix + fp.session["session_name"] + "/raw/" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+        string outname = save_prefix + session_name + "/raw/" + session_name + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + hms[2].c_str() + ".jpg";
 
         // Write to image
         LOG(INFO) << "About to write: " << outname;
@@ -471,7 +471,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
         // NOTE: By this point, fp.session["session_name"] and session_name are equivalent
         LOG(DEBUG) << "Updating Document";
-        string filestub = fp.session["session_name"] + "/raw/" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".jpg";
+        string filestub = session_name + "/raw/" + session_name + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + hms[2].c_str() + ".jpg";
         mongocxx::client _conn{mongocxx::uri{"mongodb://localhost:27017"}};
         mongocxx::database _db = _conn["plenty"];
         mongocxx::collection _task = _db["task"];
@@ -491,7 +491,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
 
     } else if (mode.compare("hdf5") == 0) {
         // Write to HDF5
-        string hdf5file = save_prefix + fp.session["session_name"] + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
+        string hdf5file = save_prefix + session_name + "/raw/" + session_name + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + ".hdf5";
         
         // Should we open a new file?
         if (hdf5file.compare(current_hdf5_file) != 0) {
