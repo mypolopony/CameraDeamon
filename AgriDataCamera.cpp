@@ -500,7 +500,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             if (current_hdf5_file.compare("") != 0) {
                 LOG(INFO) << "Closing old HDF5 file";
                 H5Fclose(hdf5_out);
-                AddTask(fp.session["session_name"] + "/raw/" + current_hdf5_file);
+                AddTask(current_hdf5_file);
             }
 
             current_hdf5_file = hdf5file;
