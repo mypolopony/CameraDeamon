@@ -497,12 +497,16 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         
         // Should we open a new file?
         if (hdf5file.compare(current_hdf5_file) != 0) {
+            LOG(INFO) << "Opening a new file";
+            LOG(INFO) << "Current HDF5 file is" << current_hdf5_file;
+            LOG(INFO) << "Suggested HDF5 file is" << hdf5file;
 
             // Close the previous file (if it is a thing)
             if (current_hdf5_file.compare("") != 0) {
                 LOG(INFO) << "Closing old HDF5 file";
                 H5Fclose(hdf5_out);
-                AddTask(taskname);
+                LOG(INFO) << "Creating task";
+                AddTask(current_hdf5_file);
             }
 
             current_hdf5_file = hdf5file;
