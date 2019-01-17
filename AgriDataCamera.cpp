@@ -519,22 +519,28 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
         }
 
-        // Create HDF5 Dataset
-        clockstart = clock();
-        hsize_t buffersize = outbuffer.size();
-        try {
-            H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-            frame_number++;
-        } catch (...) {
-            LOG(INFO) << "Frame dropped from HDF5 creation";
-        }
-        duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
-        // LOG(INFO) << "Wrote frame " << frame_number << ": " << duration << "ms";
-
-        // Output streaming image (2x per second)
-        if (frame_number % (int) (HIGH_FPS / 2) == 0) {
+        // Save to streaming ever / 1
+        if (frame_number % 1 == 0) {
+            LOG(DEBUG) << "Saving to streaming " << frame_number;
             writeLatestImage(small_last_img, compression_params);
         }
+
+        // Create HDF5 Dataset every HIGH_FPS / 6
+        if (frame_number % 6 == 0) {
+            LOG(DEBUG) << "Writing new frame " << frame_number;
+            clockstart = clock();
+            hsize_t buffersize = outbuffer.size();
+            try {
+                LOG(INFO) << "Moving the goalpost";
+                H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+            } catch (...) {
+                LOG(INFO) << "Frame dropped from HDF5 creation";
+            }
+            duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
+        }
+
+        // Increment frame number
+        frame_number++;
 
     }
 
