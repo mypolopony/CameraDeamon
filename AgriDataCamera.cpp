@@ -519,13 +519,11 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
         }
 
-        // Save to streaming ever / 1
-        if (frame_number % 1 == 0) {
-            LOG(DEBUG) << "Saving to streaming " << frame_number;
-            writeLatestImage(small_last_img, compression_params);
-        }
+        // Save to streaming every FPS
+        LOG(DEBUG) << "Saving to streaming " << frame_number;
+        writeLatestImage(small_last_img, compression_params);
 
-        // Create HDF5 Dataset every HIGH_FPS / 6
+        // Create HDF5 Dataset every FPS
         if (frame_number % 6 == 0) {
             LOG(DEBUG) << "Writing new frame " << frame_number;
             clockstart = clock();
