@@ -197,6 +197,9 @@ void AgriDataCamera::Initialize() {
 
     // Frame Rate
     HIGH_FPS = AcquisitionFrameRateAbs.GetValue();
+
+    // Processing Mod
+    PROCESSING_MOD = 20;
     
     // Print camera device information.
     LOG(INFO) << "Camera Device Information";
@@ -214,6 +217,7 @@ void AgriDataCamera::Initialize() {
     LOG(INFO) << "Target Frame Rate : " << HIGH_FPS;
     LOG(INFO) << "Rotation required : " << rotation;
     LOG(INFO) << "Color format " << COLOR_FMT;
+    LOG(INFO) << "Processing every " << PROCESSING_MOD << " frames";
 
     // Base directory
     save_prefix = "/data/output/plenty/";
@@ -342,6 +346,9 @@ void AgriDataCamera::Start(nlohmann::json session) {
 
     // Initialize frame number
     frame_number = 0;
+
+    // Speed
+    PROCESSING_MOD = session["speed"];
     
     while (isRecording) {
         try {
@@ -519,22 +526,26 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
         }
 
-        // Save to streaming every FPS
-        LOG(DEBUG) << "Saving to streaming " << frame_number;
-        writeLatestImage(small_last_img, compression_params);
+        LOG(DEBUG) << "Frame Number: " << frame_number;
+        LOG(DEBUG) << "And mod: " << frame_number % PROCESSING_MOD;
 
-        // Create HDF5 Dataset every FPS
-        if (frame_number % 6 == 0) {
+        // Save to streaming every FPS
+        if (frame_number % 1 == 0) {
+            LOG(DEBUG) << "Saving to streaming " << frame_number;
+            writeLatestImage(small_last_img, compression_params);
+        }
+        
+
+        // Create HDF5 Dataset every % PROCESSING_MOD
+        if (frame_number % PROCESSING_MOD == 0) {
             LOG(DEBUG) << "Writing new frame " << frame_number;
             clockstart = clock();
             hsize_t buffersize = outbuffer.size();
             try {
-                LOG(INFO) << "Moving the goalpost";
                 H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
             } catch (...) {
                 LOG(INFO) << "Frame dropped from HDF5 creation";
             }
-            duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
         }
 
         // Increment frame number

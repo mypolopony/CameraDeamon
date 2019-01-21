@@ -374,6 +374,18 @@ int main() {
                             reply["message"][sn] = status;
                         }
                     }
+
+                    // Speed
+                    else if (received["action"] == "speed") {
+                        for (size_t i = 0; i < 1; ++i) {
+                            if (received["speed"].get<std::string>().compare("HIGH") == 0) {
+                                cameras[i]->PROCESSING_MOD = 4;
+                            } else if (received["speed"].get<std::string>().compare("LOW") == 0) {
+                                cameras[i]->PROCESSING_MOD = 20;
+                            }
+                        }
+                        reply["message"] = "Cameras set to " + received["speed"].get<std::string>();
+                    }
                     
                     // Snap
                     else if (received["action"] == "snap") {

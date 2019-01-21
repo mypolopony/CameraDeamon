@@ -68,6 +68,7 @@ public:
 
     virtual ~AgriDataCamera();
 
+    int PROCESSING_MOD;
     std::string scanid;
     std::string session_name;
     bool isRecording;
