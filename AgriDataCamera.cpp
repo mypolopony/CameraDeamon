@@ -524,34 +524,33 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
             H5LTset_attribute_string(hdf5_out, "/", "VERSION", VERSION.c_str());
             H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
+        }
 
-            LOG(DEBUG) << "Frame Number: " << frame_number;
-            LOG(DEBUG) << "And mod: " << frame_number % PROCESSING_MOD;
-            
-            // Create HDF5 Dataset every % PROCESSING_MOD
-            if (frame_number % PROCESSING_MOD == 0) {
-                LOG(DEBUG) << "Writing new frame " << frame_number;
-                clockstart = clock();
-                hsize_t buffersize = outbuffer.size();
-                try {
-                    H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-                } catch (...) {
-                    LOG(INFO) << "Frame dropped from HDF5 creation";
-                }
+        LOG(DEBUG) << "Frame Number: " << frame_number;
+        LOG(DEBUG) << "And mod: " << frame_number % PROCESSING_MOD;
+        
+        // Create HDF5 Dataset every % PROCESSING_MOD
+        if (frame_number % PROCESSING_MOD == 0) {
+            LOG(DEBUG) << "Writing new frame " << frame_number;
+            clockstart = clock();
+            hsize_t buffersize = outbuffer.size();
+            try {
+                H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+            } catch (...) {
+                LOG(INFO) << "Frame dropped from HDF5 creation";
             }
-
         }
-
-        // Save to streaming every FPS
-        if (frame_number % 1 == 0) {
-            LOG(DEBUG) << "Saving to streaming " << frame_number;
-            writeLatestImage(small_last_img, compression_params);
-        }
-
-        // Increment frame number
-        frame_number++;
 
     }
+
+    // Save to streaming every FPS
+    if (frame_number % 1 == 0) {
+        LOG(DEBUG) << "Saving to streaming " << frame_number;
+        writeLatestImage(small_last_img, compression_params);
+    }
+
+    // Increment frame number
+    frame_number++;
 
     /*
     // Dynamic frame rate adjustment
