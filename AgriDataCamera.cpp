@@ -334,6 +334,9 @@ void AgriDataCamera::Start(nlohmann::json session) {
         oVideoWriter.open(aviout, CV_FOURCC('H','2','6','4'), 20, Size(TARGET_HEIGHT, TARGET_WIDTH), true);
     } else if (mode.compare("hdf5") == 0) {
         // HDF5 Output
+
+        // Speed
+        PROCESSING_MOD = session["speed"];
     }
 
     // Set recording to true and start grabbing
@@ -346,9 +349,6 @@ void AgriDataCamera::Start(nlohmann::json session) {
 
     // Initialize frame number
     frame_number = 0;
-
-    // Speed
-    PROCESSING_MOD = session["speed"];
     
     while (isRecording) {
         try {
@@ -524,28 +524,28 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
             H5LTset_attribute_string(hdf5_out, "/", "COLOR_FMT", COLOR_FMT.c_str());
             H5LTset_attribute_string(hdf5_out, "/", "VERSION", VERSION.c_str());
             H5LTset_attribute_string(hdf5_out, "/", "ROTATION_NEEDED", rotation.c_str());
-        }
 
-        LOG(DEBUG) << "Frame Number: " << frame_number;
-        LOG(DEBUG) << "And mod: " << frame_number % PROCESSING_MOD;
+            LOG(DEBUG) << "Frame Number: " << frame_number;
+            LOG(DEBUG) << "And mod: " << frame_number % PROCESSING_MOD;
+            
+            // Create HDF5 Dataset every % PROCESSING_MOD
+            if (frame_number % PROCESSING_MOD == 0) {
+                LOG(DEBUG) << "Writing new frame " << frame_number;
+                clockstart = clock();
+                hsize_t buffersize = outbuffer.size();
+                try {
+                    H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
+                } catch (...) {
+                    LOG(INFO) << "Frame dropped from HDF5 creation";
+                }
+            }
+
+        }
 
         // Save to streaming every FPS
         if (frame_number % 1 == 0) {
             LOG(DEBUG) << "Saving to streaming " << frame_number;
             writeLatestImage(small_last_img, compression_params);
-        }
-        
-
-        // Create HDF5 Dataset every % PROCESSING_MOD
-        if (frame_number % PROCESSING_MOD == 0) {
-            LOG(DEBUG) << "Writing new frame " << frame_number;
-            clockstart = clock();
-            hsize_t buffersize = outbuffer.size();
-            try {
-                H5LTmake_dataset(hdf5_out, to_string(frame_number).c_str(), 1, &buffersize, H5T_NATIVE_UCHAR, &outbuffer[0]);
-            } catch (...) {
-                LOG(INFO) << "Frame dropped from HDF5 creation";
-            }
         }
 
         // Increment frame number
