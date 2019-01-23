@@ -227,9 +227,6 @@ void AgriDataCamera::Initialize() {
     last_img = Mat(width, height, CV_8UC3);
     resize(last_img, small_last_img, Size(TARGET_HEIGHT, TARGET_WIDTH));
 
-    // Define pixel output format (to match algorithm optimalization)
-    fc.OutputPixelFormat = PixelType_BGR8packed;
-
     // Initial status
     isRecording = false;
 
@@ -426,7 +423,8 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     ostringstream camera_time;
     camera_time << fp.img_ptr->GetTimeStamp();
 
-    // Convert to BGR8Packed CPylonImage
+    // Define pixel output format and convert (to match algorithm optimalization)
+    fc.OutputPixelFormat = PixelType_RGB8packed;
     clockstart = clock();
     fc.Convert(image, fp.img_ptr);
     duration = 100 * ( clock() - clockstart ) / (double) CLOCKS_PER_SEC;
@@ -661,6 +659,7 @@ void AgriDataCamera::snapCycle() {
 
                 RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
                 
+                fc.OutputPixelFormat = PixelType_BGR8packed;
                 fc.Convert(image, ptrGrabResult);
                 snap_img = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(),
                         CV_8UC3, (uint8_t *) image.GetBuffer());
