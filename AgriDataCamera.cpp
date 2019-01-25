@@ -542,7 +542,7 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
     }
 
     // Save to streaming every FPS
-    if (frame_number % 1 == 0) {
+    if (frame_number % 2 == 0) {
         LOG(DEBUG) << "Saving to streaming " << frame_number;
         writeLatestImage(small_last_img, compression_params);
     }
@@ -589,6 +589,7 @@ void AgriDataCamera::AddTask(string targetfile) {
                 << bsoncxx::builder::stream::close_array
             << "progress" << bsoncxx::builder::stream::open_document
                 << "health_detection" << 0
+                << "process" << 0
                 << bsoncxx::builder::stream::close_document
             << bsoncxx::builder::stream::finalize;
 
