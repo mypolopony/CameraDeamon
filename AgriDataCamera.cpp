@@ -467,6 +467,9 @@ void AgriDataCamera::HandleOneFrame(AgriDataCamera::FramePacket fp) {
         LOG(INFO) << "Session name: " << fp.session["session_name"];
         string outname = save_prefix + session_name + "/raw/" + session_name + "_" + serialnumber + "_" + hms[0].c_str() + "_" + hms[1].c_str() + "_" + hms[2].c_str() + ".jpg";
 
+        // Convert color again?
+        cvtColor(last_img, last_img, CV_RGB2BGR);
+
         // Write to image
         LOG(INFO) << "About to write: " << outname;
         clockstart = clock();
